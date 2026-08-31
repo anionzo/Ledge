@@ -20,6 +20,7 @@
   },
   "scripts": {
     "dev": "electron-vite dev",
+    "start": "npm run build && electron .",
     "build": "electron-vite build",
     "preview": "electron-vite preview",
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json --composite false",

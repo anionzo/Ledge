@@ -66,13 +66,45 @@ fabricated token counts.
 Download the **`Ledge Setup <version>.exe`** installer from the
 [latest release](https://github.com/anionzo/Ledge/releases/latest) and run it.
 
-> The installer is **not code-signed** yet, so Windows SmartScreen warns on
-> first run — click **More info → Run anyway**.
+> The installer is **not code-signed** yet. Two different Windows features
+> react to that, and they are not the same thing:
+>
+> - **SmartScreen** warns. Click **More info -> Run anyway** and you are done.
+> - **Smart App Control** *blocks*, with no "run anyway" button at all. It is
+>   Windows 11 only and switches itself on only for clean installs, so most
+>   machines never see it. If you hit it, use the npm route below — turning
+>   Smart App Control off is a one-way door (Windows will not let you turn it
+>   back on without a reinstall), and that is a big price for one app.
 
 After that, Ledge keeps itself current: it checks GitHub releases in the
 background and installs the new version on your next restart. Turn it off under
-**Settings → Behaviour → Updates**. A Microsoft Store build never checks —
+**Settings -> Behaviour -> Updates**. A Microsoft Store build never checks —
 the store owns updates there.
+
+### Any OS, from source (npm)
+
+No installer, so nothing for SmartScreen to flag — the files arrive through npm
+rather than a browser download, so they never get the Mark-of-the-Web that
+SmartScreen keys on. Needs Node 20+ and roughly 1 GB of disk for
+`node_modules`.
+
+```bash
+git clone https://github.com/anionzo/Ledge.git
+cd Ledge
+npm ci
+npm start          # builds, then launches the app
+```
+
+Ledge lives in the tray — right-click the tray icon for Settings or Quit.
+`npm start` rebuilds first, so it is also what you run after pulling changes.
+
+> Honest limits: this route skips the installer, so there is no Start-menu
+> shortcut, no launch-at-login entry written by the installer, and **no
+> auto-update** — `git pull && npm start` is the update. And if Smart App
+> Control is in *enforcement* mode it may block the unsigned `electron.exe`
+> inside `node_modules` too; that has not been tested against a live
+> enforcement machine. The only real fix for both is a code-signing
+> certificate — see [`docs/BUILD.md`](docs/BUILD.md).
 
 ### macOS / Linux
 The build configuration is ready (DMG / AppImage + deb), but signed artifacts

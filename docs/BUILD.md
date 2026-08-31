@@ -64,6 +64,22 @@ Without signing, users see a warning on first launch (Windows SmartScreen;
 macOS Gatekeeper "unidentified developer"). To ship trusted installers, add
 these **repository secrets** and re-enable signing in `release.yml`:
 
+> **Smart App Control is a harder wall than SmartScreen.** SmartScreen warns
+> and offers "Run anyway"; Smart App Control (Windows 11, on by default only
+> for clean installs) blocks an unsigned binary outright with no override, and
+> a user can only turn it off permanently — Windows will not re-enable it
+> without a reinstall. So signing is what makes Ledge installable on those
+> machines at all, not merely warning-free. The README points affected users at
+> the from-source npm route in the meantime; note that an enforcing machine may
+> block the unsigned `electron.exe` under `node_modules` as well, which has not
+> been tested against one.
+>
+> Cheapest current path is **Azure Trusted Signing** (about $10/month, but it
+> requires identity verification through Microsoft). A traditional OV/EV
+> certificate from DigiCert or Sectigo runs into the hundreds per year and,
+> since 2023, must live on a hardware token or cloud HSM — which is awkward to
+> feed to CI.
+
 **macOS** (requires an Apple Developer account, ~$99/yr):
 - `CSC_LINK` — base64 of your `Developer ID Application` `.p12`
 - `CSC_KEY_PASSWORD` — its password
@@ -78,6 +94,16 @@ entitlements Electron needs.
 
 ## Auto-update
 
-`package.json` `build.publish` points at the GitHub repo, so electron-updater
-can pull new releases. The updater wiring itself is a follow-up (the dependency
-is present).
+`package.json` `build.publish` points at the GitHub repo, and
+`electron/main/updater.ts` is wired to it: a packaged build checks GitHub 10 s
+after start and every 4 hours after that, downloads per `settings.autoUpdates`,
+and installs only when the user presses **Restart to update** in Settings.
+
+Nothing happens on an unpackaged run (`npm run dev`, `npm start`) or on a
+Store/MSIX build — no listener is attached and no request is made. Publishing a
+release therefore needs `latest.yml` beside the installer, which
+`electron-builder --publish always` uploads for you.
+
+Note that `electron-updater` is CommonJS and must be imported as a default
+import; the named form typechecks, builds, and then kills the app at launch.
+The comment in `updater.ts` explains it.
