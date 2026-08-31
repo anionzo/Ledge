@@ -10,11 +10,34 @@
  * open? is launch-at-login on?) has to be re-created — `refresh()` is called by
  * main whenever any of that changes.
  */
-import { Menu, Tray, app, nativeImage, type NativeImage } from 'electron'
+import {
+  Menu,
+  Tray,
+  app,
+  nativeImage,
+  type MenuItemConstructorOptions,
+  type NativeImage
+} from 'electron'
 import { join } from 'node:path'
 import type { PlatformAdapter } from '../platform/types'
+import type { UpdaterStatus } from '../../shared/ipc'
 import type { Settings } from '../../shared/types/settings'
 import type { EdgePanelId, PanelHost } from './panels/PanelHost'
+
+/**
+ * What the tray needs from the updater.
+ *
+ * Ledge lives in the tray, so this is where someone looks to ask "is there a
+ * new version?" — expecting them to open Settings and find the right tab to
+ * press a button is expecting them to already know the answer. The Settings
+ * banner still exists for the case where they are in there anyway.
+ */
+export interface TrayUpdateHooks {
+  status(): UpdaterStatus
+  check(): void
+  download(): void
+  restartToInstall(): void
+}
 
 export interface TrayDeps {
   platform: PlatformAdapter
@@ -24,6 +47,8 @@ export interface TrayDeps {
   refreshQuota: () => void
   setAutostart: (enabled: boolean) => void
   quit: () => void
+  /** Absent only if main chose not to wire an updater at all. */
+  updates?: TrayUpdateHooks
 }
 
 export interface TrayController {
@@ -62,6 +87,66 @@ function resolveIcon(platform: PlatformAdapter): NativeImage {
 function label(base: string, accelerator: string): string {
   const trimmed = accelerator.trim()
   return trimmed === '' ? base : `${base}\t${trimmed}`
+}
+
+/**
+ * The one update row the tray shows, chosen from the updater's current state.
+ *
+ * One row, not a submenu: at any moment there is exactly one thing worth
+ * doing, and the label says which — "Check for updates" until there is
+ * something to fetch, then "Download", then "Restart". Returns an empty list
+ * where the updater is inert (an unpackaged run, or a Store build that must
+ * never check), for the same reason the Settings section is absent there:
+ * a menu item wired to nothing is worse than no menu item.
+ */
+export function updateItems(hooks: TrayUpdateHooks | undefined): MenuItemConstructorOptions[] {
+  if (!hooks) return []
+  const status = hooks.status()
+  if (!status.supported) return []
+
+  if (status.downloadedVersion !== null) {
+    return [
+      { type: 'separator' },
+      {
+        label: `Restart to update (${status.downloadedVersion})`,
+        click: () => {
+          hooks.restartToInstall()
+        }
+      }
+    ]
+  }
+
+  if (status.downloading) {
+    return [{ type: 'separator' }, { label: 'Downloading update…', enabled: false }]
+  }
+
+  if (status.checking) {
+    return [{ type: 'separator' }, { label: 'Checking for updates…', enabled: false }]
+  }
+
+  if (status.availableVersion !== null) {
+    // Only reachable with auto-download switched off; otherwise the download
+    // starts itself and this state passes by too fast to click.
+    return [
+      { type: 'separator' },
+      {
+        label: `Download update (${status.availableVersion})`,
+        click: () => {
+          hooks.download()
+        }
+      }
+    ]
+  }
+
+  return [
+    { type: 'separator' },
+    {
+      label: 'Check for updates',
+      click: () => {
+        hooks.check()
+      }
+    }
+  ]
 }
 
 export function createTray(deps: TrayDeps): TrayController {
@@ -140,6 +225,7 @@ export function createTray(deps: TrayDeps): TrayController {
           deps.setAutostart(item.checked)
         }
       },
+      ...updateItems(deps.updates),
       { type: 'separator' },
       {
         label: 'Quit Ledge',
@@ -150,6 +236,12 @@ export function createTray(deps: TrayDeps): TrayController {
     ])
 
     tray.setContextMenu(menu)
+
+    // The tooltip is the only part of a tray app visible without opening
+    // anything, so a waiting update says so there rather than hoping someone
+    // right-clicks today.
+    const ready = deps.updates?.status().downloadedVersion ?? null
+    tray.setToolTip(ready === null ? 'Ledge' : `Ledge — ${ready} ready, restart to update`)
   }
 
   build()

@@ -236,6 +236,7 @@
   "settings.update.ready": "Phiên bản {version} đã sẵn sàng",
   "settings.update.restart": "Khởi động lại để cập nhật",
   "settings.update.check": "Kiểm tra cập nhật",
+  "settings.update.check_button": "Kiểm tra",
   "settings.update.checking": "Đang kiểm tra…",
   "settings.update.current": "Ledge đã là bản mới nhất",
   "settings.update.failed": "Không kiểm tra được cập nhật: {reason}",

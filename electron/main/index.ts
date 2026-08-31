@@ -387,13 +387,18 @@ function bootstrap(): void {
     }
   })
 
-  updater = initAutoUpdater({
+  const updaterController = initAutoUpdater({
     getSettings: loadSettings,
     onStatus: (status) => {
       broadcast('updater:status', status)
+      // The tray carries the same state (a "Restart to update" row and the
+      // tooltip), and Electron menus are immutable once built on Windows — so
+      // reflecting a change means rebuilding, not mutating.
+      tray?.refresh()
     }
   })
-  registerUpdaterIpc(updater)
+  updater = updaterController
+  registerUpdaterIpc(updaterController)
 
   tray = createTray({
     platform,
@@ -410,6 +415,21 @@ function bootstrap(): void {
         .catch((err: unknown) => {
           console.error('[quota] manual refresh failed', err)
         })
+    },
+    // Bound to the controller directly rather than to the module-level
+    // `updater`, which is nullable only so `teardown` can release it — the
+    // tray is destroyed in that same pass, so it can never outlive this one.
+    updates: {
+      status: () => updaterController.status(),
+      check: () => {
+        void updaterController.check()
+      },
+      download: () => {
+        void updaterController.download()
+      },
+      restartToInstall: () => {
+        updaterController.quitAndInstall()
+      }
     },
     setAutostart: (enabled) => {
       void platform.setAutostart(enabled).catch((err: unknown) => {

@@ -301,6 +301,9 @@ export const en: Dictionary = {
   'settings.update.ready': 'Version {version} is ready',
   'settings.update.restart': 'Restart to update',
   'settings.update.check': 'Check for updates',
+  // The row is already labelled "Check for updates"; the button beside it only
+  // needs the verb, or the phrase reads twice on one line.
+  'settings.update.check_button': 'Check',
   'settings.update.checking': 'Checking…',
   'settings.update.current': 'Ledge is up to date',
   'settings.update.failed': 'Update check failed: {reason}',

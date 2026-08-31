@@ -283,7 +283,7 @@ export function BehaviourTab({ settings, capabilities, update }: SettingsTabProp
               >
                 {checkState === 'checking'
                   ? t('settings.update.checking')
-                  : t('settings.update.check')}
+                  : t('settings.update.check_button')}
               </Button>
             }
           />
