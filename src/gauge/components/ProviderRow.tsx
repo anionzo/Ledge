@@ -151,6 +151,17 @@ function StatusLine({ reading }: { reading: QuotaReading }) {
         </Chip>
       )}
       {active && <span className="bz-provider-window">{active.label}</span>}
+      {/* Burn-rate warning: usage is running ahead of the window clock, so this
+          quota is on pace to run out before it resets. Only shown for a live
+          numeric reading; a warn-toned datum, never the accent. */}
+      {hasNumber(reading) && reading.pace === 'hot' && (
+        <span className="bz-pace" title={t('gauge.pace.hot')}>
+          <span className="bz-pace-glyph" aria-hidden="true">
+            ▲
+          </span>
+          <span className="bz-pace-text">{t('gauge.pace.hot')}</span>
+        </span>
+      )}
       <span className="bz-provider-reset bz-truncate">
         {remaining === null
           ? t('gauge.reset_unknown')

@@ -7,7 +7,12 @@
  */
 
 .bz-sheet {
-  position: fixed;
+  /* absolute, not fixed: scope the sheet to its positioned ancestor .bz-panel
+     (position:relative + overflow:hidden) so it is clipped to the panel like
+     every other overlay in the z-ladder — not to the window. fixed only stayed
+     inside the panel by accident (the panel's backdrop-filter happened to form
+     a containing block); absolute makes the containment explicit. */
+  position: absolute;
   inset: 0;
   z-index: 20;
   display: flex;

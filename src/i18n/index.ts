@@ -64,6 +64,16 @@ export const en: Dictionary = {
   'size.mb': '{n} MB',
   'size.gb': '{n} GB',
 
+  // ── Units ────────────────────────────────────────────────────────────────
+  // One shared percent format so every reading writes the sign the same way,
+  // and a locale that spaces or positions it differently can say so once.
+  'unit.percent': '{n}%',
+
+  // ── Key names (shortcut display only) ────────────────────────────────────
+  // The Space accelerator itself is always the literal Electron token 'Space';
+  // this is only what the recorded shortcut reads as on screen.
+  'keys.space': 'Space',
+
   // ── Shelf ────────────────────────────────────────────────────────────────
   'shelf.title': 'Shelf',
   'shelf.search.placeholder': 'Search',
@@ -106,6 +116,30 @@ export const en: Dictionary = {
   'shelf.toast.added': 'Added {n}',
   'shelf.toast.merged': 'Merged into a stack',
   'shelf.toast.stack_full': 'That stack is full',
+
+  // ── Link cards (offline URL preview) ─────────────────────────────────────
+  // Brand nouns (GitHub, YouTube, r/, @) stay literal; only the plain-language
+  // primary line is translated.
+  'shelf.link.web': 'Web Link',
+  'shelf.link.issue': 'Issue #{n}',
+  'shelf.link.pr': 'PR #{n}',
+  'shelf.link.pin': 'Pin #{n}',
+  'shelf.link.video': 'Video ({id})',
+
+  // ── File kinds (badges/labels for non-image files) ───────────────────────
+  'fileKinds.pdf': 'PDF',
+  'fileKinds.word': 'Word',
+  'fileKinds.excel': 'Excel',
+  'fileKinds.powerpoint': 'Slides',
+  'fileKinds.archive': 'Archive',
+  'fileKinds.text': 'Text',
+  'fileKinds.code': 'Code',
+  'fileKinds.audio': 'Audio',
+  'fileKinds.video': 'Video',
+  'fileKinds.image': 'Image',
+  'fileKinds.executable': 'App',
+  'fileKinds.folder': 'Folder',
+  'fileKinds.file': 'File',
 
   // ── Filters ──────────────────────────────────────────────────────────────
   'shelf.filter.all': 'All',
@@ -178,6 +212,11 @@ export const en: Dictionary = {
   'gauge.ring.aria': '{name}: {percent} percent of quota used',
   'gauge.ring.aria_unknown': '{name}: usage unknown',
   'gauge.ring.unknown': 'Usage unknown',
+
+  // Burn rate and usage history.
+  'gauge.pace.hot': 'Burning fast',
+  'gauge.history.title': 'Usage trend',
+  'gauge.history.none': 'No history yet',
 
   // Balance-shaped providers (DeepSeek, gateway relays): money left, not a
   // used-percentage.
@@ -452,7 +491,22 @@ const ALIAS: Record<string, string> = {
   'settings.behaviour.suppress_fullscreen': 'behaviour.fullscreenProtectionTitle',
   'settings.behaviour.suppress_fullscreen.help': 'behaviour.fullscreenProtectionDesc',
   'settings.panels.side.left': 'tray.left',
-  'settings.panels.side.right': 'tray.right'
+  'settings.panels.side.right': 'tray.right',
+
+  // File kinds. The packs carry a `fileKinds.*` block of their own, so the
+  // Ledge key points straight at the same-named pack key. `executable` and
+  // `folder` have no pack entry and stay on the English source.
+  'fileKinds.pdf': 'fileKinds.pdf',
+  'fileKinds.word': 'fileKinds.word',
+  'fileKinds.excel': 'fileKinds.excel',
+  'fileKinds.powerpoint': 'fileKinds.powerpoint',
+  'fileKinds.archive': 'fileKinds.archive',
+  'fileKinds.text': 'fileKinds.text',
+  'fileKinds.code': 'fileKinds.code',
+  'fileKinds.audio': 'fileKinds.audio',
+  'fileKinds.video': 'fileKinds.video',
+  'fileKinds.image': 'fileKinds.image',
+  'fileKinds.file': 'fileKinds.file'
 }
 
 let active = 'en'

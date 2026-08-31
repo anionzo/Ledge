@@ -75,7 +75,14 @@ export function extOf(path: string): string {
 
 import { t } from '../i18n'
 
-const KEY_MAP: Record<FileKind, any> = {
+/**
+ * Each kind's i18n key. The English base in `src/i18n` guarantees `t()` always
+ * resolves to at least the English label, so no raw-key guard is needed — a
+ * missing pack entry degrades to English, never to the dotted key itself. The
+ * `KIND_INFO.label` stays as the last-ditch literal only if the key were ever
+ * removed from the dictionary.
+ */
+const KEY_MAP: Record<FileKind, string> = {
   pdf: 'fileKinds.pdf',
   word: 'fileKinds.word',
   excel: 'fileKinds.excel',
@@ -86,48 +93,30 @@ const KEY_MAP: Record<FileKind, any> = {
   audio: 'fileKinds.audio',
   video: 'fileKinds.video',
   image: 'fileKinds.image',
-  executable: 'fileKinds.file',
+  executable: 'fileKinds.executable',
   folder: 'fileKinds.folder',
   file: 'fileKinds.file'
-}
-
-function translateKind(key: string, fallback: string): string {
-  const val = t(key)
-  if (!val || val.startsWith('fileKinds.') || val === key) return fallback
-  return val
 }
 
 /** Resolve a file path to its display metadata (kind / label / color). */
 export function getFileKind(path: string, isDirectory?: boolean): FileKindInfo {
   if (isDirectory) {
     const base = KIND_INFO.folder
-    return {
-      ...base,
-      label: translateKind('fileKinds.folder', base.label)
-    }
+    return { ...base, label: t(KEY_MAP.folder) }
   }
   const ext = extOf(path)
   const kind = EXT_MAP[ext] ?? 'file'
   const base = KIND_INFO[kind]
-  return {
-    ...base,
-    label: translateKind(KEY_MAP[kind], base.label)
-  }
+  return { ...base, label: t(KEY_MAP[kind]) }
 }
 
 /** Resolve from an already-extracted extension string. */
 export function getFileKindByExt(ext: string, isDirectory?: boolean): FileKindInfo {
   if (isDirectory || ext.toLowerCase() === 'folder') {
     const base = KIND_INFO.folder
-    return {
-      ...base,
-      label: translateKind('fileKinds.folder', base.label)
-    }
+    return { ...base, label: t(KEY_MAP.folder) }
   }
   const kind = EXT_MAP[ext.toLowerCase()] ?? 'file'
   const base = KIND_INFO[kind]
-  return {
-    ...base,
-    label: translateKind(KEY_MAP[kind], base.label)
-  }
+  return { ...base, label: t(KEY_MAP[kind]) }
 }

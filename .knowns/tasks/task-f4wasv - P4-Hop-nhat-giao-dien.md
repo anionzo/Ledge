@@ -1,13 +1,14 @@
 ---
 id: f4wasv
 title: P4 - Hop nhat giao dien
-status: Done
+status: done
 priority: medium
 labels:
   - phase
   - ui
 createdAt: '2026-08-31T03:46:37.148Z'
-updatedAt: '2026-08-31T05:53:24.814Z'
+updatedAt: '2026-08-31T07:33:10.610Z'
+completedAt: '2026-08-31T07:33:10.610Z'
 timeSpent: 0
 ---
 # P4 - Hop nhat giao dien

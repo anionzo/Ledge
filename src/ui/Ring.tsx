@@ -22,6 +22,7 @@
  */
 import type { QuotaSeverity } from '../../shared/types/quota'
 import { EM_DASH } from '../lib/format'
+import { t } from '../i18n'
 import './styles/ring.css'
 
 export interface RingProps {
@@ -157,10 +158,11 @@ export function Ring({
 
       <span className="bz-ring-face" aria-hidden="true">
         {known ? (
-          <>
-            <span className="bz-num bz-ring-value-text">{rounded}</span>
-            {unit && <span className="bz-ring-unit">%</span>}
-          </>
+          // One localizable string so the per-cent sign is written — and placed
+          // — the way the active locale wants, instead of a bare literal '%'.
+          <span className="bz-num bz-ring-value-text">
+            {unit ? t('unit.percent', { n: rounded }) : rounded}
+          </span>
         ) : (
           <span className="bz-ring-dash">{EM_DASH}</span>
         )}

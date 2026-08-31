@@ -353,6 +353,17 @@
   animation: bz-hotkey-pulse 1.1s ease-in-out infinite;
 }
 
+/* The 1.1s is a literal, not a motion token, so the token strategy does not
+   zero it — guard it explicitly for both reduced-motion signals. */
+@media (prefers-reduced-motion: reduce) {
+  .bz-hotkey-pulse {
+    animation: none;
+  }
+}
+:root[data-reduce-motion='true'] .bz-hotkey-pulse {
+  animation: none;
+}
+
 @keyframes bz-hotkey-pulse {
   0%,
   100% {

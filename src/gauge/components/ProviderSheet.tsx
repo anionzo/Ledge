@@ -7,10 +7,18 @@
  *
  * Same `Sheet` primitive as the shelf's preview, mirrored the other way.
  */
-import { severityFor, type QuotaReading, type QuotaWindow } from '../../../shared/types/quota'
+import { useMemo } from 'react'
+import {
+  severityFor,
+  type QuotaReading,
+  type QuotaSeverity,
+  type QuotaWindow,
+  type UsageSample
+} from '../../../shared/types/quota'
 import type { PanelSide } from '../../../shared/types/settings'
 import { modelPrice } from '../../../shared/pricing'
 import { useCoarseNow } from '../../lib/clock'
+import { useInvoke } from '../../lib/bridge'
 import { EM_DASH, formatClock, humaniseDuration, msUntil } from '../../lib/format'
 import { t } from '../../i18n'
 import { Button, Chip, Ring, Sheet } from '../../ui'
@@ -104,6 +112,15 @@ function SheetBody({
               {t('gauge.stale')}
             </Chip>
           )}
+          {/* Same burn-rate warning as the row, restated on the detail. */}
+          {hasNumber(reading) && reading.pace === 'hot' && (
+            <span className="bz-pace" title={t('gauge.pace.hot')}>
+              <span className="bz-pace-glyph" aria-hidden="true">
+                ▲
+              </span>
+              <span className="bz-pace-text">{t('gauge.pace.hot')}</span>
+            </span>
+          )}
         </div>
       </div>
 
@@ -135,6 +152,8 @@ function SheetBody({
           alertThreshold={alertThreshold}
         />
       </div>
+
+      <UsageTrend providerId={reading.providerId} severity={reading.severity} />
 
       <CostLine reading={reading} />
       <PriceReference modelName={reading.modelName} />
@@ -233,7 +252,7 @@ function WindowRow({
             says more than our generic "Session". */}
         <span className="bz-window-label bz-row-fill">{quotaWindow.label || label}</span>
         <span className="bz-num bz-window-value">
-          {value === null ? EM_DASH : `${Math.round(value)}%`}
+          {value === null ? EM_DASH : t('unit.percent', { n: Math.round(value) })}
         </span>
       </div>
 
@@ -250,4 +269,113 @@ function WindowRow({
       </p>
     </div>
   )
+}
+
+/**
+ * Usage trend.
+ *
+ * The persisted percent-over-time history for this provider, fetched on open
+ * (never pushed — it would bloat the per-minute snapshot stream) and drawn as a
+ * bare SVG sparkline. Sparse data is the common case, not an edge: a provider
+ * enabled minutes ago has zero or one sample, so anything short of two points
+ * shows the "no history yet" line rather than a misleading dot or flat stub.
+ */
+function UsageTrend({
+  providerId,
+  severity
+}: {
+  providerId: string
+  severity: QuotaSeverity
+}) {
+  // Memoised so the identity is stable across renders — `useInvoke` captures
+  // its args by identity and would otherwise refetch on every render.
+  const args = useMemo(() => [providerId] as [string], [providerId])
+  const { data, loading } = useInvoke('gauge:history', args)
+
+  const samples = data ?? []
+  const enough = samples.length >= 2
+  const latest = samples.length > 0 ? samples[samples.length - 1].percent : null
+
+  return (
+    <section className="bz-trend">
+      <div className="bz-trend-head">
+        <span className="bz-trend-title">{t('gauge.history.title')}</span>
+        {enough && latest !== null && (
+          <span className="bz-trend-latest bz-num" data-severity={severity}>
+            {t('unit.percent', { n: Math.round(latest) })}
+          </span>
+        )}
+      </div>
+      {enough ? (
+        <Sparkline samples={samples} severity={severity} />
+      ) : loading ? null : (
+        <p className="bz-trend-empty">{t('gauge.history.none')}</p>
+      )}
+    </section>
+  )
+}
+
+// Sparkline geometry, in user units equal to the untransformed viewBox. The
+// drawing is inset by SPARK_PAD on every side so the 1.5px line and the fatter
+// endpoint dot never touch the clipped edge.
+const SPARK_W = 200
+const SPARK_H = 44
+const SPARK_PAD = 5
+
+/**
+ * A percent-over-time sparkline. No chart library: a faint area fill under a
+ * severity-coloured line, with the final sample emphasised by a dot. Uniformly
+ * scaled (so the dot stays round) and clipped to its box by CSS.
+ *
+ * Only called with two or more samples — `UsageTrend` handles the sparse cases
+ * before rendering — so `first` and `last` are always real points.
+ */
+function Sparkline({
+  samples,
+  severity
+}: {
+  samples: UsageSample[]
+  severity: QuotaSeverity
+}) {
+  const n = samples.length
+  const innerW = SPARK_W - SPARK_PAD * 2
+  const innerH = SPARK_H - SPARK_PAD * 2
+  const baseline = SPARK_H - SPARK_PAD
+
+  const points = samples.map((sample, i) => {
+    const x = SPARK_PAD + (i / (n - 1)) * innerW
+    const clamped = Math.min(100, Math.max(0, sample.percent))
+    const y = SPARK_PAD + (1 - clamped / 100) * innerH
+    return { x: round(x), y: round(y) }
+  })
+
+  const last = points[points.length - 1]
+  const line = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x} ${p.y}`).join(' ')
+  const area = `M${points[0].x} ${baseline} ${points
+    .map((p) => `L${p.x} ${p.y}`)
+    .join(' ')} L${last.x} ${baseline} Z`
+
+  return (
+    <div className="bz-spark" data-severity={severity}>
+      <svg
+        className="bz-spark-svg"
+        viewBox={`0 0 ${SPARK_W} ${SPARK_H}`}
+        width="100%"
+        preserveAspectRatio="xMidYMid meet"
+        role="img"
+        aria-hidden="true"
+        focusable="false"
+      >
+        <path className="bz-spark-area" d={area} />
+        <path className="bz-spark-line" d={line} />
+        <circle className="bz-spark-halo" cx={last.x} cy={last.y} r={4} />
+        <circle className="bz-spark-dot" cx={last.x} cy={last.y} r={2.4} />
+      </svg>
+    </div>
+  )
+}
+
+/** One decimal is plenty for a path coordinate and keeps the `d` string short. */
+function round(n: number): number {
+  return Math.round(n * 10) / 10
 }

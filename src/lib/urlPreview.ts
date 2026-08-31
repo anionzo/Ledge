@@ -2,6 +2,7 @@
  * Zero-cost offline URL preview parser.
  * Extracts rich metadata, brand badges, and titles from URLs in < 0.1ms without internet.
  */
+import { t } from '../i18n'
 
 export interface UrlPreviewInfo {
   url: string
@@ -48,7 +49,7 @@ export function parseUrlPreview(rawUrl: string): UrlPreviewInfo {
     return {
       url: rawUrl,
       domain: rawUrl,
-      serviceName: 'Web Link',
+      serviceName: t('shelf.link.web'),
       brandColor: '#3f3f46',
       faviconUrl: '',
     }
@@ -83,14 +84,18 @@ export function parseUrlPreview(rawUrl: string): UrlPreviewInfo {
     if (pathSegments.length >= 2) {
       const repo = `${pathSegments[0]}/${pathSegments[1]}`
       if (pathSegments.length >= 4 && (pathSegments[2] === 'issues' || pathSegments[2] === 'pull')) {
-        title = `${repo} · ${pathSegments[2] === 'issues' ? 'Issue' : 'PR'} #${pathSegments[3]}`
+        const ref =
+          pathSegments[2] === 'issues'
+            ? t('shelf.link.issue', { n: pathSegments[3] })
+            : t('shelf.link.pr', { n: pathSegments[3] })
+        title = `${repo} · ${ref}`
       } else {
         title = repo
       }
     }
   } else if (hostname.includes('pinterest.com')) {
     if (pathSegments.length >= 2 && pathSegments[0] === 'pin') {
-      title = `Pin #${pathSegments[1]}`
+      title = t('shelf.link.pin', { n: pathSegments[1] })
     } else if (pathSegments.length >= 1) {
       title = `@${pathSegments[0]}`
     }
@@ -105,9 +110,9 @@ export function parseUrlPreview(rawUrl: string): UrlPreviewInfo {
   } else if (hostname.includes('youtube.com') || hostname.includes('youtu.be')) {
     const v = urlObj.searchParams.get('v')
     if (v) {
-      title = `Video (${v})`
+      title = t('shelf.link.video', { id: v })
     } else if (pathSegments.length > 0) {
-      title = `Video (${pathSegments[0]})`
+      title = t('shelf.link.video', { id: pathSegments[0] })
     }
   } else if (pathSegments.length > 0) {
     const lastSeg = pathSegments[pathSegments.length - 1]

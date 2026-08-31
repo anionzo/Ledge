@@ -108,6 +108,49 @@
   opacity: 0.85;
 }
 
+/*
+ * Pace chip — "on pace to run out".
+ *
+ * A burn-rate warning, so it carries the warn hue (a semantic severity token,
+ * never the accent). Set as a compact datum in the status line: mono, upper,
+ * tracked, and held at its intrinsic width so the reset countdown beside it is
+ * the part that truncates. Shared by the row and the detail sheet.
+ */
+.bz-pace {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex: 0 0 auto;
+  color: var(--bz-warn);
+  font-family: var(--bz-font-mono);
+  font-size: var(--bz-text-xs);
+  letter-spacing: var(--bz-track-label);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.bz-pace-glyph {
+  font-size: 0.85em;
+  line-height: 1;
+  /* A slow, low-contrast breath — enough to read as "still climbing" without
+     becoming a blinking alarm. Suppressed entirely under reduced motion. */
+  animation: bz-pace-breathe 1800ms var(--bz-spring) infinite;
+}
+
+@keyframes bz-pace-breathe {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+:root[data-reduce-motion='true'] .bz-pace-glyph {
+  animation: none;
+}
+
 /* Failures that the user can act on state their case at full contrast. */
 .bz-provider[data-state='error'] .bz-provider-status,
 .bz-provider[data-state='permission-required'] .bz-provider-status {

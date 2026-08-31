@@ -1,13 +1,14 @@
 ---
 id: khxq0g
 title: P5 - Dong goi va phat hanh
-status: In Progress
+status: done
 priority: low
 labels:
   - phase
   - packaging
 createdAt: '2026-08-31T03:46:37.262Z'
-updatedAt: '2026-08-31T06:38:10.269Z'
+updatedAt: '2026-08-31T07:33:10.781Z'
+completedAt: '2026-08-31T07:33:10.781Z'
 timeSpent: 0
 ---
 # P5 - Dong goi va phat hanh

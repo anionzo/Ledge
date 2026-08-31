@@ -74,6 +74,19 @@ function QuotaStripImpl({
                 key={reading.providerId}
                 className="bz-quota-dot"
                 data-severity={dotSeverity(reading)}
+                data-pace={reading.pace === 'hot' ? 'hot' : undefined}
+                // A burn-rate warning gets a subtle, static warn-toned ring
+                // around its dot. Static by design: no motion to suppress, so it
+                // is honest under reduced-motion without a special case. Tokens
+                // only — the ring is a translucent mix of the warn hue.
+                style={
+                  reading.pace === 'hot'
+                    ? ({
+                        boxShadow:
+                          '0 0 0 1.5px color-mix(in srgb, var(--bz-warn) 55%, transparent)'
+                      } as const)
+                    : undefined
+                }
                 title={reading.displayName}
               />
             ))
@@ -85,7 +98,7 @@ function QuotaStripImpl({
             <>
               <span className="bz-quota-name">{top.displayName}</span>
               <span className="bz-quota-pct" data-severity={top.severity}>
-                {top.ringPercent}%
+                {t('unit.percent', { n: top.ringPercent })}
               </span>
             </>
           ) : (

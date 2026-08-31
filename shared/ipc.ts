@@ -131,4 +131,11 @@ export interface LedgeBridge {
     channel: C,
     listener: (...args: PushArgs<C>) => void
   ): () => void
+  /**
+   * The OS path of a dropped File. Electron 44 removed the non-standard
+   * `File.path`; `webUtils.getPathForFile` is the replacement and can only be
+   * reached from the preload, so the bridge exposes it. Returns '' when the
+   * drop carries no real file (a browser drag, a synthetic File).
+   */
+  getPathForFile(file: File): string
 }

@@ -1,13 +1,14 @@
 ---
 id: teejfm
 title: P0 - Bo khung chay duoc
-status: Done
+status: done
 priority: high
 labels:
   - phase
   - scaffold
 createdAt: '2026-08-31T03:46:11.027Z'
-updatedAt: '2026-08-31T05:53:34.905Z'
+updatedAt: '2026-08-31T07:33:10.266Z'
+completedAt: '2026-08-31T07:33:10.266Z'
 timeSpent: 0
 ---
 # P0 - Bo khung chay duoc

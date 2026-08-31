@@ -195,3 +195,103 @@
   color: var(--bz-ink-3);
   font-variant-numeric: tabular-nums;
 }
+
+/**
+ * Usage trend — a percent-over-time sparkline.
+ *
+ * A reading like everything else on this sheet: a mono uppercase label, a
+ * tabular figure, and a small instrument below. The severity of the ring is
+ * resolved into `--bz-sev` here too, so the line matches the arc it summarises.
+ */
+.bz-trend {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bz-space-2);
+}
+
+.bz-trend-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--bz-space-2);
+}
+
+.bz-trend-title {
+  flex: 1 1 auto;
+  font-family: var(--bz-font-mono);
+  font-size: var(--bz-text-xs);
+  letter-spacing: var(--bz-track-label);
+  text-transform: uppercase;
+  color: var(--bz-ink-2);
+}
+
+/* The latest sample, echoed as a figure so the trend has a number to anchor to.
+   Tinted to the same severity band as the line. */
+.bz-trend-latest {
+  flex: 0 0 auto;
+  font-size: var(--bz-text-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--bz-ink-2);
+}
+.bz-trend-latest[data-severity='ok'] {
+  color: var(--bz-ok);
+}
+.bz-trend-latest[data-severity='warn'] {
+  color: var(--bz-warn);
+}
+.bz-trend-latest[data-severity='critical'] {
+  color: var(--bz-crit);
+}
+
+.bz-trend-empty {
+  margin: 0;
+  font-size: var(--bz-text-xs);
+  color: var(--bz-ink-3);
+}
+
+.bz-spark {
+  /* Fallback so a spark with no severity attribute is still legible chrome. */
+  --bz-sev: var(--bz-ink-2);
+  /* Clip the endpoint dot and stroke to the box, per the brief. */
+  overflow: hidden;
+  border-radius: var(--bz-radius-sm);
+  background: var(--bz-panel-2);
+}
+.bz-spark[data-severity='ok'] {
+  --bz-sev: var(--bz-ok);
+}
+.bz-spark[data-severity='warn'] {
+  --bz-sev: var(--bz-warn);
+}
+.bz-spark[data-severity='critical'] {
+  --bz-sev: var(--bz-crit);
+}
+
+.bz-spark-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* A faint fill closes the space under the line without competing with it. */
+.bz-spark-area {
+  fill: var(--bz-rule);
+  stroke: none;
+  opacity: 0.6;
+}
+
+.bz-spark-line {
+  fill: none;
+  stroke: var(--bz-sev);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+/* The endpoint: the part that moves as the reading climbs. */
+.bz-spark-halo {
+  fill: var(--bz-sev);
+  opacity: 0.2;
+}
+.bz-spark-dot {
+  fill: var(--bz-sev);
+}

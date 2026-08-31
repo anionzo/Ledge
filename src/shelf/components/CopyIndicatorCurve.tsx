@@ -34,11 +34,18 @@ const FLARE_MS = 1100
 export function CopyIndicatorCurve({ flareKey, side, style, reduceMotion }: CopyIndicatorCurveProps) {
   const [active, setActive] = useState(false)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // The flare must fire only on a NEW capture, never on a settings change.
+  // Tracking the last-fired key lets us bail when the effect re-runs for any
+  // other reason — e.g. the user toggling "Reduce motion" off while flareKey is
+  // already > 0, which would otherwise replay a stale flare.
+  const firedKey = useRef(0)
 
   useEffect(() => {
     // flareKey starts at 0 and the first real capture bumps it; never fire on
     // the initial mount, and never while the user has motion turned off.
     if (flareKey <= 0 || reduceMotion) return
+    if (flareKey === firedKey.current) return // not a new capture — ignore
+    firedKey.current = flareKey
     setActive(true)
     if (timer.current) clearTimeout(timer.current)
     timer.current = setTimeout(() => setActive(false), FLARE_MS)

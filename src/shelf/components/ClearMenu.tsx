@@ -89,15 +89,19 @@ export function ClearMenu({ disabled, panelOpen, onClear }: ClearMenuProps) {
       />
 
       {open && (
-        <div className="bz-clear-pop" role="menu" aria-label={t('shelf.clear.menu')}>
-          <button type="button" role="menuitem" className="bz-clear-item" onClick={clearUnpinned}>
+        // A labelled group of real <button>s, not an ARIA menu: buttons are
+        // already Tab-reachable and Enter/Space-activatable, and Escape closes
+        // (handled in the effect below). role="menu" would promise a
+        // roving-arrow keyboard model this popover doesn't implement, so the
+        // honest role is a plain group.
+        <div className="bz-clear-pop" role="group" aria-label={t('shelf.clear.menu')}>
+          <button type="button" className="bz-clear-item" onClick={clearUnpinned}>
             <Icon name="trash" size={12} />
             <span>{t('shelf.clear.unpinned')}</span>
           </button>
           <div className="bz-clear-sep" />
           <button
             type="button"
-            role="menuitem"
             className="bz-clear-item"
             data-danger
             data-armed={confirmAll || undefined}

@@ -433,11 +433,19 @@ function keyBadges(accelerator: string): string[] {
     const key = raw.trim()
     if (key === 'CommandOrControl') return 'Ctrl'
     if (key === 'Meta' || key === 'Super' || key === 'Command') return 'Win'
+    // The one non-modifier whose accelerator token is an English word rather
+    // than a symbol the user types. Localised on display only — the stored
+    // accelerator stays 'Space' (see normaliseKey) so Electron can bind it.
+    if (key === 'Space') return t('keys.space')
     return key.length === 1 ? key.toUpperCase() : key
   })
 }
 
 function normaliseKey(key: string): string {
+  // 'Space' is the literal Electron accelerator token and must NOT be
+  // localised here: this string is committed and handed to
+  // globalShortcut.register in main. The on-screen label is translated in
+  // keyBadges instead.
   if (key === ' ') return 'Space'
   if (key.length === 1) return key.toUpperCase()
   // Arrow keys and the rest already match Electron's accelerator names.

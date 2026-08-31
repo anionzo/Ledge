@@ -1,12 +1,13 @@
 ---
 id: 9q66ks
 title: BACKLOG - Cost Meter tinh tien theo token
-status: Done
+status: done
 priority: low
 labels:
   - backlog
 createdAt: '2026-08-31T03:46:37.374Z'
-updatedAt: '2026-08-31T06:28:30.638Z'
+updatedAt: '2026-08-31T07:33:10.691Z'
+completedAt: '2026-08-31T07:33:10.691Z'
 timeSpent: 0
 ---
 # BACKLOG - Cost Meter tinh tien theo token

@@ -153,10 +153,12 @@ function ItemCardImpl({
   }
 
   const toggleExpand = () => {
-    setExpanded((open) => {
-      playCardExpandSound(!open)
-      return !open
-    })
+    // The sound is a side effect, so it must live outside the state updater —
+    // React may call an updater more than once (StrictMode, batching) and a
+    // pure updater is the contract. Compute next from the current value once.
+    const next = !expanded
+    playCardExpandSound(next)
+    setExpanded(next)
   }
 
   // Single click opens the preview — the closest thing to inspecting a clip
@@ -342,6 +344,13 @@ function StackMembers({
               onDragStart={(event) => {
                 // Same synchronous rule as the card: the drag session only
                 // exists inside this event's tick.
+                // stopPropagation is load-bearing: dragstart bubbles, and the
+                // ancestor card's onDragStart would otherwise also fire —
+                // recording the whole stack as the drag source (draggingId =
+                // stack id) and sending a second whole-item start-drag. That
+                // turns "drag one member out" into "merge/move the entire
+                // stack". Keep the member drag from ever reaching the card.
+                event.stopPropagation()
                 event.preventDefault()
                 send('shelf:start-drag', req)
               }}

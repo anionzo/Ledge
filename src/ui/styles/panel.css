@@ -2,12 +2,15 @@
  * Panel shell.
  *
  * tokens.css owns `.bz-panel`, `.bz-panel-header` and the `[data-side]`
- * mirroring. This file adds only the parts the shell component introduces:
- * the toolbar, the scroll body, the footer and the header's internals.
+ * mirroring (glass ground, blade radius, alignment). This file adds only the
+ * parts the shell component introduces: the blade material (the 1px inner light
+ * edge and the deep cast shadow), the toolbar, the scroll body, the footer and
+ * the header's internals.
  */
 
-/* The whole window is the panel. No margin, no shadow — the rim hairline in
-   tokens.css is the only edge treatment. */
+/* The whole window is the panel. No margin — the panel paints its own smoked
+   glass and carries its own edge; the desktop shows through the glass, never
+   behind the window. */
 html,
 body,
 #root {
@@ -34,6 +37,11 @@ body {
      the panel. tokens.css deliberately leaves positioning to the shell. */
   position: relative;
   opacity: 1;
+  /* The blade material: a 1px inner light edge over a deep, soft cast. The
+     recipe is theme-adaptive (deep black on dark, gentle on light) and lives in
+     --bz-shadow. The blade radius on the inner corners comes from tokens.css,
+     so the shadow tracks the same rounded inner edge and square outer edge. */
+  box-shadow: var(--bz-shadow);
   /* Opening lands with the overshoot spring — the Edge-Drop feel — while
      closing eases flat so a dismiss never bounces. */
   transition:

@@ -1,13 +1,14 @@
 ---
 id: w8q9t9
 title: P2 - Chuyen Shelf sang
-status: Done
+status: done
 priority: medium
 labels:
   - phase
   - clipboard
 createdAt: '2026-08-31T03:46:19.593Z'
-updatedAt: '2026-08-31T05:35:23.757Z'
+updatedAt: '2026-08-31T07:33:10.441Z'
+completedAt: '2026-08-31T07:33:10.441Z'
 timeSpent: 0
 ---
 # P2 - Chuyen Shelf sang

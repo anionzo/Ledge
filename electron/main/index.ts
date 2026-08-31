@@ -418,7 +418,7 @@ async function captureHub(dir: string): Promise<void> {
           providerId: 'cursor', displayName: 'Cursor', modelName: null,
           state: 'ok', message: null,
           session: { label: 'Monthly', usedPercent: 76, resetsAt: null }, weekly: null,
-          ringPercent: 76, severity: 'warn', observedAt: nowIso, stale: false
+          ringPercent: 76, severity: 'warn', observedAt: nowIso, stale: false, pace: 'hot'
         },
         {
           providerId: 'deepseek', displayName: 'DeepSeek', modelName: 'deepseek-chat',
@@ -433,16 +433,12 @@ async function captureHub(dir: string): Promise<void> {
     await wait(400)
     const win = host?.window
     if (win && !win.webContents.isDestroyed()) {
-      // Expand the strip, then open the DeepSeek detail sheet so the shot shows
-      // the Cost Meter's spend line.
+      // Expand the strip so the shot shows the full quota list (rings, the hot
+      // pace chip, the DeepSeek balance) over the clipboard — the Obsidian look.
       await win.webContents
         .executeJavaScript("document.querySelector('.bz-quota-strip')?.click(); true")
         .catch(() => undefined)
-      await wait(500)
-      await win.webContents
-        .executeJavaScript("document.querySelector('[aria-label=\"DeepSeek\"]')?.click(); true")
-        .catch(() => undefined)
-      await wait(500)
+      await wait(600)
       const image = await win.webContents.capturePage()
       writeFileSync(join(dir, 'hub.png'), image.toPNG())
       console.log('[capture] wrote hub.png')

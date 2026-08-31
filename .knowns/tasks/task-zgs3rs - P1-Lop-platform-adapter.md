@@ -1,13 +1,14 @@
 ---
 id: zgs3rs
 title: P1 - Lop platform adapter
-status: Done
+status: done
 priority: high
 labels:
   - phase
   - cross-platform
 createdAt: '2026-08-31T03:46:11.141Z'
-updatedAt: '2026-08-31T05:53:35.035Z'
+updatedAt: '2026-08-31T07:33:10.358Z'
+completedAt: '2026-08-31T07:33:10.358Z'
 timeSpent: 0
 ---
 # P1 - Lop platform adapter

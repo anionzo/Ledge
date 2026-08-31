@@ -1,13 +1,14 @@
 ---
 id: sxqzf8
 title: P3 - Chuyen Gauge sang
-status: Done
+status: done
 priority: medium
 labels:
   - phase
   - quota
 createdAt: '2026-08-31T03:46:19.692Z'
-updatedAt: '2026-08-31T05:53:24.675Z'
+updatedAt: '2026-08-31T07:33:10.526Z'
+completedAt: '2026-08-31T07:33:10.526Z'
 timeSpent: 0
 ---
 # P3 - Chuyen Gauge sang

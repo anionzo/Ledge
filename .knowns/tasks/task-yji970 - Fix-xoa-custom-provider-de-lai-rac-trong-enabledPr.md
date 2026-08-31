@@ -1,13 +1,14 @@
 ---
 id: yji970
 title: 'Fix: xoa custom provider de lai rac trong enabledProviders'
-status: todo
+status: done
 priority: medium
 labels:
   - bug
   - integration
 createdAt: '2026-08-31T04:21:17.356Z'
-updatedAt: '2026-08-31T04:21:17.356Z'
+updatedAt: '2026-08-31T07:33:10.870Z'
+completedAt: '2026-08-31T07:33:10.870Z'
 timeSpent: 0
 ---
 # Fix: xoa custom provider de lai rac trong enabledProviders
@@ -23,4 +24,10 @@ Loi ghep giua agent UI va agent build. electron/store/settings.ts merge enabledP
 - [ ] #1 Xoa custom provider xoa luon entry enabledProviders tuong ung
 - [ ] #2 Co test cho truong hop nay
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Fix boi agent P4: removeProvider trong AgentsTab gui enabledProviders:{[id]:false} cung luc xoa custom provider -> khong con orphan. Da co trong dot P3/P4.
+<!-- SECTION:NOTES:END -->
 

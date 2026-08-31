@@ -15,7 +15,7 @@
  * Emitted as CommonJS (`out/preload/index.cjs`) — a sandboxed preload is loaded
  * by Electron's own CJS loader and cannot be an ES module.
  */
-import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
+import { contextBridge, ipcRenderer, webUtils, type IpcRendererEvent } from 'electron'
 import type {
   LedgeBridge,
   InvokeArgs,
@@ -112,6 +112,14 @@ const ledge: LedgeBridge = {
     ipcRenderer.on(channel, wrapped)
     return () => {
       ipcRenderer.removeListener(channel, wrapped)
+    }
+  },
+
+  getPathForFile(file: File): string {
+    try {
+      return webUtils.getPathForFile(file)
+    } catch {
+      return ''
     }
   }
 }

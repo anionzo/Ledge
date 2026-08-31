@@ -33,8 +33,13 @@ export function dropHasContent(transfer: DataTransfer): boolean {
 
 /** Best-effort absolute path for a dropped file, or null when unavailable. */
 function pathOf(file: File): string | null {
-  const path = (file as File & { path?: unknown }).path
-  return typeof path === 'string' && path.length > 0 ? path : null
+  // Electron 44 removed File.path; the path now comes through the preload
+  // bridge (webUtils.getPathForFile). Fall back to the legacy field for older
+  // runtimes, then give up (a browser drag has no real path).
+  const viaBridge = window.ledge?.getPathForFile?.(file)
+  if (typeof viaBridge === 'string' && viaBridge.length > 0) return viaBridge
+  const legacy = (file as File & { path?: unknown }).path
+  return typeof legacy === 'string' && legacy.length > 0 ? legacy : null
 }
 
 function baseName(path: string): string {
