@@ -27,9 +27,22 @@ interface Release {
 
 const RELEASES: Release[] = [
   {
-    version: 'v0.1.4',
+    version: 'v0.1.5',
     date: 'Sep 2026',
     latest: true,
+    summary: 'The update control moved to where a tray app is actually used.',
+    highlights: [
+      {
+        title: 'Updates from the tray',
+        description:
+          'Right-click the tray icon to check, download, or restart into a new version — no hunting through Settings. The tooltip says when one is waiting.'
+      }
+    ]
+  },
+  {
+    version: 'v0.1.4',
+    date: 'Sep 2026',
+    latest: false,
     summary:
       'The smoothness wave: the edge knows the difference between passing through and arriving, and the hub can be pinned to a monitor.',
     highlights: [
