@@ -15,7 +15,8 @@
 import type { DisplayOption } from '../../../shared/ipc'
 import type { PanelSide, TriggerAlign } from '../../../shared/types/settings'
 import type { SettingsTabProps } from '../context'
-import { useInvoke } from '../../lib/bridge'
+import { useEffect, useRef } from 'react'
+import { invoke, useInvoke } from '../../lib/bridge'
 import { Field, Section, Segmented, Select, Slider, Switch, useFieldId } from '../components/Controls'
 import { Icon } from '../../ui'
 import { t } from '../../i18n'
@@ -23,6 +24,13 @@ import '../styles/panels-tab.css'
 
 /** The picker's own sentinel for "no saved monitor" — `<select>` values are strings. */
 const AUTO_DISPLAY = 'auto'
+
+/**
+ * How long the hub stays open after an edge or display change. Long enough to
+ * register where the panel went, short enough that it does not read as the
+ * hub having simply opened itself and stayed.
+ */
+const DOCK_PREVIEW_MS = 1_750
 
 export function PanelsTab({ settings, capabilities, update }: SettingsTabProps) {
   const clipboardEnabledId = useFieldId('clipboard-on')
@@ -55,6 +63,40 @@ export function PanelsTab({ settings, capabilities, update }: SettingsTabProps) 
   const stickDisplayValue =
     settings.stickDisplay.displayId !== null ? String(settings.stickDisplay.displayId) : AUTO_DISPLAY
 
+  /**
+   * Show the hub where it just moved to, for 1.75 s.
+   *
+   * Changing the edge or the monitor from Settings repositions a window the
+   * user is not currently looking at — the hub is collapsed, and on the
+   * click-through strategy it is invisible until something opens it. So the
+   * change is committed immediately (never held hostage to a timer: a setting
+   * the user picked must not be lost if Settings closes) and the panel is
+   * flashed open afterwards so they can actually see the answer to "which
+   * edge of which screen?".
+   *
+   * A second change inside the window replaces the first preview rather than
+   * queueing another close behind it.
+   */
+  const previewTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const previewDock = () => {
+    if (previewTimer.current !== null) clearTimeout(previewTimer.current)
+    void invoke('panel:open', 'shelf')
+    previewTimer.current = setTimeout(() => {
+      previewTimer.current = null
+      void invoke('panel:close', 'shelf')
+    }, DOCK_PREVIEW_MS)
+  }
+
+  // A pending preview must not outlive the tab, or a close lands on a panel
+  // the user has since opened for real.
+  useEffect(
+    () => () => {
+      if (previewTimer.current !== null) clearTimeout(previewTimer.current)
+    },
+    []
+  )
+
   // Writes back the saved work area + scale factor alongside the id, not just
   // the id: those are what tier 2 of the main-process resolve matches against
   // once Windows reassigns display ids on the next reboot (see
@@ -63,6 +105,7 @@ export function PanelsTab({ settings, capabilities, update }: SettingsTabProps) 
   const onDisplayChange = (value: string) => {
     if (value === AUTO_DISPLAY) {
       void update({ stickDisplay: { displayId: null, savedWorkArea: null, savedScaleFactor: null } })
+      previewDock()
       return
     }
     const chosen = (displays ?? []).find((option) => String(option.id) === value)
@@ -74,6 +117,15 @@ export function PanelsTab({ settings, capabilities, update }: SettingsTabProps) 
         savedScaleFactor: chosen.scaleFactor
       }
     })
+    previewDock()
+  }
+
+  // One frame, one edge. The hub reads `shelf.side`; `gauge.side` is kept in
+  // lockstep so a legacy reader of it can never disagree about which edge the
+  // single frame is on.
+  const setSide = (side: PanelSide) => {
+    void update({ shelf: { side }, gauge: { side } })
+    previewDock()
   }
 
   const alignOptions: { value: TriggerAlign; label: string }[] = [
@@ -82,10 +134,6 @@ export function PanelsTab({ settings, capabilities, update }: SettingsTabProps) 
     { value: 'bottom', label: t('settings.panels.trigger.bottom') }
   ]
 
-  // One frame, one edge. The hub reads `shelf.side`; `gauge.side` is kept in
-  // lockstep so a legacy reader of it can never disagree about which edge the
-  // single frame is on.
-  const setSide = (side: PanelSide) => void update({ shelf: { side }, gauge: { side } })
 
   return (
     <>
