@@ -34,6 +34,7 @@ export type IconName =
   | 'file'
   | 'folder'
   | 'stack'
+  | 'grid'
   | 'grip'
   | 'plus'
   | 'minus'
@@ -67,6 +68,8 @@ const PATHS: Record<IconName, string> = {
   file: 'M4 1.8h5l3 3v9.4H4zM9 1.8V5h3',
   folder: 'M2 3.6h4.2l1.4 1.8h6.4v8.2H2z',
   stack: 'M2.6 5.4 8 2.6l5.4 2.8L8 8.2ZM2.6 8.4 8 11.2l5.4-2.8M2.6 11 8 13.8 13.4 11',
+  // Four panes — the "everything, unfiltered" mark on the shelf's filter row.
+  grid: 'M3.2 3.2h4.2v4.2H3.2zM8.6 3.2h4.2v4.2H8.6zM3.2 8.6h4.2v4.2H3.2zM8.6 8.6h4.2v4.2H8.6z',
   grip: 'M6 3.4v.1M6 7.4v.1M6 11.4v.1M10 3.4v.1M10 7.4v.1M10 11.4v.1',
   plus: 'M8 3.4v9.2M3.4 8h9.2',
   minus: 'M3.4 8h9.2',

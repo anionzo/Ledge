@@ -28,17 +28,27 @@
   flex-direction: row-reverse;
 }
 
+/*
+ * A square target, not a text pill.
+ *
+ * 30px is the smallest a pointer target should be for something pressed this
+ * often, and it is the same in every language — which the old text pills were
+ * not. The glyph itself stays 14px; the rest is deliberate slack so the row is
+ * easy to hit without aiming.
+ */
 .bz-filter {
   flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
   border: 1px solid var(--bz-rule);
   border-radius: 999px;
   background: transparent;
   color: var(--bz-ink-3);
   font: inherit;
-  font-size: var(--bz-text-xs);
-  letter-spacing: var(--bz-track-label);
-  text-transform: uppercase;
-  padding: 3px var(--bz-space-3);
+  padding: 0;
   cursor: default;
   transition:
     color var(--bz-close-ms) var(--bz-spring),
