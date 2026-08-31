@@ -114,14 +114,6 @@ function openSettings(): void {
   openSettingsWindow({ preloadPath: preloadPath(), htmlEntry: htmlEntry('settings') })
 }
 
-/**
- * One panel now, not two. The user asked for a single unified frame rather
- * than mirrored panels on both edges, so the Shelf and the Gauge are composed
- * together inside one right-docked `hub` renderer. The internal panel id stays
- * `shelf` so the cursor-poll routing, the toggle wiring and the push channels
- * keep working unchanged; only its renderer and content changed. `gauge:*`
- * pushes still reach it because `broadcast` sends to every live panel.
- */
 /** True when two optional rectangles describe the same area. */
 function sameRect(
   a: { x: number; y: number; width: number; height: number } | null,
@@ -159,6 +151,14 @@ function stickDisplayIdFor(settings: Settings): number | null {
   return resolved.displayId
 }
 
+/**
+ * One panel now, not two. The user asked for a single unified frame rather
+ * than mirrored panels on both edges, so the Shelf and the Gauge are composed
+ * together inside one right-docked `hub` renderer. The internal panel id stays
+ * `shelf` so the cursor-poll routing, the toggle wiring and the push channels
+ * keep working unchanged; only its renderer and content changed. `gauge:*`
+ * pushes still reach it because `broadcast` sends to every live panel.
+ */
 function syncPanels(settings: Settings): void {
   const platform = getPlatform()
   const strategy = collapseStrategyFor(platform.capabilities.clickThrough)
@@ -572,6 +572,36 @@ async function captureHub(dir: string): Promise<void> {
       const image = await win.webContents.capturePage()
       writeFileSync(join(dir, 'hub.png'), image.toPNG())
       console.log('[capture] wrote hub.png')
+    }
+
+    // Settings is where most of the configuration surface lives, and it is the
+    // one window a screenshot of the hub can say nothing about. Shot once per
+    // tab: a tab that throws on mount is invisible from any other tab, and the
+    // whole point of this harness is catching what typecheck cannot.
+    openSettings()
+    await wait(1400)
+    const settingsWin = getSettingsWindow()
+    for (const tab of ['behaviour', 'panels', 'agents', 'appearance', 'about']) {
+      if (!settingsWin || settingsWin.webContents.isDestroyed()) break
+      await settingsWin.webContents
+        .executeJavaScript(`document.getElementById('bz-tab-${tab}')?.click(); true`)
+        .catch(() => undefined)
+      await wait(500)
+      const shot = await settingsWin.webContents.capturePage()
+      writeFileSync(join(dir, `settings-${tab}.png`), shot.toPNG())
+      console.log(`[capture] wrote settings-${tab}.png`)
+
+      // Half of every tab is below the fold at this window size, and that half
+      // is where newly added rows land — so shoot the bottom too rather than
+      // proving only that the top of a tab renders.
+      await settingsWin.webContents
+        .executeJavaScript(
+          "const p = document.querySelector('.bz-settings-pane'); if (p) p.scrollTop = p.scrollHeight; true"
+        )
+        .catch(() => undefined)
+      await wait(400)
+      const bottom = await settingsWin.webContents.capturePage()
+      writeFileSync(join(dir, `settings-${tab}-bottom.png`), bottom.toPNG())
     }
   } catch (err) {
     console.error('[capture] failed', err)
