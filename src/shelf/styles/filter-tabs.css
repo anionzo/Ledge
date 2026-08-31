@@ -6,15 +6,22 @@
  * filter is chrome, not a status.
  */
 
+/*
+ * Wraps rather than scrolls.
+ *
+ * These pills used to sit in an `overflow-x: auto` row with the scrollbar
+ * hidden, which fits five English words and hides one the moment a locale is
+ * wordier — Vietnamese clips TỆP off the edge, leaving a sliver of a pill as
+ * the only hint that a whole filter exists. A filter the user cannot see is a
+ * filter they do not have, and a scroll affordance nobody can see is not an
+ * affordance. Wrapping costs one 26px row in the locales that need it and
+ * nothing in the ones that do not, and it cannot hide anything in any
+ * language — including the ones with longer words than Vietnamese.
+ */
 .bz-filters {
   gap: var(--bz-space-1);
   padding: var(--bz-space-2) var(--bz-space-3);
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.bz-filters::-webkit-scrollbar {
-  display: none;
+  flex-wrap: wrap;
 }
 
 .bz-panel[data-side='right'] .bz-filters {
