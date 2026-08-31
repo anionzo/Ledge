@@ -1,0 +1,36 @@
+/**
+ * Gauge-wide.
+ *
+ * The panel is a column of rings. Everything here exists to keep that column
+ * straight — a ragged ring column is the fastest way to make an instrument
+ * look like a web page.
+ */
+
+.bz-provider-list {
+  display: flex;
+  flex-direction: column;
+}
+
+/* The refresh action turns while a cycle is running. It is the only moving
+   part in the panel, so it is also the only progress indicator needed — and
+   tokens.css zeroes the duration under reduced motion, which stops the spin
+   without needing a second rule here. */
+.bz-panel-header .bz-btn[data-spinning] .bz-icon {
+  animation: bz-spin 900ms linear infinite;
+}
+
+@keyframes bz-spin {
+  to {
+    rotate: 360deg;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bz-panel-header .bz-btn[data-spinning] .bz-icon {
+    animation: none;
+  }
+}
+
+:root[data-reduce-motion='true'] .bz-panel-header .bz-btn[data-spinning] .bz-icon {
+  animation: none;
+}

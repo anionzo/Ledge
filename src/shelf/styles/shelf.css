@@ -1,0 +1,21 @@
+/**
+ * Shelf-wide.
+ *
+ * Almost nothing lives here: the shell, the row grammar and the primitives
+ * carry the panel. What is left is the handful of things that are true of the
+ * shelf specifically.
+ */
+
+/* A drag leaving the panel must not paint Chromium's own ghost — main draws
+   the real drag image. */
+.bz-panel img {
+  -webkit-user-drag: none;
+}
+
+/* No top padding: the first card's hairline continues the toolbar's, so the
+   ledger starts flush against it. The breathing room at the bottom goes on the
+   scroll container rather than on the list, whose height is the virtualiser's
+   arithmetic and must not be padded. */
+.bz-panel-body:has(.bz-item-list) {
+  padding-bottom: var(--bz-space-4);
+}

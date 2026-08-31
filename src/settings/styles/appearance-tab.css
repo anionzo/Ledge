@@ -1,0 +1,29 @@
+/**
+ * Appearance tab.
+ *
+ * The ring preview is the product's thesis in one row: four instruments, three
+ * colours, and one of them showing an em dash because there was nothing to
+ * read.
+ */
+
+.bz-preview-rings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--bz-space-5);
+  padding: var(--bz-space-4) 0;
+}
+
+.bz-preview-ring {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--bz-space-2);
+}
+
+.bz-preview-ring-label {
+  font-family: var(--bz-font-mono);
+  font-size: var(--bz-text-xs);
+  letter-spacing: var(--bz-track-label);
+  text-transform: uppercase;
+  color: var(--bz-ink-3);
+}

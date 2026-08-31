@@ -1,0 +1,87 @@
+/**
+ * Button.
+ *
+ * Ghost buttons have no resting border at all. In a floating panel every
+ * outline is an edge competing with the rim hairline, so the affordance shows
+ * up on hover instead — this is a cursor-driven product; the pointer is
+ * already there.
+ */
+
+.bz-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--bz-space-2);
+  border: 1px solid transparent;
+  border-radius: var(--bz-radius-sm);
+  background: transparent;
+  color: var(--bz-ink-2);
+  font-family: var(--bz-font-body);
+  font-size: var(--bz-text-sm);
+  /* Not `pointer`: a hand cursor over a panel floating on the desktop reads as
+     a web page. Instruments use an arrow. */
+  cursor: default;
+  transition:
+    background-color var(--bz-close-ms) var(--bz-spring),
+    color var(--bz-close-ms) var(--bz-spring),
+    border-color var(--bz-close-ms) var(--bz-spring);
+}
+
+.bz-btn[data-size='md'] {
+  height: 26px;
+  padding: 0 var(--bz-space-3);
+}
+
+.bz-btn[data-size='sm'] {
+  height: 20px;
+  padding: 0 var(--bz-space-2);
+  font-size: var(--bz-text-xs);
+}
+
+.bz-btn-icon {
+  padding: 0;
+  width: 26px;
+}
+
+.bz-btn-icon[data-size='sm'] {
+  width: 20px;
+}
+
+.bz-btn:hover:not(:disabled) {
+  background: var(--bz-panel-2);
+  color: var(--bz-ink);
+}
+
+.bz-btn:active:not(:disabled) {
+  /* A 1px nudge instead of a scale: scaling blurs a hairline border. */
+  translate: 0 1px;
+}
+
+.bz-btn:disabled {
+  opacity: 0.4;
+}
+
+.bz-btn[data-variant='primary'] {
+  color: var(--bz-rim);
+  border-color: var(--bz-rim-hairline);
+  background: var(--bz-rim-soft);
+}
+
+.bz-btn[data-variant='primary']:hover:not(:disabled) {
+  border-color: var(--bz-rim);
+  background: var(--bz-rim-soft);
+  color: var(--bz-rim);
+}
+
+.bz-btn[data-variant='danger'] {
+  color: var(--bz-crit);
+}
+
+.bz-btn[data-variant='danger']:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--bz-crit) 12%, transparent);
+  color: var(--bz-crit);
+}
+
+.bz-btn-text {
+  white-space: nowrap;
+}

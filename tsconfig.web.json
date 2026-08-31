@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "src/**/*.d.ts",
+    "shared/**/*.ts"
+  ],
+  "compilerOptions": {
+    "composite": true,
+    "outDir": "node_modules/.tmp/tsc/web",
+    "tsBuildInfoFile": "node_modules/.tmp/tsc/web.tsbuildinfo",
+
+    "target": "ES2022",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "moduleDetection": "force",
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "jsx": "react-jsx",
+
+    "strict": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true,
+
+    // No "node" here on purpose: a renderer that can see `process` or `fs`
+    // types will eventually try to use them, and sandbox:true means it cannot.
+    // Everything a renderer needs from the main process comes through
+    // `window.ledge` (see shared/ipc.ts).
+    "types": ["vite/client"],
+
+    "baseUrl": ".",
+    "paths": {
+      "@shared/*": ["shared/*"],
+      "@renderer/*": ["src/*"]
+    }
+  }
+}

@@ -1,0 +1,166 @@
+/**
+ * Provider row.
+ *
+ * Same ledger grammar as the shelf's cards — hairline separated, edge aligned,
+ * no rounding — so the two panels look like two views of one instrument rather
+ * than two apps that happen to be open.
+ */
+
+.bz-provider {
+  border-bottom: 1px solid var(--bz-rule-soft);
+  content-visibility: auto;
+  contain-intrinsic-size: auto 60px;
+}
+
+.bz-provider:last-child {
+  border-bottom: none;
+}
+
+.bz-provider-main {
+  width: 100%;
+  gap: var(--bz-space-3);
+  padding: var(--bz-space-3);
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  cursor: default;
+}
+
+.bz-provider-main:hover {
+  background: var(--bz-panel-2);
+}
+
+.bz-provider-main:focus-visible {
+  outline: 2px solid var(--bz-rim);
+  outline-offset: -2px;
+}
+
+/*
+ * States that are permanent facts about this machine — no CLI installed, no
+ * reader for this OS — recede. They are answers, not problems, and a list
+ * where four of six providers shout is a list nobody reads.
+ */
+.bz-provider[data-muted] {
+  opacity: 0.55;
+}
+
+.bz-provider[data-muted]:hover {
+  opacity: 1;
+}
+
+/* A retained reading dims the identity as well as the ring, so the whole row
+   reads as a photograph of a moment rather than a live instrument. */
+.bz-provider[data-stale] .bz-provider-name,
+.bz-provider[data-stale] .bz-provider-model {
+  opacity: 0.7;
+}
+
+.bz-provider-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.bz-provider-name {
+  font-family: var(--bz-font-display);
+  font-size: var(--bz-text-md);
+  letter-spacing: var(--bz-track-display);
+  color: var(--bz-ink);
+  line-height: 1.2;
+}
+
+.bz-provider-model {
+  font-family: var(--bz-font-mono);
+  font-size: var(--bz-text-xs);
+  color: var(--bz-ink-3);
+  line-height: 1.3;
+}
+
+.bz-provider-status {
+  gap: var(--bz-space-1);
+  margin-top: 2px;
+  font-size: var(--bz-text-xs);
+  color: var(--bz-ink-3);
+  min-width: 0;
+}
+
+/* The window's own label ("Session", "Weekly") comes from the provider, so it
+   is set apart as a datum rather than as prose. */
+.bz-provider-window {
+  flex: 0 0 auto;
+  font-family: var(--bz-font-mono);
+  letter-spacing: var(--bz-track-label);
+  text-transform: uppercase;
+  color: var(--bz-ink-3);
+  opacity: 0.75;
+}
+
+.bz-provider-reset {
+  min-width: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.bz-provider-message {
+  min-width: 0;
+  opacity: 0.85;
+}
+
+/* Failures that the user can act on state their case at full contrast. */
+.bz-provider[data-state='error'] .bz-provider-status,
+.bz-provider[data-state='permission-required'] .bz-provider-status {
+  color: var(--bz-crit);
+}
+
+.bz-provider[data-state='logged-out'] .bz-provider-status {
+  color: var(--bz-ink-2);
+}
+
+/* A depleted balance is the one "ok" state that still needs the critical hue:
+   the read succeeded, but there is nothing left to spend. */
+.bz-provider-status[data-balance='critical'] {
+  color: var(--bz-crit);
+}
+
+.bz-provider-more {
+  color: var(--bz-ink-3);
+  opacity: 0;
+  transition: opacity var(--bz-close-ms) var(--bz-spring);
+}
+
+.bz-provider-main:hover .bz-provider-more,
+.bz-provider-main:focus-visible .bz-provider-more {
+  opacity: 1;
+}
+
+.bz-provider-recover {
+  padding: 0 var(--bz-space-3) var(--bz-space-3);
+  /* Aligned under the body, not under the ring: the button belongs to the
+     explanation, and the ring column stays a clean vertical rule of rings. */
+  padding-inline-start: calc(var(--bz-space-3) + 34px + var(--bz-space-3));
+}
+
+.bz-panel[data-side='right'] .bz-provider-recover {
+  padding-inline-start: var(--bz-space-3);
+  padding-inline-end: calc(var(--bz-space-3) + 34px + var(--bz-space-3));
+  /* The row is reversed here, so the main-axis start is the right edge;
+     flex-end is what puts the button back under the body on the left. */
+  justify-content: flex-end;
+}
+
+/* Provider brand mark (agent-notch icons). Sits inline before the name,
+   inheriting the row's ink colour so it never competes with the ring's
+   severity hue. */
+.bz-provider-glyph {
+  display: inline-block;
+  vertical-align: -2px;
+  margin-right: var(--bz-space-2);
+  color: var(--bz-ink-2);
+  flex: 0 0 auto;
+}
+.bz-provider-name {
+  display: inline-flex;
+  align-items: center;
+}

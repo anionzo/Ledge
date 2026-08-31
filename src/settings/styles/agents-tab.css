@@ -1,0 +1,88 @@
+/**
+ * Agents tab.
+ *
+ * A custom provider is a small form, so it gets a boxed group — the only place
+ * in the settings window where fields are enclosed rather than ruled. The box
+ * is what says "these five controls belong to this one provider" when there
+ * are four of them stacked.
+ */
+
+.bz-agents-empty {
+  margin: 0;
+  padding: var(--bz-space-4) 0;
+  font-size: var(--bz-text-sm);
+  color: var(--bz-ink-3);
+}
+
+.bz-custom-provider {
+  margin: var(--bz-space-3) 0;
+  padding: 0 var(--bz-space-3) var(--bz-space-2);
+  border: 1px solid var(--bz-rule);
+  border-radius: var(--bz-radius-sm);
+  background: var(--bz-panel);
+}
+
+/* The last field in the box should not draw a rule against the box's own
+   border — two hairlines 12px apart read as a mistake. */
+.bz-custom-provider .bz-field:last-child {
+  border-bottom: none;
+}
+
+.bz-custom-head {
+  display: flex;
+  align-items: center;
+  gap: var(--bz-space-2);
+  padding: var(--bz-space-2) 0;
+  border-bottom: 1px solid var(--bz-rule-soft);
+  color: var(--bz-ink-3);
+}
+
+.bz-custom-name {
+  font-family: var(--bz-font-display);
+  font-size: var(--bz-text-base);
+  color: var(--bz-ink);
+}
+
+.bz-custom-spacer {
+  flex: 1 1 auto;
+}
+
+.bz-custom-command {
+  display: flex;
+  align-items: center;
+  gap: var(--bz-space-2);
+  width: 100%;
+}
+
+.bz-custom-command .bz-text-field {
+  flex: 1 1 auto;
+}
+
+/* The probe result is the only place in the settings window where a colour
+   carries meaning, so it is allowed one — the same ok/critical pair the rings
+   use, never a fourth green. */
+.bz-custom-probe {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--bz-space-2);
+  margin: 0 0 var(--bz-space-2);
+  font-family: var(--bz-font-mono);
+  font-size: var(--bz-text-xs);
+  line-height: 1.45;
+  color: var(--bz-crit);
+  overflow-wrap: anywhere;
+  user-select: text;
+}
+
+.bz-custom-probe[data-ok] {
+  color: var(--bz-ok);
+}
+
+.bz-custom-hint {
+  margin: 0;
+  padding: var(--bz-space-2) 0;
+}
+
+.bz-agents-add {
+  padding: var(--bz-space-3) 0;
+}

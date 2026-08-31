@@ -1,0 +1,71 @@
+{
+  "name": "TASKBAR-ALL",
+  "id": "TASKBAR-ALL",
+  "createdAt": "2026-08-31T03:33:05.6631073Z",
+  "settings": {
+    "defaultPriority": "medium",
+    "taskLifecycle": {
+      "excludeDoneFromDefaultRetrieval": true,
+      "autoArchive": true,
+      "archiveAfter": "30d",
+      "purgeAfter": null
+    },
+    "gitTrackingMode": "git-tracked",
+    "gitTracking": {
+      "tasks": true,
+      "docs": true,
+      "templates": true,
+      "memories": false,
+      "decisions": true
+    },
+    "statuses": [
+      "todo",
+      "in-progress",
+      "in-review",
+      "done",
+      "blocked",
+      "on-hold",
+      "urgent"
+    ],
+    "statusColors": {
+      "blocked": "red",
+      "done": "green",
+      "in-progress": "blue",
+      "in-review": "purple",
+      "on-hold": "yellow",
+      "todo": "gray",
+      "urgent": "orange"
+    },
+    "visibleColumns": [
+      "todo",
+      "in-progress",
+      "blocked",
+      "done",
+      "in-review"
+    ],
+    "semanticSearch": {
+      "enabled": true,
+      "model": "multilingual-e5-small",
+      "provider": "local",
+      "huggingFaceId": "Xenova/multilingual-e5-small",
+      "dimensions": 384,
+      "maxTokens": 512,
+      "vectorStore": {
+        "backend": "qdrant",
+        "mode": "managed",
+        "managedRoot": "~/.knowns/runtime/qdrant",
+        "install": "lazy",
+        "retention": {
+          "previousGenerations": 1,
+          "previousGenerationTTL": "72h"
+        }
+      }
+    },
+    "serverPort": 6420,
+    "platforms": [
+      "claude-code",
+      "agents"
+    ],
+    "enableChatUI": false
+  }
+}

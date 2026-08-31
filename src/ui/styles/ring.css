@@ -1,0 +1,112 @@
+/**
+ * Ring — the instrument face.
+ *
+ * One severity colour is resolved into `--bz-sev` at the top and reused by the
+ * arc, the endpoint and the numeral. That is what stops the dot from drifting
+ * to a different green than the arc it caps.
+ */
+
+.bz-ring {
+  position: relative;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  /* Fallback so a ring with no severity attribute is still legible chrome
+     rather than an invisible one. */
+  --bz-sev: var(--bz-ink-2);
+}
+
+.bz-ring[data-severity='ok'] {
+  --bz-sev: var(--bz-ok);
+}
+.bz-ring[data-severity='warn'] {
+  --bz-sev: var(--bz-warn);
+}
+.bz-ring[data-severity='critical'] {
+  --bz-sev: var(--bz-crit);
+}
+
+/* No reading, no colour. An unknown ring is chrome, not a status. */
+.bz-ring[data-unknown] {
+  --bz-sev: var(--bz-ink-3);
+}
+
+.bz-ring-svg {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+
+/* The track is deliberately faint: present enough to close the circle, quiet
+   enough that the value arc is the only thing the eye lands on. */
+.bz-ring-track {
+  stroke: var(--bz-rule);
+}
+
+.bz-ring-value {
+  stroke: var(--bz-sev);
+  transition: stroke-dashoffset var(--bz-open-ms) var(--bz-spring);
+}
+
+.bz-ring-endpoint {
+  transition: transform var(--bz-open-ms) var(--bz-spring);
+}
+
+/* Halo is wider than the arc, so the terminus bulges very slightly — the
+   difference between a bar that stopped and a needle that is pointing. */
+.bz-ring-endpoint-halo {
+  fill: var(--bz-sev);
+}
+
+/* A punched core turns the bulge into an index mark. It uses the opaque panel
+   colour rather than the glass so it reads as a hole in the needle, not as a
+   thin spot in the ring. */
+.bz-ring-endpoint-dot {
+  fill: var(--bz-panel);
+}
+
+.bz-ring-face {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.5px;
+  line-height: 1;
+  color: var(--bz-ink);
+  /* The face must not intercept clicks meant for the row behind it. */
+  pointer-events: none;
+}
+
+.bz-ring-value-text {
+  font-size: calc(var(--bz-ring-size, 34px) * 0.34);
+  letter-spacing: var(--bz-track-display);
+  font-weight: 500;
+}
+
+.bz-ring-unit {
+  font-family: var(--bz-font-mono);
+  font-size: calc(var(--bz-ring-size, 34px) * 0.2);
+  color: var(--bz-ink-3);
+}
+
+.bz-ring-dash {
+  font-family: var(--bz-font-mono);
+  font-size: calc(var(--bz-ring-size, 34px) * 0.32);
+  color: var(--bz-ink-3);
+}
+
+/* Stale: the whole instrument recedes. The reading is still true, it is just
+   no longer current, and dimming says that without inventing a new colour. */
+.bz-ring[data-stale] {
+  opacity: 0.55;
+}
+
+/* The arc length is carried by stroke-dashoffset, so a stale ring must not
+   touch stroke-dasharray — it would redraw the pattern around the whole
+   circle and change the reading. The endpoint carries the signal instead:
+   the needle goes hollow, which reads as "not live" even where a 45% opacity
+   drop is easy to miss. The radius change is done in the component, where the
+   stroke width is known. */
+.bz-ring[data-stale] .bz-ring-value {
+  transition: none;
+}

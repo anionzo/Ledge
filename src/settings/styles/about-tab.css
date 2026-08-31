@@ -1,0 +1,59 @@
+/**
+ * About tab.
+ *
+ * The capability list is a checklist, not a warning. A missing capability gets
+ * a dash and reduced contrast — never the critical colour, because "this OS
+ * does not support click-through" is a fact about Linux, not a fault.
+ */
+
+.bz-about-head {
+  padding: var(--bz-space-4) 0;
+}
+
+.bz-about-name {
+  margin: 0;
+  font-family: var(--bz-font-display);
+  font-size: var(--bz-text-xl);
+  letter-spacing: var(--bz-track-display);
+  color: var(--bz-ink);
+  line-height: 1.1;
+}
+
+.bz-about-tagline {
+  margin: var(--bz-space-1) 0 0;
+  font-size: var(--bz-text-md);
+  color: var(--bz-ink-2);
+}
+
+.bz-about-version {
+  margin: var(--bz-space-3) 0 0;
+  font-size: var(--bz-text-sm);
+  color: var(--bz-ink-3);
+}
+
+.bz-capabilities {
+  margin: 0;
+  padding: var(--bz-space-3) 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--bz-space-2) var(--bz-space-4);
+}
+
+.bz-capability {
+  display: flex;
+  align-items: center;
+  gap: var(--bz-space-2);
+  font-size: var(--bz-text-sm);
+  color: var(--bz-ink-3);
+}
+
+.bz-capability[data-supported] {
+  color: var(--bz-ink-2);
+}
+
+.bz-about-actions {
+  margin-top: var(--bz-space-6);
+  padding-top: var(--bz-space-4);
+  border-top: 1px solid var(--bz-rule);
+}

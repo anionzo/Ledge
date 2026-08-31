@@ -1,0 +1,181 @@
+/**
+ * Panel shell.
+ *
+ * tokens.css owns `.bz-panel`, `.bz-panel-header` and the `[data-side]`
+ * mirroring. This file adds only the parts the shell component introduces:
+ * the toolbar, the scroll body, the footer and the header's internals.
+ */
+
+/* The whole window is the panel. No margin, no shadow — the rim hairline in
+   tokens.css is the only edge treatment. */
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  background: transparent;
+}
+
+body {
+  font-family: var(--bz-font-body);
+  color: var(--bz-ink);
+  -webkit-font-smoothing: antialiased;
+  /* The panel is a floating instrument, not a document. Selecting its chrome
+     by dragging across it is never what the user meant; the places where text
+     really is selectable opt back in. */
+  user-select: none;
+  cursor: default;
+}
+
+/* Entrance. The panel slides in from its own edge, so the motion agrees with
+   the direction it docks — Shelf pushes right, Gauge pushes left. */
+.bz-panel {
+  /* The containing block for the toast stack and anything else that overlays
+     the panel. tokens.css deliberately leaves positioning to the shell. */
+  position: relative;
+  opacity: 1;
+  transition:
+    opacity var(--bz-open-ms) var(--bz-spring),
+    translate var(--bz-open-ms) var(--bz-spring);
+}
+
+.bz-panel:not([data-open]) {
+  opacity: 0;
+  transition-duration: var(--bz-close-ms);
+}
+
+.bz-panel[data-side='left']:not([data-open]) {
+  translate: -8px 0;
+}
+
+.bz-panel[data-side='right']:not([data-open]) {
+  translate: 8px 0;
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+
+.bz-panel-header-title {
+  color: var(--bz-ink-2);
+  white-space: nowrap;
+}
+
+.bz-panel-header-meta {
+  font-size: var(--bz-text-xs);
+  color: var(--bz-ink-3);
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+
+/* Pushes the single action to the inner edge in both mirrorings. The header's
+   flex direction is already reversed for the right side, so one rule covers
+   both. */
+.bz-panel-header-spacer {
+  flex: 1 1 auto;
+}
+
+/* ── Toolbar ─────────────────────────────────────────────────────────────── */
+
+.bz-panel-toolbar {
+  flex: 0 0 auto;
+  padding: var(--bz-space-2) var(--bz-space-3);
+  border-bottom: 1px solid var(--bz-rule-soft);
+}
+
+/* ── Body ────────────────────────────────────────────────────────────────── */
+
+.bz-panel-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  /* Never hand a scroll the panel cannot use back to the desktop underneath —
+     it would scroll whatever window the panel is floating over. */
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--bz-rule) transparent;
+}
+
+.bz-panel-body:focus-visible {
+  /* The body is focusable only so keyboard scrolling works; a full focus ring
+     around the entire panel would be shouting. An inset hairline is enough. */
+  outline: none;
+  box-shadow: inset 0 0 0 1px var(--bz-rim-hairline);
+}
+
+.bz-panel-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.bz-panel-body::-webkit-scrollbar-thumb {
+  background: var(--bz-rule);
+  border-radius: var(--bz-radius-sm);
+  /* Inset by a transparent border so the thumb does not touch the panel edge. */
+  background-clip: padding-box;
+  border: 2px solid transparent;
+}
+
+.bz-panel-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ── Footer ──────────────────────────────────────────────────────────────── */
+
+.bz-panel-footer {
+  flex: 0 0 auto;
+  border-top: 1px solid var(--bz-rule);
+  padding: var(--bz-space-2) var(--bz-space-3);
+}
+
+/* ── Shared row grammar ──────────────────────────────────────────────────── */
+
+/**
+ * `.bz-row` is the mirroring primitive. Anything laid out edge-first uses it,
+ * and the one rule below is what keeps Shelf's cards and Gauge's provider rows
+ * reflecting each other instead of each solving mirroring privately.
+ */
+.bz-row {
+  display: flex;
+  align-items: center;
+  gap: var(--bz-space-2);
+  min-width: 0;
+}
+
+.bz-panel[data-side='right'] .bz-row {
+  flex-direction: row-reverse;
+}
+
+/* Text blocks inside a mirrored row inherit the panel's alignment from
+   tokens.css; this only stops a long label forcing the row wider. */
+.bz-row-fill {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.bz-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Two lines then ellipsis, for previews where one line loses the meaning. */
+.bz-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Screen-reader-only text: used where the visual design carries meaning by
+   position or colour that has no textual equivalent. */
+.bz-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}

@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "include": [
+    "electron/**/*.ts",
+    "shared/**/*.ts",
+    "electron.vite.config.ts"
+  ],
+  "compilerOptions": {
+    // Referenced by tsconfig.json, so this must be composite. `npm run
+    // typecheck:node` passes `--composite false` to get a pure no-emit check.
+    "composite": true,
+    "outDir": "node_modules/.tmp/tsc/node",
+    "tsBuildInfoFile": "node_modules/.tmp/tsc/node.tsbuildinfo",
+
+    "target": "ES2022",
+    "lib": ["ES2023"],
+
+    // Bundler resolution, not NodeNext, even though this code runs in Node.
+    //
+    // `package.json` is `"type": "module"`, and under NodeNext that makes every
+    // relative import in an ESM file require an explicit `.js` extension. The
+    // contract files written before this config — shared/ipc.ts,
+    // electron/platform/types.ts — import extensionlessly, and electron-vite
+    // bundles main and preload with Rollup anyway, so Node's own resolver never
+    // sees these specifiers. Bundler resolution is what actually describes the
+    // build. The ESM/CJS split that NodeNext would buy us is enforced instead by
+    // the `.cjs` preload output in electron.vite.config.ts.
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "moduleDetection": "force",
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+
+    "strict": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true,
+
+    // Explicit list, so a stray DOM lib can never leak into main-process code.
+    "types": ["node", "electron-vite/node"],
+
+    "baseUrl": ".",
+    "paths": {
+      "@shared/*": ["shared/*"],
+      "@renderer/*": ["src/*"]
+    }
+  }
+}

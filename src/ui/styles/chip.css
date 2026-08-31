@@ -1,0 +1,77 @@
+/**
+ * Chip.
+ *
+ * Neutral by default. `data-tone` only ever tints the mark and the text — a
+ * filled coloured pill would compete with the rings, which are the one place
+ * colour is allowed to be the message.
+ */
+
+.bz-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--bz-space-1);
+  height: 18px;
+  padding: 0 6px;
+  border: 1px solid var(--bz-rule);
+  border-radius: var(--bz-radius-sm);
+  background: transparent;
+  color: var(--bz-ink-3);
+  font-family: var(--bz-font-mono);
+  font-size: var(--bz-text-xs);
+  letter-spacing: var(--bz-track-label);
+  text-transform: uppercase;
+  white-space: nowrap;
+  max-width: 100%;
+  flex: 0 0 auto;
+}
+
+.bz-chip-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bz-chip-quiet {
+  border-color: transparent;
+  padding: 0;
+  height: auto;
+}
+
+button.bz-chip {
+  cursor: default;
+  transition: color var(--bz-close-ms) var(--bz-spring),
+    border-color var(--bz-close-ms) var(--bz-spring),
+    background-color var(--bz-close-ms) var(--bz-spring);
+}
+
+button.bz-chip:hover {
+  color: var(--bz-ink);
+  border-color: var(--bz-ink-3);
+}
+
+/* Pressed is a filled state rather than a coloured one: the rim tint is the
+   only accent chrome gets, and it is enough to read as "on". */
+button.bz-chip[aria-pressed='true'] {
+  background: var(--bz-rim-soft);
+  border-color: var(--bz-rim-hairline);
+  color: var(--bz-rim);
+}
+
+.bz-chip[data-tone='ok'] {
+  color: var(--bz-ok);
+  border-color: color-mix(in srgb, var(--bz-ok) 34%, transparent);
+}
+
+.bz-chip[data-tone='warn'] {
+  color: var(--bz-warn);
+  border-color: color-mix(in srgb, var(--bz-warn) 34%, transparent);
+}
+
+.bz-chip[data-tone='critical'] {
+  color: var(--bz-crit);
+  border-color: color-mix(in srgb, var(--bz-crit) 34%, transparent);
+}
+
+.bz-chip[data-tone='accent'] {
+  color: var(--bz-rim);
+  border-color: var(--bz-rim-hairline);
+}

@@ -1,0 +1,90 @@
+/**
+ * Balance meter.
+ *
+ * Sits in the ring's column, so it borrows the ring's restraint: chrome tokens
+ * only, no severity hue unless the provider says it is out of credit. The two
+ * segments are a composition (granted vs topped-up), not a fill against a max,
+ * so neither is coloured as "used".
+ */
+
+.bz-balance {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--bz-space-1);
+  min-width: 0;
+}
+
+.bz-balance-amount {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35em;
+  white-space: nowrap;
+  font-size: var(--bz-text-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--bz-ink);
+  line-height: 1;
+}
+
+.bz-balance[data-size='detail'] .bz-balance-amount {
+  font-size: var(--bz-text-xl);
+  letter-spacing: var(--bz-track-display);
+}
+
+/* The currency code is a label, not a figure — set apart the way the window
+   labels are, so the eye lands on the amount. */
+.bz-balance-currency {
+  font-family: var(--bz-font-mono);
+  font-size: var(--bz-text-xs);
+  letter-spacing: var(--bz-track-label);
+  text-transform: uppercase;
+  color: var(--bz-ink-3);
+}
+
+.bz-balance[data-size='detail'] .bz-balance-currency {
+  font-size: var(--bz-text-sm);
+}
+
+/* Out of credit is the one thing on this instrument colour is allowed to mean,
+   so it takes the same critical hue a maxed ring would. */
+.bz-balance[data-critical] .bz-balance-amount,
+.bz-balance[data-critical] .bz-balance-currency {
+  color: var(--bz-crit);
+}
+
+.bz-balance-meter {
+  display: flex;
+  gap: 1px;
+  width: 100%;
+  min-width: 44px;
+  height: 4px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--bz-panel-2);
+}
+
+.bz-balance[data-size='detail'] .bz-balance-meter {
+  height: 6px;
+}
+
+.bz-balance-seg {
+  display: block;
+  height: 100%;
+  flex-basis: 0;
+}
+
+/* Granted (free) credit is the quieter tone; topped-up (paid) credit takes the
+   rim accent. Both are chrome — running low is carried by the amount going
+   critical, not by the split. */
+.bz-balance-seg[data-part='granted'] {
+  background: var(--bz-ink-3);
+}
+
+.bz-balance-seg[data-part='topup'] {
+  background: var(--bz-rim);
+}
+
+.bz-balance[data-critical] .bz-balance-seg {
+  background: var(--bz-crit);
+  opacity: 0.55;
+}

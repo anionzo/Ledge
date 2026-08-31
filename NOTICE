@@ -1,0 +1,43 @@
+Ledge
+Copyright 2026 the Ledge authors
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+================================================================================
+Third-party work incorporated into this product
+================================================================================
+
+Ledge is a merge of two existing open-source projects. Substantial portions of
+this codebase are derived from them, and both are credited here as required by
+their licenses.
+
+--------------------------------------------------------------------------------
+Edge-Drop
+    https://github.com/Deepender25/Edge-Drop
+    Copyright the Edge-Drop authors
+    Licensed under the Apache License, Version 2.0
+    Full text: licenses/Edge-Drop-Apache-2.0.txt
+
+Derived work in Ledge: the edge-docked panel window model, adaptive cursor
+polling and edge-hover detection, the Win32 no-activate and fullscreen-detection
+paths, the clipboard watcher and item store, the native drag-out pipeline, and
+the typed IPC contract pattern.
+
+--------------------------------------------------------------------------------
+agent-notch
+    https://github.com/adityarya24/agent-notch
+    Copyright (c) 2026 Aditya Arya
+    Licensed under the MIT License
+    Full text: licenses/agent-notch-MIT.txt
+
+Derived work in Ledge: the AI coding-agent quota readers for Claude Code, OpenAI
+Codex, Gemini/Antigravity, Cursor, Grok, OpenCode and user-defined CLIs; the
+per-provider read cache and last-known-value staleness policy; and the quota
+ring presentation model.
+
+================================================================================
+
+Where this product combines the two, the combined work is distributed under the
+Apache License, Version 2.0. The MIT-licensed portions remain available under
+the MIT License, whose terms and copyright notice are preserved above and in
+licenses/agent-notch-MIT.txt.

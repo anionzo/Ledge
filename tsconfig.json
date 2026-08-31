@@ -1,0 +1,13 @@
+{
+  // Solution file. It holds no sources of its own — editors and `tsc -b` walk
+  // the two references below. The node project covers everything that runs in
+  // Electron's main/preload contexts, the web project everything that runs in a
+  // renderer. `shared/` is deliberately in BOTH: it is the only code allowed to
+  // cross that boundary, and compiling it twice is what proves it stays free of
+  // Node-only and DOM-only APIs.
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.node.json" },
+    { "path": "./tsconfig.web.json" }
+  ]
+}

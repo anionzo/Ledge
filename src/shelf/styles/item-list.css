@@ -1,0 +1,26 @@
+/**
+ * Item list.
+ *
+ * The container is sized to the full virtual height so the scrollbar tells the
+ * truth about how much history there is, and the mounted window is pushed down
+ * with a transform rather than a top offset — a transform is composited and
+ * does not invalidate layout on every scroll frame.
+ */
+
+.bz-item-list {
+  position: relative;
+  width: 100%;
+}
+
+.bz-item-window {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  will-change: transform;
+}
+
+.bz-item-list:focus,
+.bz-item-window:focus {
+  outline: none;
+}

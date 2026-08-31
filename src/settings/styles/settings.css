@@ -1,0 +1,161 @@
+/**
+ * Settings window.
+ *
+ * Not a panel. This window is opaque, ordinary and resizable, so it sits on
+ * `--bz-ground` with no glass and no rim — the instrument language belongs to
+ * the things that float on the screen edge, and borrowing it here would make
+ * an ordinary window look like a malfunctioning one.
+ *
+ * What it does keep: the same tokens, the same hairlines, the same achromatic
+ * chrome, the same type scale. That is what makes it the same product.
+ */
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bz-ground);
+  color: var(--bz-ink);
+  font-family: var(--bz-font-body);
+  font-size: var(--bz-text-base);
+  -webkit-font-smoothing: antialiased;
+  /* The panels turn selection off because dragging across an instrument is
+     never meant as a text selection. This window is an ordinary window, so it
+     turns it back on. */
+  user-select: text;
+  cursor: auto;
+}
+
+.bz-settings {
+  position: relative;
+  display: grid;
+  /* A fixed rail and a fluid pane. The rail holds five short words in every
+     locale we ship, and letting it flex would make the tabs move as the user
+     switches language. */
+  grid-template-columns: 184px 1fr;
+  height: 100%;
+  overflow: hidden;
+}
+
+.bz-settings[data-loading] {
+  grid-template-columns: 1fr;
+  place-items: center;
+}
+
+.bz-settings-loading {
+  color: var(--bz-ink-3);
+  font-size: var(--bz-text-sm);
+}
+
+/* ── Rail ────────────────────────────────────────────────────────────────── */
+
+.bz-settings-rail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bz-space-4);
+  padding: var(--bz-space-4) var(--bz-space-3);
+  border-right: 1px solid var(--bz-rule);
+  background: var(--bz-panel-2);
+}
+
+.bz-settings-brand {
+  display: flex;
+  align-items: baseline;
+  gap: var(--bz-space-2);
+  padding: 0 var(--bz-space-2);
+}
+
+.bz-settings-brand-name {
+  font-family: var(--bz-font-display);
+  font-size: var(--bz-text-md);
+  letter-spacing: var(--bz-track-display);
+  color: var(--bz-ink);
+}
+
+.bz-settings-brand-version {
+  font-size: var(--bz-text-xs);
+  color: var(--bz-ink-3);
+}
+
+.bz-settings-tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1 1 auto;
+}
+
+.bz-settings-tab {
+  display: flex;
+  align-items: center;
+  gap: var(--bz-space-2);
+  height: 28px;
+  padding: 0 var(--bz-space-2);
+  border: none;
+  border-radius: var(--bz-radius-sm);
+  background: transparent;
+  color: var(--bz-ink-2);
+  font-family: var(--bz-font-body);
+  font-size: var(--bz-text-sm);
+  text-align: left;
+  cursor: default;
+}
+
+.bz-settings-tab:hover {
+  background: var(--bz-panel);
+  color: var(--bz-ink);
+}
+
+/* The selected tab takes the rim accent and nothing else — no bold, no larger
+   type. One signal per state. */
+.bz-settings-tab[aria-selected='true'] {
+  background: var(--bz-rim-soft);
+  color: var(--bz-rim);
+}
+
+.bz-settings-status {
+  min-height: 16px;
+  padding: 0 var(--bz-space-2);
+  font-family: var(--bz-font-mono);
+  font-size: var(--bz-text-xs);
+  letter-spacing: var(--bz-track-label);
+  text-transform: uppercase;
+  color: var(--bz-ink-3);
+}
+
+/* ── Pane ────────────────────────────────────────────────────────────────── */
+
+.bz-settings-pane {
+  overflow-y: auto;
+  padding: var(--bz-space-5) var(--bz-space-6);
+  /* Settings prose is unreadable across a wide window; the measure is capped
+     and the column stays put rather than centring, so switching tabs does not
+     move everything sideways. */
+  max-width: 720px;
+}
+
+.bz-settings-pane:focus-visible {
+  outline: none;
+}
+
+.bz-settings-heading {
+  margin: 0 0 var(--bz-space-5);
+  font-family: var(--bz-font-display);
+  font-size: var(--bz-text-xl);
+  font-weight: 500;
+  letter-spacing: var(--bz-track-display);
+  color: var(--bz-ink);
+}
+
+/* The settings window has no docked edge, so the toast stack pins to the
+   bottom right corner of the window itself. The `left` from the panel's
+   mirroring rule has to be cleared, or the stack spans the whole width. */
+.bz-settings .bz-toast-stack[data-side='right'] {
+  left: auto;
+  right: var(--bz-space-4);
+  bottom: var(--bz-space-4);
+  align-items: flex-end;
+}

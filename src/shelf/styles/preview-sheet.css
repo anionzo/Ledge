@@ -1,0 +1,140 @@
+/**
+ * Preview.
+ *
+ * The sheet is where the panel stops being a list and becomes a document, so
+ * this is the one surface where text is selectable, wraps freely, and is set
+ * at reading size rather than scanning size.
+ */
+
+.bz-preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bz-space-3);
+  /* Reading, not scanning. Left-aligned even in the right-docked panel: a
+     wrapped paragraph aligned to its ragged edge is unreadable. */
+  text-align: left;
+}
+
+.bz-preview-title {
+  margin: 0;
+  font-family: var(--bz-font-display);
+  font-size: var(--bz-text-md);
+  line-height: 1.3;
+  letter-spacing: var(--bz-track-display);
+  color: var(--bz-ink);
+  user-select: text;
+}
+
+.bz-preview-text {
+  margin: 0;
+  max-height: 40vh;
+  overflow: auto;
+  font-family: var(--bz-font-mono);
+  font-size: var(--bz-text-sm);
+  line-height: 1.5;
+  color: var(--bz-ink);
+  white-space: pre-wrap;
+  /* A copied token or minified line has no spaces to break at, and letting it
+     overflow would push the sheet's own layout sideways. */
+  overflow-wrap: anywhere;
+  user-select: text;
+}
+
+.bz-preview-url {
+  margin: 0;
+  font-size: var(--bz-text-sm);
+  line-height: 1.45;
+  color: var(--bz-ink-3);
+  overflow-wrap: anywhere;
+  user-select: text;
+}
+
+.bz-preview-note {
+  margin: 0;
+  font-size: var(--bz-text-xs);
+  color: var(--bz-ink-3);
+}
+
+.bz-preview-image {
+  display: grid;
+  place-items: center;
+  padding: var(--bz-space-2);
+  border: 1px solid var(--bz-rule);
+  border-radius: var(--bz-radius-sm);
+  background: var(--bz-panel-2);
+}
+
+.bz-preview-image img {
+  max-width: 100%;
+  max-height: 40vh;
+  object-fit: contain;
+  display: block;
+}
+
+.bz-preview-file {
+  gap: var(--bz-space-2);
+  color: var(--bz-ink);
+  font-size: var(--bz-text-md);
+}
+
+/* ── Facts ───────────────────────────────────────────────────────────────── */
+
+.bz-preview-facts {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--bz-space-1);
+  padding-top: var(--bz-space-2);
+  border-top: 1px solid var(--bz-rule-soft);
+}
+
+.bz-preview-fact {
+  justify-content: space-between;
+  gap: var(--bz-space-3);
+  font-size: var(--bz-text-xs);
+}
+
+.bz-preview-fact dt {
+  color: var(--bz-ink-3);
+  font-family: var(--bz-font-mono);
+  letter-spacing: var(--bz-track-label);
+  text-transform: uppercase;
+}
+
+.bz-preview-fact dd {
+  margin: 0;
+  color: var(--bz-ink-2);
+}
+
+/* ── Stack members ───────────────────────────────────────────────────────── */
+
+.bz-preview-stack {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.bz-preview-member {
+  gap: var(--bz-space-2);
+  padding: var(--bz-space-2) 0;
+  border-bottom: 1px solid var(--bz-rule-soft);
+  color: var(--bz-ink-3);
+  font-size: var(--bz-text-sm);
+}
+
+.bz-preview-member:last-child {
+  border-bottom: none;
+}
+
+.bz-preview-member-text {
+  color: var(--bz-ink);
+  /* Members drag individually; the grab cursor is the only hint that this row
+     is a handle and not a label. */
+  cursor: grab;
+}
+
+.bz-preview-member-text:active {
+  cursor: grabbing;
+}

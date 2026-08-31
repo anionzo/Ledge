@@ -1,0 +1,197 @@
+/**
+ * Provider detail.
+ *
+ * This is a reading, so it is set as data: labels in mono uppercase, figures
+ * tabular, prose only where an explanation is genuinely a sentence.
+ */
+
+.bz-detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bz-space-4);
+  text-align: left;
+}
+
+.bz-detail-head {
+  display: flex;
+  align-items: center;
+  gap: var(--bz-space-3);
+}
+
+.bz-detail-identity {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
+}
+
+.bz-detail-name {
+  margin: 0;
+  font-family: var(--bz-font-display);
+  font-size: var(--bz-text-lg);
+  letter-spacing: var(--bz-track-display);
+  color: var(--bz-ink);
+  line-height: 1.15;
+}
+
+.bz-detail-model {
+  margin: 0;
+  font-family: var(--bz-font-mono);
+  font-size: var(--bz-text-xs);
+  color: var(--bz-ink-3);
+}
+
+/* ── Status ──────────────────────────────────────────────────────────────── */
+
+.bz-detail-status {
+  padding: var(--bz-space-3);
+  border: 1px solid var(--bz-rule);
+  border-radius: var(--bz-radius-sm);
+  background: var(--bz-panel-2);
+}
+
+/* Only the states the user can act on take the critical hue. A missing CLI is
+   not an error, and colouring it like one trains people to ignore the colour. */
+.bz-detail-status[data-tone='live'] {
+  border-color: color-mix(in srgb, var(--bz-crit) 32%, var(--bz-rule));
+}
+
+.bz-detail-status[data-tone='live'] .bz-detail-status-title {
+  color: var(--bz-crit);
+}
+
+.bz-detail-status-title {
+  margin: 0 0 var(--bz-space-1);
+  font-family: var(--bz-font-mono);
+  font-size: var(--bz-text-xs);
+  letter-spacing: var(--bz-track-label);
+  text-transform: uppercase;
+  color: var(--bz-ink-2);
+}
+
+.bz-detail-status-body {
+  margin: 0;
+  font-size: var(--bz-text-sm);
+  line-height: 1.45;
+  color: var(--bz-ink-2);
+}
+
+/* Verbatim provider output. Set as a quotation so it is clear these are not
+   our words, and made selectable because it is the string a user pastes into
+   a bug report. */
+.bz-detail-message {
+  margin: var(--bz-space-2) 0 0;
+  padding-left: var(--bz-space-2);
+  border-left: 2px solid var(--bz-rule);
+  font-family: var(--bz-font-mono);
+  font-size: var(--bz-text-xs);
+  line-height: 1.45;
+  color: var(--bz-ink-3);
+  overflow-wrap: anywhere;
+  user-select: text;
+}
+
+.bz-detail-note {
+  margin: 0;
+  font-size: var(--bz-text-xs);
+  line-height: 1.45;
+  color: var(--bz-warn);
+}
+
+/* ── Windows ─────────────────────────────────────────────────────────────── */
+
+.bz-detail-windows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bz-space-4);
+  padding-top: var(--bz-space-3);
+  border-top: 1px solid var(--bz-rule-soft);
+}
+
+.bz-window {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bz-space-2);
+  --bz-sev: var(--bz-ink-3);
+}
+
+.bz-window[data-severity='ok'] {
+  --bz-sev: var(--bz-ok);
+}
+.bz-window[data-severity='warn'] {
+  --bz-sev: var(--bz-warn);
+}
+.bz-window[data-severity='critical'] {
+  --bz-sev: var(--bz-crit);
+}
+
+.bz-window-head {
+  gap: var(--bz-space-2);
+}
+
+.bz-window-label {
+  font-family: var(--bz-font-mono);
+  font-size: var(--bz-text-xs);
+  letter-spacing: var(--bz-track-label);
+  text-transform: uppercase;
+  color: var(--bz-ink-3);
+}
+
+.bz-window-value {
+  font-size: var(--bz-text-base);
+  color: var(--bz-ink);
+}
+
+.bz-window-track {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--bz-rule);
+  overflow: hidden;
+}
+
+/* An unknown window keeps its empty track. Drawing nothing at all would leave
+   a gap that reads as a layout fault rather than as missing data. */
+.bz-window-track[data-unknown] {
+  background: repeating-linear-gradient(
+    90deg,
+    var(--bz-rule) 0 3px,
+    transparent 3px 6px
+  );
+}
+
+.bz-window-fill {
+  height: 100%;
+  background: var(--bz-sev);
+  transition: width var(--bz-open-ms) var(--bz-spring);
+}
+
+.bz-window-reset {
+  margin: 0;
+  font-size: var(--bz-text-xs);
+  color: var(--bz-ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.bz-provider-observed {
+  font-size: var(--bz-text-xs);
+  color: var(--bz-ink-3);
+}
+
+/**
+ * Cost Meter — secondary to the quota/balance above. Achromatic, tabular
+ * figures, no colour: spend is information, not an alert.
+ */
+.bz-detail-cost {
+  margin: 0;
+  font-size: var(--bz-text-xs);
+  color: var(--bz-ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.bz-detail-price {
+  margin: 0;
+  font-size: var(--bz-text-xs);
+  color: var(--bz-ink-3);
+  font-variant-numeric: tabular-nums;
+}

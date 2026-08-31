@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en" data-panel="shelf">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ledge — Shelf</title>
+
+    <!--
+      CSP is set here rather than in a session handler so it applies identically
+      to the dev server and to the packaged file:// load. 'unsafe-inline' on
+      style-src is unavoidable: Vite injects <style> tags for CSS modules in dev,
+      and Google Fonts serves a stylesheet from a second origin. connect-src
+      keeps ws: for HMR — harmless in production, where nothing dials out.
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self';
+               script-src 'self' 'unsafe-inline';
+               style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+               font-src 'self' data: https://fonts.gstatic.com;
+               img-src 'self' data: blob: ledge:;
+               connect-src 'self' ws: wss: http://localhost:*;
+               object-src 'none';
+               base-uri 'none';
+               form-action 'none'"
+    />
+
+    <!--
+      Archivo carries the numerals and panel titles, IBM Plex Sans the body,
+      IBM Plex Mono the percentages and reset timers. display=swap so a cold
+      cache or an offline machine paints in the fallback stack immediately
+      instead of showing an empty panel — these windows must never be blank.
+      TODO before 1.0: self-host these under resources/fonts so the app has no
+      runtime network dependency at all.
+    -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+    />
+
+    <style>
+      /*
+        The window itself is transparent (BrowserWindow transparent:true,
+        backgroundColor '#00000000'). Anything opaque declared here would show
+        up as a rectangle floating over the user's desktop, so the ground is
+        painted by the panel element inside #root, never by html/body.
+      */
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        background: transparent;
+        overflow: hidden;
+        /* The desktop stays draggable/selectable underneath; nothing in these
+           panels should ever start a text selection by accident. */
+        user-select: none;
+        -webkit-user-select: none;
+        font-family: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+        color-scheme: light dark;
+      }
+
+      #root {
+        height: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="./main.tsx"></script>
+  </body>
+</html>

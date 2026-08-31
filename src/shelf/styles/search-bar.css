@@ -1,0 +1,70 @@
+/**
+ * Search field.
+ *
+ * A recessed slot rather than a raised box: the panel is already a floating
+ * surface, and stacking a second raised element on it adds a layer the design
+ * does not have.
+ */
+
+.bz-search {
+  height: 24px;
+  padding: 0 var(--bz-space-2);
+  border: 1px solid var(--bz-rule);
+  border-radius: var(--bz-radius-sm);
+  background: var(--bz-panel-2);
+  color: var(--bz-ink-3);
+}
+
+.bz-search:focus-within {
+  border-color: var(--bz-rim);
+  color: var(--bz-ink-2);
+}
+
+.bz-search-icon {
+  opacity: 0.8;
+}
+
+.bz-search-input {
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: var(--bz-ink);
+  font-family: var(--bz-font-body);
+  font-size: var(--bz-text-sm);
+  /* The field is the one place in the panel where typed text lives, so it
+     opts back into selection that the panel body turns off. */
+  user-select: text;
+  /* Inherit the panel's mirrored alignment: the caret starts on the screen
+     edge side, like everything else. */
+  text-align: inherit;
+}
+
+.bz-search-input:focus {
+  outline: none;
+}
+
+.bz-search-input::placeholder {
+  color: var(--bz-ink-3);
+}
+
+/* Chromium's own clear affordance duplicates ours and cannot be styled. */
+.bz-search-input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.bz-search-clear {
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: none;
+  border-radius: var(--bz-radius-sm);
+  background: transparent;
+  color: var(--bz-ink-3);
+  cursor: default;
+}
+
+.bz-search-clear:hover {
+  color: var(--bz-ink);
+}

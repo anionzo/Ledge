@@ -1,0 +1,184 @@
+/**
+ * Item card.
+ *
+ * Cards are separated by a hairline and nothing else — no gap, no rounding, no
+ * card-on-a-surface stacking. A list of two hundred rounded tiles inside a
+ * 320 px panel is visual noise; a ruled list is a ledger, which is what a
+ * clipboard history actually is.
+ */
+
+.bz-item {
+  position: relative;
+  align-items: flex-start;
+  gap: var(--bz-space-3);
+  padding: var(--bz-space-2) var(--bz-space-3);
+  border-bottom: 1px solid var(--bz-rule-soft);
+  /* Off-screen cards skip layout and paint entirely. Paired with the
+     virtualiser this is belt and braces: the window is small, and this keeps
+     even the mounted rows cheap while a fast scroll flings past them. */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 54px;
+}
+
+.bz-item[data-kind='image'] {
+  contain-intrinsic-size: auto 76px;
+}
+
+.bz-item:hover {
+  background: var(--bz-panel-2);
+}
+
+.bz-item[data-selected] {
+  background: var(--bz-rim-soft);
+}
+
+/* The selection marker is a rim-coloured bar on the screen-edge side, so it
+   reads as the panel's own edge lighting up rather than a highlight bolted on.
+   Mirrored with the panel. */
+.bz-item[data-selected]::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--bz-rim);
+}
+
+.bz-panel[data-side='left'] .bz-item[data-selected]::before {
+  left: 0;
+}
+
+.bz-panel[data-side='right'] .bz-item[data-selected]::before {
+  right: 0;
+}
+
+.bz-item:focus-visible {
+  outline: 2px solid var(--bz-rim);
+  outline-offset: -2px;
+}
+
+/* ── Mark ────────────────────────────────────────────────────────────────── */
+
+.bz-item-mark {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--bz-radius-sm);
+  border: 1px solid var(--bz-rule-soft);
+  color: var(--bz-ink-3);
+  overflow: hidden;
+}
+
+.bz-item[data-pinned] .bz-item-mark {
+  border-color: var(--bz-rim-hairline);
+  color: var(--bz-rim);
+}
+
+.bz-item-thumb {
+  width: 40px;
+  height: 40px;
+  /* A checker-free flat ground: transparent PNGs are common on a clipboard,
+     and a checkerboard at 40 px is a moiré. */
+  background: var(--bz-panel-2);
+}
+
+.bz-item-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ── Body ────────────────────────────────────────────────────────────────── */
+
+.bz-item-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 1px;
+}
+
+.bz-item-primary {
+  font-size: var(--bz-text-base);
+  line-height: 1.35;
+  color: var(--bz-ink);
+}
+
+/* Text content is the one thing in the panel worth selecting by hand. */
+.bz-item[data-kind='text'] .bz-item-primary,
+.bz-item[data-kind='link'] .bz-item-primary {
+  user-select: text;
+}
+
+.bz-item-meta {
+  gap: var(--bz-space-2);
+  font-size: var(--bz-text-xs);
+  color: var(--bz-ink-3);
+  min-width: 0;
+}
+
+.bz-item-kind {
+  flex: 0 0 auto;
+  font-family: var(--bz-font-mono);
+  letter-spacing: var(--bz-track-label);
+  text-transform: uppercase;
+}
+
+.bz-item-secondary {
+  min-width: 0;
+  font-family: var(--bz-font-mono);
+}
+
+/* ── Actions ─────────────────────────────────────────────────────────────── */
+
+.bz-item-actions {
+  flex: 0 0 auto;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity var(--bz-close-ms) var(--bz-spring);
+}
+
+.bz-item:hover .bz-item-actions,
+.bz-item:focus-within .bz-item-actions {
+  opacity: 1;
+}
+
+.bz-item-action {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: var(--bz-radius-sm);
+  background: transparent;
+  color: var(--bz-ink-3);
+  cursor: default;
+}
+
+.bz-item-action:hover {
+  color: var(--bz-ink);
+  background: var(--bz-panel);
+}
+
+/* A pinned item shows its pin even when the row is cold — pinning is a state
+   of the item, not an action waiting to be taken. */
+.bz-item-action[data-always] {
+  opacity: 1;
+  color: var(--bz-rim);
+}
+
+.bz-item-actions:has(.bz-item-action[data-always]) {
+  opacity: 1;
+}
+
+.bz-item-actions:has(.bz-item-action[data-always]) .bz-item-action:not([data-always]) {
+  opacity: 0;
+}
+
+.bz-item:hover .bz-item-actions .bz-item-action,
+.bz-item:focus-within .bz-item-actions .bz-item-action {
+  opacity: 1;
+}

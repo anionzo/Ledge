@@ -1,0 +1,160 @@
+/**
+ * Hub-specific layout: the full-off-edge collapse, the quota strip, and the
+ * container for the provider rows the strip expands into. Colour appears only
+ * on the severity dots and percentage; everything else is achromatic and comes
+ * straight from the tokens.
+ */
+
+.bz-hub-root {
+  height: 100%;
+}
+
+/*
+ * The collapse fix.
+ *
+ * panel.css nudges a closed panel 8px and fades it — enough for a slide-in, but
+ * the full-size glass window still sits over the desktop at opacity 0. The hub
+ * instead translates entirely off its own docked edge when closed, so a
+ * collapsed Ledge leaves nothing over the desktop but the OS hover strip. The
+ * extra `.bz-hub-root` in the selector outranks panel.css on equal specificity.
+ */
+.bz-hub-root .bz-hub[data-side='right']:not([data-open]) {
+  translate: 100% 0;
+}
+
+.bz-hub-root .bz-hub[data-side='left']:not([data-open]) {
+  translate: -100% 0;
+}
+
+/* ── Quota strip ─────────────────────────────────────────────────────────── */
+
+.bz-quota {
+  border-bottom: 1px solid var(--bz-rule-soft);
+}
+
+.bz-quota-strip {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: var(--bz-ink-2);
+  font: inherit;
+  padding: var(--bz-space-2) var(--bz-space-3);
+  cursor: pointer;
+  gap: var(--bz-space-2);
+}
+
+.bz-quota-strip:hover {
+  background: var(--bz-panel-2);
+}
+
+.bz-quota-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: 0 0 auto;
+}
+
+.bz-quota-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  /* The one place, with the percentage, colour is allowed to mean something. */
+  background: var(--bz-ink-3);
+}
+
+.bz-quota-dot[data-severity='ok'] {
+  background: var(--bz-ok);
+}
+.bz-quota-dot[data-severity='warn'] {
+  background: var(--bz-warn);
+}
+.bz-quota-dot[data-severity='critical'] {
+  background: var(--bz-crit);
+}
+.bz-quota-dot[data-severity='none'] {
+  /* An unknown reading is a hollow dot, never a coloured one — colour here
+     would claim a severity the reader does not have. */
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--bz-rule);
+}
+
+.bz-quota-headline {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--bz-space-2);
+  min-width: 0;
+  font-size: var(--bz-text-sm);
+}
+
+.bz-quota-name {
+  color: var(--bz-ink-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bz-quota-idle {
+  color: var(--bz-ink-3);
+}
+
+.bz-quota-pct {
+  font-family: var(--bz-font-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  color: var(--bz-ink);
+}
+
+.bz-quota-pct[data-severity='warn'] {
+  color: var(--bz-warn);
+}
+.bz-quota-pct[data-severity='critical'] {
+  color: var(--bz-crit);
+}
+
+.bz-quota-chevron {
+  flex: 0 0 auto;
+  color: var(--bz-ink-3);
+  transition: rotate var(--bz-close-ms) var(--bz-spring);
+}
+
+.bz-quota[data-expanded] .bz-quota-chevron {
+  rotate: 180deg;
+}
+
+/* The strip's mirroring: on a left dock the chevron sits on the far side, same
+   as every other edge-first row in the app. */
+.bz-panel[data-side='right'] .bz-quota-strip {
+  flex-direction: row-reverse;
+}
+
+/* ── Expanded provider list ──────────────────────────────────────────────── */
+
+.bz-quota-panel {
+  /* An accordion, not a floating layer: it grows the strip and pushes the
+     search down, which keeps it out of any z-index fight with the sheets and
+     never clips against the window edge. Tall provider lists scroll in place. */
+  max-height: 46vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-top: 1px solid var(--bz-rule-soft);
+  padding: var(--bz-space-2);
+  scrollbar-width: thin;
+  scrollbar-color: var(--bz-rule) transparent;
+}
+
+.bz-quota-empty {
+  margin: 0;
+  padding: var(--bz-space-3);
+  color: var(--bz-ink-3);
+  font-size: var(--bz-text-sm);
+  text-align: center;
+}
+
+/* The provider-row container. ProviderRow carries its own CSS, but the list
+   wrapper is normally styled in gauge.css, which the hub does not load — so the
+   layout is restated here. */
+.bz-provider-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bz-space-1);
+}

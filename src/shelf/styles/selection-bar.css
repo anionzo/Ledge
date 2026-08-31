@@ -1,0 +1,38 @@
+/**
+ * Selection bar.
+ *
+ * It lives in the panel footer, which already carries the top hairline, so the
+ * bar itself is unstyled beyond its rhythm. `.bz-row` handles the mirroring:
+ * the count sits against the screen edge and the verbs against the inner edge,
+ * in both panels.
+ */
+
+.bz-selection {
+  gap: var(--bz-space-1);
+}
+
+.bz-selection-count {
+  flex: 0 0 auto;
+  font-size: var(--bz-text-xs);
+  letter-spacing: var(--bz-track-label);
+  text-transform: uppercase;
+  color: var(--bz-rim);
+  white-space: nowrap;
+}
+
+/* Slides up from the edge it is pinned to, so it reads as the panel growing a
+   bar rather than a dialog arriving. */
+.bz-panel-footer:has(.bz-selection) {
+  animation: bz-selection-in var(--bz-open-ms) var(--bz-spring);
+}
+
+@keyframes bz-selection-in {
+  from {
+    opacity: 0;
+    translate: 0 8px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}

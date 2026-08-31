@@ -1,0 +1,233 @@
+/**
+ * Ledge design tokens — "Instrument".
+ *
+ * The constraint behind every value here: these panels float on top of someone
+ * else's desktop. The background could be a white IDE, a black terminal, or a
+ * photo. So the panel carries its own ground, and colour appears only where
+ * colour is information — the quota rings. The chrome is achromatic.
+ *
+ * Theme resolution has three states, not two. An explicit choice stamps
+ * `data-theme` on <html>; the default "system" stamps nothing and only
+ * `prefers-color-scheme` separates light from dark. Every colour is defined on
+ * bare `:root` first so it always resolves, then redefined in both dark blocks.
+ * Never declare a colour only inside a media query or a `[data-theme]` block.
+ */
+
+/* ── Light: the complete palette. Everything below only overrides. ───────── */
+:root {
+  /* Ground and surfaces. The neutral is biased blue-green, not pure grey, so
+     it sits calmly next to both a white window and a black one. */
+  --bz-ground: #f1f2f0;
+  --bz-panel: #ffffff;
+  --bz-panel-2: #e9ebe8;
+  --bz-rule: #d6dad5;
+  --bz-rule-soft: #e4e7e2;
+
+  --bz-ink: #141819;
+  --bz-ink-2: #3c4544;
+  --bz-ink-3: #6c7674;
+
+  /* The single chrome accent: pale reflected screen-light on a device rim.
+     Darkened here so it holds contrast on a light ground. */
+  --bz-rim: #1f6f8b;
+  --bz-rim-soft: #ddebf0;
+  --bz-rim-hairline: rgba(31, 111, 139, 0.22);
+
+  /* Semantic. Green -> amber -> oxide. Deliberately clear of the rim's blue
+     so a warning ring can never be mistaken for chrome. */
+  --bz-ok: #2f7d57;
+  --bz-warn: #8f6410;
+  --bz-crit: #a8402c;
+
+  /* Panel material. Smoked glass over whatever is behind the window. */
+  --bz-glass: rgba(248, 249, 247, 0.82);
+  --bz-glass-blur: blur(24px) saturate(1.15);
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bz-ground: #0e1112;
+    --bz-panel: #161a1b;
+    --bz-panel-2: #1d2223;
+    --bz-rule: #2a3133;
+    --bz-rule-soft: #202627;
+
+    --bz-ink: #e7eae7;
+    --bz-ink-2: #afb8b6;
+    --bz-ink-3: #7c8785;
+
+    --bz-rim: #8fc2d4;
+    --bz-rim-soft: #16303a;
+    --bz-rim-hairline: rgba(143, 194, 212, 0.14);
+
+    --bz-ok: #5fa97e;
+    --bz-warn: #d3a234;
+    --bz-crit: #d06a54;
+
+    --bz-glass: rgba(14, 17, 18, 0.82);
+
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme='dark'] {
+  --bz-ground: #0e1112;
+  --bz-panel: #161a1b;
+  --bz-panel-2: #1d2223;
+  --bz-rule: #2a3133;
+  --bz-rule-soft: #202627;
+
+  --bz-ink: #e7eae7;
+  --bz-ink-2: #afb8b6;
+  --bz-ink-3: #7c8785;
+
+  --bz-rim: #8fc2d4;
+  --bz-rim-soft: #16303a;
+  --bz-rim-hairline: rgba(143, 194, 212, 0.14);
+
+  --bz-ok: #5fa97e;
+  --bz-warn: #d3a234;
+  --bz-crit: #d06a54;
+
+  --bz-glass: rgba(14, 17, 18, 0.82);
+
+  color-scheme: dark;
+}
+
+/* ── Type ────────────────────────────────────────────────────────────────── */
+:root {
+  /* Archivo carries headings and large numerals; IBM Plex Sans carries prose;
+     IBM Plex Mono carries every figure that lines up in a column. All three
+     cover Vietnamese, which the 31-language i18n set requires. */
+  --bz-font-display: 'Archivo', 'Segoe UI', system-ui, sans-serif;
+  --bz-font-body: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
+  --bz-font-mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+
+  --bz-text-xs: 10px;
+  --bz-text-sm: 11.5px;
+  --bz-text-base: 13px;
+  --bz-text-md: 15px;
+  --bz-text-lg: 19px;
+  --bz-text-xl: 26px;
+
+  /* Uppercase micro-labels need air or they read as a smudge. */
+  --bz-track-label: 0.12em;
+  --bz-track-display: -0.02em;
+}
+
+/* ── Geometry ────────────────────────────────────────────────────────────── */
+:root {
+  /* The sensing strip left showing when a panel is collapsed. */
+  --bz-grip: 4px;
+  /* Panel width when open. Both panels share it — that is what makes them
+     read as a matched pair rather than two apps. */
+  --bz-panel-w: 320px;
+  --bz-header-h: 28px;
+
+  --bz-space-1: 4px;
+  --bz-space-2: 8px;
+  --bz-space-3: 12px;
+  --bz-space-4: 16px;
+  --bz-space-5: 24px;
+  --bz-space-6: 32px;
+
+  /* Rounded on the inner edge only. The outer edge is square because it is
+     flush against the physical screen edge. */
+  --bz-radius: 10px;
+  --bz-radius-sm: 4px;
+}
+
+/* ── Motion ──────────────────────────────────────────────────────────────── */
+:root {
+  --bz-spring: cubic-bezier(0.32, 0.72, 0, 1);
+  --bz-open-ms: 280ms;
+  --bz-close-ms: 180ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --bz-open-ms: 0ms;
+    --bz-close-ms: 0ms;
+  }
+}
+
+/* Set by the main process when the user turns motion off in Settings, so the
+   preference works even where the OS-level media query does not apply. */
+:root[data-reduce-motion='true'] {
+  --bz-open-ms: 0ms;
+  --bz-close-ms: 0ms;
+}
+
+/* ── Panel material ──────────────────────────────────────────────────────── */
+
+/**
+ * One recipe, mirrored. `.bz-panel` takes a `data-side` of `left` or `right`;
+ * the radius, the rim hairline and the content alignment all flip with it.
+ * Shelf opens rightward from the left edge, Gauge leftward from the right —
+ * the same grammar reflected, which is what pairs them.
+ */
+.bz-panel {
+  background: var(--bz-glass);
+  backdrop-filter: var(--bz-glass-blur);
+  -webkit-backdrop-filter: var(--bz-glass-blur);
+  color: var(--bz-ink);
+  font-family: var(--bz-font-body);
+  font-size: var(--bz-text-base);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.bz-panel[data-side='left'] {
+  border-radius: 0 var(--bz-radius) var(--bz-radius) 0;
+  /* Rim light on the outer edge — the detail the product is named for. */
+  box-shadow: inset 1px 0 0 var(--bz-rim-hairline);
+  text-align: left;
+}
+
+.bz-panel[data-side='right'] {
+  border-radius: var(--bz-radius) 0 0 var(--bz-radius);
+  box-shadow: inset -1px 0 0 var(--bz-rim-hairline);
+  text-align: right;
+}
+
+.bz-panel-header {
+  height: var(--bz-header-h);
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--bz-space-2);
+  padding: 0 var(--bz-space-3);
+  border-bottom: 1px solid var(--bz-rule);
+  font-family: var(--bz-font-mono);
+  font-size: var(--bz-text-xs);
+  letter-spacing: var(--bz-track-label);
+  text-transform: uppercase;
+  color: var(--bz-ink-3);
+}
+
+.bz-panel[data-side='right'] .bz-panel-header {
+  flex-direction: row-reverse;
+}
+
+/* Figures that stack in a column must not jitter as they tick. */
+.bz-num {
+  font-family: var(--bz-font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Separation is done with hairlines, never shadows — a drop shadow over an
+   unknown desktop background reads as dirt. */
+.bz-rule {
+  border: none;
+  border-top: 1px solid var(--bz-rule-soft);
+  margin: 0;
+}
+
+:where(button, a, [tabindex]):focus-visible {
+  outline: 2px solid var(--bz-rim);
+  outline-offset: 2px;
+}

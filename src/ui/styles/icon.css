@@ -1,0 +1,9 @@
+/* Icons inherit colour and sit on the text baseline they are next to. */
+.bz-icon {
+  display: block;
+  flex: 0 0 auto;
+  color: inherit;
+  /* Hairline strokes drift off the pixel grid at fractional sizes; asking for
+     geometric precision keeps them from going soft next to a 1px rule. */
+  shape-rendering: geometricPrecision;
+}

@@ -1,0 +1,292 @@
+/**
+ * Settings controls.
+ *
+ * Same tokens, same hairlines, same achromatic chrome as the panels. The only
+ * accent is `--bz-rim`, and it appears exactly where a control is on.
+ */
+
+/* ── Sections ────────────────────────────────────────────────────────────── */
+
+.bz-section + .bz-section {
+  margin-top: var(--bz-space-6);
+}
+
+.bz-section-title {
+  margin: 0 0 var(--bz-space-1);
+  font-family: var(--bz-font-mono);
+  font-size: var(--bz-text-xs);
+  letter-spacing: var(--bz-track-label);
+  text-transform: uppercase;
+  color: var(--bz-ink-3);
+  font-weight: 400;
+}
+
+.bz-section-description {
+  margin: 0 0 var(--bz-space-3);
+  max-width: 60ch;
+  font-size: var(--bz-text-sm);
+  line-height: 1.5;
+  color: var(--bz-ink-3);
+}
+
+.bz-section-body {
+  border-top: 1px solid var(--bz-rule);
+}
+
+/* ── Fields ──────────────────────────────────────────────────────────────── */
+
+.bz-field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--bz-space-5);
+  padding: var(--bz-space-3) 0;
+  border-bottom: 1px solid var(--bz-rule-soft);
+}
+
+.bz-field[data-stacked] {
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--bz-space-2);
+}
+
+.bz-field-text {
+  min-width: 0;
+}
+
+.bz-field-label {
+  display: block;
+  font-size: var(--bz-text-base);
+  color: var(--bz-ink);
+}
+
+.bz-field-help {
+  margin: 2px 0 0;
+  max-width: 52ch;
+  font-size: var(--bz-text-sm);
+  line-height: 1.45;
+  color: var(--bz-ink-3);
+}
+
+.bz-field-control {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--bz-space-2);
+}
+
+.bz-field[data-stacked] .bz-field-control {
+  flex: 1 1 auto;
+}
+
+/* ── Switch ──────────────────────────────────────────────────────────────── */
+
+.bz-switch {
+  position: relative;
+  display: inline-flex;
+  width: 32px;
+  height: 18px;
+}
+
+/* The real checkbox stays on top and transparent: it keeps the hit area, the
+   keyboard behaviour and the label association, and the drawn track below is
+   purely decorative. */
+.bz-switch input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: default;
+  z-index: 1;
+}
+
+.bz-switch-track {
+  position: absolute;
+  inset: 0;
+  border: 1px solid var(--bz-rule);
+  border-radius: 9px;
+  background: var(--bz-panel-2);
+  transition:
+    background-color var(--bz-close-ms) var(--bz-spring),
+    border-color var(--bz-close-ms) var(--bz-spring);
+}
+
+.bz-switch-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--bz-ink-3);
+  transition:
+    translate var(--bz-close-ms) var(--bz-spring),
+    background-color var(--bz-close-ms) var(--bz-spring);
+}
+
+.bz-switch input:checked ~ .bz-switch-track {
+  background: var(--bz-rim-soft);
+  border-color: var(--bz-rim);
+}
+
+.bz-switch input:checked ~ .bz-switch-track .bz-switch-thumb {
+  translate: 14px 0;
+  background: var(--bz-rim);
+}
+
+.bz-switch input:focus-visible ~ .bz-switch-track {
+  outline: 2px solid var(--bz-rim);
+  outline-offset: 2px;
+}
+
+/* ── Segmented ───────────────────────────────────────────────────────────── */
+
+.bz-segmented {
+  display: inline-flex;
+  border: 1px solid var(--bz-rule);
+  border-radius: var(--bz-radius-sm);
+  overflow: hidden;
+}
+
+.bz-segment {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--bz-space-1);
+  height: 24px;
+  padding: 0 var(--bz-space-3);
+  border: none;
+  border-inline-start: 1px solid var(--bz-rule);
+  background: transparent;
+  color: var(--bz-ink-3);
+  font-family: var(--bz-font-body);
+  font-size: var(--bz-text-sm);
+  cursor: default;
+  white-space: nowrap;
+}
+
+.bz-segment:first-child {
+  border-inline-start: none;
+}
+
+.bz-segment:hover {
+  color: var(--bz-ink);
+  background: var(--bz-panel-2);
+}
+
+.bz-segment[aria-checked='true'] {
+  background: var(--bz-rim-soft);
+  color: var(--bz-rim);
+}
+
+/* ── Slider ──────────────────────────────────────────────────────────────── */
+
+.bz-slider {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--bz-space-3);
+}
+
+.bz-slider input {
+  width: 160px;
+  accent-color: var(--bz-rim);
+  cursor: default;
+}
+
+.bz-slider-value {
+  min-width: 6ch;
+  font-size: var(--bz-text-sm);
+  color: var(--bz-ink-2);
+  /* Right-aligned so the handle does not shift as the digits change width —
+     tabular figures fix the glyph width, this fixes the block. */
+  text-align: right;
+}
+
+/* ── Text and select ─────────────────────────────────────────────────────── */
+
+.bz-text-field {
+  width: 100%;
+  min-width: 180px;
+  height: 26px;
+  padding: 0 var(--bz-space-2);
+  border: 1px solid var(--bz-rule);
+  border-radius: var(--bz-radius-sm);
+  background: var(--bz-panel);
+  color: var(--bz-ink);
+  font-family: var(--bz-font-body);
+  font-size: var(--bz-text-sm);
+  user-select: text;
+}
+
+.bz-text-field[data-mono] {
+  font-family: var(--bz-font-mono);
+  font-size: var(--bz-text-xs);
+}
+
+.bz-text-field:focus {
+  outline: none;
+  border-color: var(--bz-rim);
+}
+
+.bz-text-field::placeholder {
+  color: var(--bz-ink-3);
+}
+
+.bz-select {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  color: var(--bz-ink-3);
+}
+
+.bz-select select {
+  appearance: none;
+  height: 26px;
+  padding: 0 calc(var(--bz-space-5) + var(--bz-space-1)) 0 var(--bz-space-2);
+  border: 1px solid var(--bz-rule);
+  border-radius: var(--bz-radius-sm);
+  background: var(--bz-panel);
+  color: var(--bz-ink);
+  font-family: var(--bz-font-body);
+  font-size: var(--bz-text-sm);
+  cursor: default;
+}
+
+.bz-select select:focus {
+  outline: none;
+  border-color: var(--bz-rim);
+}
+
+.bz-select .bz-icon {
+  position: absolute;
+  right: var(--bz-space-2);
+  pointer-events: none;
+}
+
+/* ── Hotkey ──────────────────────────────────────────────────────────────── */
+
+.bz-hotkey {
+  min-width: 180px;
+  height: 26px;
+  padding: 0 var(--bz-space-3);
+  border: 1px dashed var(--bz-rule);
+  border-radius: var(--bz-radius-sm);
+  background: var(--bz-panel);
+  color: var(--bz-ink-2);
+  font-size: var(--bz-text-sm);
+  cursor: default;
+}
+
+.bz-hotkey:hover {
+  border-color: var(--bz-ink-3);
+}
+
+/* Recording is a live state, so it takes the accent and a solid edge: the
+   dashed border says "click to record", the solid one says "listening". */
+.bz-hotkey[data-recording] {
+  border-style: solid;
+  border-color: var(--bz-rim);
+  background: var(--bz-rim-soft);
+  color: var(--bz-rim);
+}

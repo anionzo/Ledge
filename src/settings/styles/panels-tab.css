@@ -1,0 +1,108 @@
+/**
+ * Panels tab.
+ *
+ * The diagram is the one piece of illustration in the whole product, and it
+ * earns its place by being the only thing that shows the mirroring at a
+ * glance. It is drawn in chrome tokens — no colour, because nothing here is
+ * status.
+ */
+
+.bz-edge-diagram {
+  padding: var(--bz-space-4) 0;
+  border-bottom: 1px solid var(--bz-rule-soft);
+  display: flex;
+  justify-content: center;
+}
+
+.bz-edge-screen {
+  position: relative;
+  width: 240px;
+  /* 16:10, the shape of most laptop displays. Close enough to read as "a
+     screen" without pretending to match the user's actual aspect ratio. */
+  aspect-ratio: 16 / 10;
+  border: 1px solid var(--bz-rule);
+  border-radius: var(--bz-radius-sm);
+  background: var(--bz-panel);
+}
+
+/* One frame, docked to one edge, split into its two stacked halves — the quota
+   strip on top, the clipboard filling the rest — the way the real hub is laid
+   out. */
+.bz-edge-panel {
+  position: absolute;
+  top: 12%;
+  height: 76%;
+  width: 46px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bz-panel-2);
+  transition:
+    left var(--bz-open-ms) var(--bz-spring),
+    right var(--bz-open-ms) var(--bz-spring);
+}
+
+/* Same rim hairline and same asymmetric radius as the real frame: rounded on
+   the inner edge, square against the screen edge. */
+.bz-edge-panel[data-side='left'] {
+  left: 0;
+  border-radius: 0 var(--bz-radius-sm) var(--bz-radius-sm) 0;
+  box-shadow: inset 1px 0 0 var(--bz-rim-hairline);
+}
+
+.bz-edge-panel[data-side='right'] {
+  right: 0;
+  border-radius: var(--bz-radius-sm) 0 0 var(--bz-radius-sm);
+  box-shadow: inset -1px 0 0 var(--bz-rim-hairline);
+}
+
+.bz-edge-section {
+  display: grid;
+  place-items: center;
+  color: var(--bz-ink-3);
+  font-family: var(--bz-font-mono);
+  font-size: var(--bz-text-xs);
+  letter-spacing: var(--bz-track-label);
+  text-transform: uppercase;
+  /* Reading up the column, the way the real frame is a tall narrow strip. */
+  writing-mode: vertical-rl;
+}
+
+.bz-edge-section[data-part='quota'] {
+  flex: 0 0 34%;
+  border-bottom: 1px solid var(--bz-rule);
+}
+
+.bz-edge-section[data-part='clipboard'] {
+  flex: 1 1 auto;
+}
+
+/* A switched-off half recedes to an empty bay rather than vanishing, so the
+   frame keeps its shape and the toggle reads as "off", not "gone". */
+.bz-edge-section[data-off] {
+  color: transparent;
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 5px,
+    var(--bz-rule-soft) 5px,
+    var(--bz-rule-soft) 6px
+  );
+}
+
+/* ── Collapse note ───────────────────────────────────────────────────────── */
+
+.bz-collapse-note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--bz-space-2);
+  padding: var(--bz-space-3) 0;
+  color: var(--bz-ink-3);
+}
+
+.bz-collapse-note p {
+  margin: 0;
+  max-width: 56ch;
+  font-size: var(--bz-text-sm);
+  line-height: 1.45;
+}

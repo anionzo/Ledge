@@ -1,0 +1,49 @@
+/**
+ * EmptyState.
+ *
+ * Centred and quiet. This is the one place in either panel where content is
+ * centred rather than aligned to the screen edge: there is no list to align
+ * with, and an off-centre paragraph in an otherwise blank panel reads as a
+ * layout bug.
+ */
+
+.bz-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--bz-space-2);
+  height: 100%;
+  min-height: 160px;
+  padding: var(--bz-space-5) var(--bz-space-4);
+  text-align: center;
+}
+
+.bz-empty-icon {
+  color: var(--bz-ink-3);
+  opacity: 0.6;
+  margin-bottom: var(--bz-space-1);
+}
+
+.bz-empty-title {
+  margin: 0;
+  font-family: var(--bz-font-display);
+  font-size: var(--bz-text-md);
+  letter-spacing: var(--bz-track-display);
+  color: var(--bz-ink-2);
+}
+
+.bz-empty-body {
+  margin: 0;
+  max-width: 28ch;
+  font-size: var(--bz-text-sm);
+  line-height: 1.45;
+  color: var(--bz-ink-3);
+  /* Balanced wrapping keeps a two-line sentence from leaving one orphan word,
+     which in a narrow panel is most of the time. */
+  text-wrap: balance;
+}
+
+.bz-empty-action {
+  margin-top: var(--bz-space-2);
+}

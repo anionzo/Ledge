@@ -1,0 +1,74 @@
+{
+  "task:9q66ks": {
+    "entityType": "task",
+    "entityId": "9q66ks",
+    "canonicalHash": "5160adbb826c50c0b09096ec24a97dd721785fe7562865bb43ebaedd551ba6e4",
+    "revision": 3,
+    "path": "tasks/9q66ks.md",
+    "indexedAt": "0001-01-01T00:00:00Z",
+    "stale": true
+  },
+  "task:f4wasv": {
+    "entityType": "task",
+    "entityId": "f4wasv",
+    "canonicalHash": "0d46ed585a428f563ba693e5cfa2075415bcbbd0cfdcd5309fcda8543efa8913",
+    "revision": 2,
+    "path": "tasks/f4wasv.md",
+    "indexedAt": "0001-01-01T00:00:00Z",
+    "stale": true
+  },
+  "task:khxq0g": {
+    "entityType": "task",
+    "entityId": "khxq0g",
+    "canonicalHash": "916a69831377f8bf0b8479a6a510d49c2d3bef3e28905a592527311ec3863402",
+    "revision": 3,
+    "path": "tasks/khxq0g.md",
+    "indexedAt": "0001-01-01T00:00:00Z",
+    "stale": true
+  },
+  "task:sxqzf8": {
+    "entityType": "task",
+    "entityId": "sxqzf8",
+    "canonicalHash": "f46b87084b06b3dd0417b8012fb4c98f48782c6540c046577c31f37ec064a0f8",
+    "revision": 2,
+    "path": "tasks/sxqzf8.md",
+    "indexedAt": "0001-01-01T00:00:00Z",
+    "stale": true
+  },
+  "task:teejfm": {
+    "entityType": "task",
+    "entityId": "teejfm",
+    "canonicalHash": "267200de14d2928620729bdd68fa5b53c5f425e33a24b94e6e48c380b1132af0",
+    "revision": 2,
+    "path": "tasks/teejfm.md",
+    "indexedAt": "0001-01-01T00:00:00Z",
+    "stale": true
+  },
+  "task:w8q9t9": {
+    "entityType": "task",
+    "entityId": "w8q9t9",
+    "canonicalHash": "1489eafaadcf4586753b87a8eb9ed83a1768f5e37248f38989f28fb76879f8a8",
+    "revision": 3,
+    "path": "tasks/w8q9t9.md",
+    "indexedAt": "0001-01-01T00:00:00Z",
+    "stale": true
+  },
+  "task:yji970": {
+    "entityType": "task",
+    "entityId": "yji970",
+    "canonicalHash": "308b2b1c9ec703e114c16d321c868c77f5d1ed522dded0aadc4c41ddc8e77209",
+    "revision": 1,
+    "path": "tasks/yji970.md",
+    "indexedAt": "0001-01-01T00:00:00Z",
+    "stale": true
+  },
+  "task:zgs3rs": {
+    "entityType": "task",
+    "entityId": "zgs3rs",
+    "canonicalHash": "7dd930280807c1846626b4103c7ef621c44fcba9e5ba25e95d3296049fd126a7",
+    "revision": 2,
+    "path": "tasks/zgs3rs.md",
+    "indexedAt": "0001-01-01T00:00:00Z",
+    "stale": true
+  }
+}

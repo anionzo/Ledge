@@ -1,0 +1,85 @@
+/**
+ * Sheet.
+ *
+ * It covers the panel completely and carries its own opaque-ish ground. A
+ * translucent layer over a translucent panel over an unknown desktop stacks
+ * two unknowns, and text stops being readable on a photo background.
+ */
+
+.bz-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  background: var(--bz-panel);
+  color: var(--bz-ink);
+  /* Same mirroring as the panel: rounded on the inner edge, square against
+     the screen edge. */
+  border-radius: inherit;
+  animation: bz-sheet-in var(--bz-open-ms) var(--bz-spring);
+}
+
+/* Enters from the inner edge — the direction the panel itself opens. */
+@keyframes bz-sheet-in {
+  from {
+    opacity: 0;
+    translate: var(--bz-sheet-from, 24px) 0;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+.bz-sheet[data-side='left'] {
+  --bz-sheet-from: 24px;
+  border-radius: 0 var(--bz-radius) var(--bz-radius) 0;
+}
+
+.bz-sheet[data-side='right'] {
+  --bz-sheet-from: -24px;
+  border-radius: var(--bz-radius) 0 0 var(--bz-radius);
+}
+
+.bz-sheet:focus {
+  outline: none;
+}
+
+.bz-sheet-header {
+  flex: 0 0 auto;
+  height: var(--bz-header-h);
+  padding: 0 var(--bz-space-2);
+  border-bottom: 1px solid var(--bz-rule);
+}
+
+.bz-sheet-title {
+  font-family: var(--bz-font-mono);
+  font-size: var(--bz-text-xs);
+  letter-spacing: var(--bz-track-label);
+  text-transform: uppercase;
+  color: var(--bz-ink-3);
+}
+
+.bz-sheet-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--bz-space-3);
+  scrollbar-width: thin;
+  scrollbar-color: var(--bz-rule) transparent;
+}
+
+.bz-sheet-footer {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--bz-space-2);
+  padding: var(--bz-space-2) var(--bz-space-3);
+  border-top: 1px solid var(--bz-rule);
+}
+
+.bz-panel[data-side='right'] .bz-sheet-footer {
+  flex-direction: row-reverse;
+}

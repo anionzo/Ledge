@@ -1,0 +1,85 @@
+/**
+ * Toast.
+ *
+ * A hairline-bordered slab on the opaque panel colour. No shadow: this floats
+ * over the panel, which floats over an unknown desktop, and a shadow at the
+ * second level of stacking is where the whole thing starts to look grubby.
+ */
+
+.bz-toast-stack {
+  position: absolute;
+  bottom: var(--bz-space-3);
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: var(--bz-space-2);
+  /* The stack itself must not block the list behind it; only the slabs do. */
+  pointer-events: none;
+  max-width: calc(100% - var(--bz-space-5));
+}
+
+/* Stack against the inner edge — away from the physical screen border. */
+.bz-toast-stack[data-side='left'] {
+  right: var(--bz-space-3);
+  align-items: flex-end;
+}
+
+.bz-toast-stack[data-side='right'] {
+  left: var(--bz-space-3);
+  align-items: flex-start;
+}
+
+.bz-toast {
+  pointer-events: auto;
+  padding: var(--bz-space-2) var(--bz-space-2) var(--bz-space-2) var(--bz-space-3);
+  border: 1px solid var(--bz-rule);
+  border-radius: var(--bz-radius-sm);
+  background: var(--bz-panel);
+  color: var(--bz-ink-2);
+  font-size: var(--bz-text-sm);
+  line-height: 1.35;
+  max-width: 100%;
+  animation: bz-toast-in var(--bz-open-ms) var(--bz-spring);
+}
+
+/* Errors get the critical hue on the mark and a tinted edge, not a filled
+   slab — a solid red rectangle over someone's editor is an alarm, and a
+   clipboard write failing is not one. */
+.bz-toast[data-tone='error'] {
+  color: var(--bz-crit);
+  border-color: color-mix(in srgb, var(--bz-crit) 40%, var(--bz-rule));
+}
+
+.bz-toast-message {
+  min-width: 0;
+}
+
+.bz-toast-dismiss {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: none;
+  border-radius: var(--bz-radius-sm);
+  background: transparent;
+  color: var(--bz-ink-3);
+  cursor: default;
+}
+
+.bz-toast-dismiss:hover {
+  color: var(--bz-ink);
+  background: var(--bz-panel-2);
+}
+
+@keyframes bz-toast-in {
+  from {
+    opacity: 0;
+    translate: 0 6px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
