@@ -23,15 +23,27 @@
  *     storm: the periodic re-check already covers "try again later".
  */
 import { app } from 'electron'
-import {
-  autoUpdater,
-  type ProgressInfo,
-  type UpdateDownloadedEvent,
-  type UpdateInfo
-} from 'electron-updater'
+// Default import, then destructure below — NOT `import { autoUpdater }`.
+// See the note above the destructure for why the named form breaks at runtime.
+import electronUpdater from 'electron-updater'
+import type { ProgressInfo, UpdateDownloadedEvent, UpdateInfo } from 'electron-updater'
 import type { UpdaterStatus } from '../../shared/ipc'
 import type { Settings } from '../../shared/types/settings'
 import { isStoreBuild } from './config'
+
+/**
+ * `electron-updater` is CommonJS (`"type": "commonjs"`, `main: out/main.js`,
+ * no `exports` map), but its `.d.ts` advertises named exports — so `tsc`
+ * accepts `import { autoUpdater }`, `externalizeDepsPlugin` keeps the package
+ * external, and Rollup emits that named import verbatim into an ESM main
+ * bundle. Node then refuses it at load ("Named export 'autoUpdater' not
+ * found") and the app dies before `whenReady` ever runs.
+ *
+ * Neither typecheck nor build can see this; it only appears when the app is
+ * actually launched. Reaching the binding through the default import is what
+ * Node's own error message recommends.
+ */
+const { autoUpdater } = electronUpdater
 
 export interface UpdaterController {
   status(): UpdaterStatus
