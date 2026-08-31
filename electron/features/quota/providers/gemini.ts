@@ -27,6 +27,7 @@
 import type { QuotaProvider, ReadContext } from '../provider'
 import type { QuotaReading, QuotaState } from '../../../../shared/types/quota'
 import { httpsRequest } from '../http'
+import { readAntigravityCredits } from './antigravityCredits'
 import {
   arrayAt,
   asRecord,
@@ -228,6 +229,37 @@ async function isInstalled(ctx: ReadContext): Promise<boolean> {
 }
 
 async function read(ctx: ReadContext): Promise<QuotaReading> {
+  // Primary path: read the credit balance straight from Antigravity's local
+  // state.vscdb. It needs no token, no OAuth client and no network, so it works
+  // where the API path (which needs an Antigravity OAuth client nobody ships)
+  // cannot. The API path below stays as a fallback for a future build that has
+  // the client configured.
+  try {
+    const credits = await readAntigravityCredits(ctx.platform)
+    if (credits) {
+      return makeReading({
+        providerId: ID,
+        displayName: DISPLAY_NAME,
+        modelName: DISPLAY_NAME,
+        state: 'ok',
+        message: null,
+        session: null,
+        weekly: null,
+        balance: {
+          currency: 'credits',
+          totalBalance: String(credits.available),
+          grantedBalance: null,
+          toppedUpBalance: null,
+          isAvailable: credits.available > 0
+        },
+        now: ctx.now,
+        alertThreshold: ctx.alertThreshold
+      })
+    }
+  } catch {
+    // Fall through to the API path; a bad DB read must never fail the provider.
+  }
+
   let access: string
   try {
     access = await getAccessToken(ctx)

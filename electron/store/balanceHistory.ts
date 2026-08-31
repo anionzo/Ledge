@@ -39,7 +39,7 @@ import type { QuotaBalance, QuotaCost } from '../../shared/types/quota'
 export interface BalancePoint {
   at: string
   amount: number
-  currency: 'USD' | 'CNY'
+  currency: 'USD' | 'CNY' | 'credits'
 }
 
 type HistoryStore = Record<string, BalancePoint[]>

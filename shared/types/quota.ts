@@ -111,7 +111,8 @@ export interface QuotaReading {
  * binary float — money must not lose a cent to IEEE-754.
  */
 export interface QuotaBalance {
-  currency: 'USD' | 'CNY'
+  /** `'credits'` is a unit-less token count (Antigravity), rendered "N credits". */
+  currency: 'USD' | 'CNY' | 'credits'
   totalBalance: string
   grantedBalance: string | null
   toppedUpBalance: string | null
@@ -120,7 +121,7 @@ export interface QuotaBalance {
 }
 
 export interface QuotaCost {
-  currency: 'USD' | 'CNY'
+  currency: 'USD' | 'CNY' | 'credits'
   /** Spend since the current session/window began. */
   sessionAmount: number | null
   /** Spend since local midnight. */

@@ -48,8 +48,18 @@ export function BalanceMeter({ balance, label, size = 'row' }: BalanceMeterProps
       aria-label={label}
     >
       <span className="bz-balance-amount bz-num" aria-hidden="true">
-        <span className="bz-balance-currency">{balance.currency}</span>
-        {balance.totalBalance}
+        {balance.currency === 'credits' ? (
+          // Credits are a count, not money: read "1000 credits", unit after.
+          <>
+            {balance.totalBalance}
+            <span className="bz-balance-currency"> credits</span>
+          </>
+        ) : (
+          <>
+            <span className="bz-balance-currency">{balance.currency}</span>
+            {balance.totalBalance}
+          </>
+        )}
       </span>
 
       {split && (

@@ -426,6 +426,12 @@ async function captureHub(dir: string): Promise<void> {
           ringPercent: null, severity: 'ok', observedAt: nowIso, stale: false,
           balance: { currency: 'CNY', totalBalance: '110.00', grantedBalance: '10.00', toppedUpBalance: '100.00', isAvailable: true },
           cost: { currency: 'CNY', sessionAmount: null, todayAmount: 12.5, monthAmount: 47.3, meteredByToken: true }
+        },
+        {
+          providerId: 'gemini', displayName: 'Antigravity', modelName: 'Antigravity',
+          state: 'ok', message: null, session: null, weekly: null,
+          ringPercent: null, severity: 'ok', observedAt: nowIso, stale: false,
+          balance: { currency: 'credits', totalBalance: '1000', grantedBalance: null, toppedUpBalance: null, isAvailable: true }
         }
       ]
     }
