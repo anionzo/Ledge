@@ -40,9 +40,16 @@
   --bz-warn: #8f6410;
   --bz-crit: #a8402c;
 
-  /* Panel material. Smoked glass over whatever is behind the window. */
-  --bz-glass: rgba(246, 246, 250, 0.82);
-  --bz-glass-blur: blur(24px) saturate(1.15);
+  /* Panel material. Smoked glass over whatever is behind the window. The tint
+     is fixed per theme; --bz-panel-opacity is the live knob (Settings ›
+     Appearance › Panel opacity), applied inline on :root by useThemeAttributes,
+     so the panel goes from frosted glass to a solid ground without a rebuild. */
+  --bz-glass-rgb: 246, 246, 250;
+  --bz-panel-opacity: 0.92;
+  --bz-glass: rgba(var(--bz-glass-rgb), var(--bz-panel-opacity));
+  /* A cheap, light blur — the 0.92 fill is the material now, not the blur, so
+     the hub reads solid on a busy wallpaper and stays smooth at 60/120fps. */
+  --bz-glass-blur: blur(14px) saturate(1.1);
 
   /* Blade depth: a 1px inner edge plus a soft cast. Kept gentle on light so the
      panel reads as a floating card, not a hole. */
@@ -78,7 +85,9 @@
     --bz-warn: #e0a83a;
     --bz-crit: #df6a4f;
 
-    --bz-glass: rgba(12, 12, 16, 0.72);
+    --bz-glass-rgb: 12, 12, 16;
+    --bz-panel-opacity: 0.92;
+    --bz-glass: rgba(var(--bz-glass-rgb), var(--bz-panel-opacity));
 
     /* 1px inner light edge over a deep, soft cast. */
     --bz-shadow:
@@ -109,7 +118,9 @@
   --bz-warn: #e0a83a;
   --bz-crit: #df6a4f;
 
-  --bz-glass: rgba(12, 12, 16, 0.72);
+  --bz-glass-rgb: 12, 12, 16;
+  --bz-panel-opacity: 0.92;
+  --bz-glass: rgba(var(--bz-glass-rgb), var(--bz-panel-opacity));
 
   --bz-shadow:
     inset 0 0 0 1px rgba(255, 255, 255, 0.06),

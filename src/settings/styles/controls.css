@@ -188,10 +188,96 @@
   gap: var(--bz-space-3);
 }
 
-.bz-slider input {
+.bz-slider input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
   width: 160px;
-  accent-color: var(--bz-rim);
+  height: 16px;
+  background: transparent;
   cursor: default;
+}
+
+/* The track is achromatic — the thumb is the one accent, per Obsidian Blade. */
+.bz-slider input[type='range']::-webkit-slider-runnable-track {
+  height: 3px;
+  border-radius: 2px;
+  background: var(--bz-panel-2);
+  border: 1px solid var(--bz-rule);
+}
+
+.bz-slider input[type='range']::-moz-range-track {
+  height: 3px;
+  border-radius: 2px;
+  background: var(--bz-panel-2);
+  border: 1px solid var(--bz-rule);
+}
+
+.bz-slider input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  margin-top: -5px;
+  border-radius: 50%;
+  border: none;
+  background: var(--bz-rim);
+  transition: transform var(--bz-fast) var(--bz-spring);
+}
+
+.bz-slider input[type='range']::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: none;
+  background: var(--bz-rim);
+  transition: transform var(--bz-fast) var(--bz-spring);
+}
+
+.bz-slider input[type='range']:hover::-webkit-slider-thumb,
+.bz-slider input[type='range']:focus-visible::-webkit-slider-thumb {
+  transform: scale(1.15);
+}
+
+.bz-slider input[type='range']:active::-webkit-slider-thumb {
+  transform: scale(1.35);
+}
+
+.bz-slider input[type='range']:hover::-moz-range-thumb,
+.bz-slider input[type='range']:focus-visible::-moz-range-thumb {
+  transform: scale(1.15);
+}
+
+.bz-slider input[type='range']:active::-moz-range-thumb {
+  transform: scale(1.35);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bz-slider input[type='range']::-webkit-slider-thumb,
+  .bz-slider input[type='range']::-moz-range-thumb {
+    transition: none;
+  }
+  .bz-slider input[type='range']:hover::-webkit-slider-thumb,
+  .bz-slider input[type='range']:focus-visible::-webkit-slider-thumb,
+  .bz-slider input[type='range']:active::-webkit-slider-thumb,
+  .bz-slider input[type='range']:hover::-moz-range-thumb,
+  .bz-slider input[type='range']:focus-visible::-moz-range-thumb,
+  .bz-slider input[type='range']:active::-moz-range-thumb {
+    transform: none;
+  }
+}
+
+:root[data-reduce-motion='true'] .bz-slider input[type='range']::-webkit-slider-thumb,
+:root[data-reduce-motion='true'] .bz-slider input[type='range']::-moz-range-thumb {
+  transition: none;
+}
+
+:root[data-reduce-motion='true'] .bz-slider input[type='range']:hover::-webkit-slider-thumb,
+:root[data-reduce-motion='true'] .bz-slider input[type='range']:focus-visible::-webkit-slider-thumb,
+:root[data-reduce-motion='true'] .bz-slider input[type='range']:active::-webkit-slider-thumb,
+:root[data-reduce-motion='true'] .bz-slider input[type='range']:hover::-moz-range-thumb,
+:root[data-reduce-motion='true'] .bz-slider input[type='range']:focus-visible::-moz-range-thumb,
+:root[data-reduce-motion='true'] .bz-slider input[type='range']:active::-moz-range-thumb {
+  transform: none;
 }
 
 .bz-slider-value {
@@ -201,6 +287,34 @@
   /* Right-aligned so the handle does not shift as the digits change width —
      tabular figures fix the glyph width, this fixes the block. */
   text-align: right;
+}
+
+/* A snapped commit pulses the readout once — the magnetic settle is felt in
+   the number, since the native thumb resists a real position transition. */
+.bz-slider-value[data-settling] {
+  animation: bz-slider-settle var(--bz-fast) var(--bz-spring);
+}
+
+@keyframes bz-slider-settle {
+  0% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bz-slider-value[data-settling] {
+    animation: none;
+  }
+}
+
+:root[data-reduce-motion='true'] .bz-slider-value[data-settling] {
+  animation: none;
 }
 
 /* ── Text and select ─────────────────────────────────────────────────────── */

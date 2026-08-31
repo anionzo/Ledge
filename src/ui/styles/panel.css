@@ -31,35 +31,45 @@ body {
 }
 
 /* Entrance. The panel slides in from its own edge, so the motion agrees with
-   the direction it docks — Shelf pushes right, Gauge pushes left. */
+   the direction it docks — Shelf pushes right, Gauge pushes left. Closed, it
+   sits fully off its docked edge (100% of its own width) so nothing peeks;
+   open is the default, visible state, so content stays on-screen even if a
+   script never gets to add [data-open]. */
 .bz-panel {
   /* The containing block for the toast stack and anything else that overlays
      the panel. tokens.css deliberately leaves positioning to the shell. */
   position: relative;
   opacity: 1;
+  transform: translateX(0) scale(1);
   /* The blade material: a 1px inner light edge over a deep, soft cast. The
      recipe is theme-adaptive (deep black on dark, gentle on light) and lives in
      --bz-shadow. The blade radius on the inner corners comes from tokens.css,
      so the shadow tracks the same rounded inner edge and square outer edge. */
   box-shadow: var(--bz-shadow);
-  /* Opening lands with the overshoot spring — the Edge-Drop feel — while
-     closing eases flat so a dismiss never bounces. */
+  /* Opening lands with the overshoot spring — a confident, restrained
+     Edge-Drop landing, not a bounce — while closing (below) eases flat on
+     --bz-spring so a dismiss never overshoots. */
   transition:
     opacity var(--bz-open-ms) var(--bz-spring-overshoot),
-    translate var(--bz-open-ms) var(--bz-spring-overshoot);
+    transform var(--bz-open-ms) var(--bz-spring-overshoot);
 }
 
 .bz-panel:not([data-open]) {
   opacity: 0;
-  transition-duration: var(--bz-close-ms);
+  /* Exit is quicker and plain-eased: no overshoot on the way out. */
+  transition:
+    opacity var(--bz-close-ms) var(--bz-spring),
+    transform var(--bz-close-ms) var(--bz-spring);
 }
 
 .bz-panel[data-side='left']:not([data-open]) {
-  translate: -8px 0;
+  /* Fully clear of the viewport, with a hair of shrink so the close reads as
+     a retreat rather than a plain slide. */
+  transform: translateX(-100%) scale(0.98);
 }
 
 .bz-panel[data-side='right']:not([data-open]) {
-  translate: 8px 0;
+  transform: translateX(100%) scale(0.98);
 }
 
 /* ── Header ──────────────────────────────────────────────────────────────── */
@@ -110,6 +120,7 @@ body {
      around the entire panel would be shouting. An inset hairline is enough. */
   outline: none;
   box-shadow: inset 0 0 0 1px var(--bz-rim-hairline);
+  transition: box-shadow var(--bz-fast) var(--bz-spring);
 }
 
 .bz-panel-body::-webkit-scrollbar {
@@ -122,6 +133,7 @@ body {
   /* Inset by a transparent border so the thumb does not touch the panel edge. */
   background-clip: padding-box;
   border: 2px solid transparent;
+  transition: background-color var(--bz-fast) var(--bz-spring);
 }
 
 .bz-panel-body::-webkit-scrollbar-track {

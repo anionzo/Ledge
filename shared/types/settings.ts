@@ -109,6 +109,13 @@ export interface Settings {
   theme: ThemeMode
   language: string
   reduceMotion: boolean
+  /**
+   * Opacity of the panel's glass material, 0.5–1. Lower lets the desktop
+   * show through the frosted ground; 1 is a solid, fully opaque panel. The one
+   * knob users reach for when the translucent chrome reads as too faint over a
+   * busy wallpaper.
+   */
+  panelOpacity: number
   launchAtLogin: boolean
   /** Suppress both panels while a fullscreen app or game is in the foreground. */
   suppressOnFullscreen: boolean
@@ -125,6 +132,7 @@ export const DEFAULT_SETTINGS: Settings = {
   theme: 'system',
   language: 'system',
   reduceMotion: false,
+  panelOpacity: 0.92,
   launchAtLogin: false,
   suppressOnFullscreen: true,
   hotkeyToggleShelf: 'CommandOrControl+Shift+V',

@@ -62,6 +62,18 @@
   border: 1px solid var(--bz-rule);
   border-radius: var(--bz-radius-sm);
   background: var(--bz-panel-2);
+  width: 100%;
+  cursor: zoom-in;
+  transition: border-color var(--bz-fast) var(--bz-spring);
+}
+
+.bz-preview-image:hover {
+  border-color: var(--bz-rim-hairline);
+}
+
+.bz-preview-image:focus-visible {
+  outline: 2px solid var(--bz-rim);
+  outline-offset: 2px;
 }
 
 .bz-preview-image img {

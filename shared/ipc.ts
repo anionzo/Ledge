@@ -28,6 +28,13 @@ export interface EdgeCursorEvent {
   offsetPx: number
   /** True while the cursor is inside the panel's trigger strip. */
   inTriggerZone: boolean
+  /**
+   * True the moment the cursor presses the docked edge but sits OUTSIDE the
+   * trigger strip, so the panel will not open from here. Main only emits the
+   * transition, which makes this a once-per-approach signal the renderer can
+   * flash a proximity beacon from rather than a 60 Hz strobe.
+   */
+  edgeMiss: boolean
 }
 
 export interface InvokeMap {

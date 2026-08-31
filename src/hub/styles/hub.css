@@ -51,17 +51,84 @@
 }
 
 .bz-quota-strip {
+  display: flex;
+  align-items: center;
   width: 100%;
   border: none;
   background: transparent;
   color: var(--bz-ink-2);
   font: inherit;
   padding: var(--bz-space-2) var(--bz-space-3);
-  cursor: pointer;
   gap: var(--bz-space-2);
 }
 
-.bz-quota-strip:hover {
+.bz-quota-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--bz-space-1);
+  min-width: 0;
+}
+
+.bz-quota-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: none;
+  background: transparent;
+  color: var(--bz-ink-2);
+  font: inherit;
+  font-size: var(--bz-text-sm);
+  padding: 2px 6px;
+  border-radius: var(--bz-radius-sm);
+  cursor: pointer;
+  transition: background var(--bz-fast) var(--bz-spring);
+}
+
+.bz-quota-chip:hover {
+  background: var(--bz-panel-2);
+}
+
+.bz-quota-chip[data-muted] {
+  opacity: 0.55;
+}
+
+.bz-quota-chip[data-pace='hot'] {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--bz-warn) 45%, transparent);
+}
+
+.bz-quota-chip-glyph {
+  flex: 0 0 auto;
+  color: currentColor;
+}
+
+.bz-quota-chip-val {
+  font-family: var(--bz-font-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  color: var(--bz-ink);
+}
+
+.bz-quota-chip-val[data-severity='warn'] {
+  color: var(--bz-warn);
+}
+.bz-quota-chip-val[data-severity='critical'] {
+  color: var(--bz-crit);
+}
+
+.bz-quota-toggle {
+  flex: 0 0 auto;
+  border: none;
+  background: transparent;
+  color: var(--bz-ink-3);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  padding: 2px;
+  border-radius: var(--bz-radius-sm);
+}
+
+.bz-quota-toggle:hover {
   background: var(--bz-panel-2);
 }
 
@@ -113,6 +180,8 @@
 
 .bz-quota-idle {
   color: var(--bz-ink-3);
+  font-size: var(--bz-text-sm);
+  flex: 1 1 auto;
 }
 
 .bz-quota-pct {
@@ -259,4 +328,118 @@
 
 :root[data-reduce-motion='true'] .bz-hub-drop {
   animation: none;
+}
+
+/* ── Motion polish (impeccable): quota chips ─────────────────────────────────
+   Chips lift a hair on hover so the row feels alive under the pointer, and a
+   burn-rate chip breathes its warn ring so "running hot" reads without colour
+   shouting. Transform/box-shadow only; silenced under reduced motion. */
+.bz-quota-chip {
+  transition:
+    background var(--bz-fast) var(--bz-spring),
+    transform var(--bz-fast) var(--bz-spring),
+    box-shadow var(--bz-fast) var(--bz-spring);
+}
+.bz-quota-chip:hover {
+  transform: translateY(-1px);
+}
+.bz-quota-chip:active {
+  transform: translateY(0);
+}
+@keyframes bz-chip-breathe {
+  0%,
+  100% {
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--bz-warn) 30%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--bz-warn) 62%, transparent);
+  }
+}
+.bz-quota-chip[data-pace='hot'] {
+  animation: bz-chip-breathe 2.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .bz-quota-chip:hover {
+    transform: none;
+  }
+  .bz-quota-chip[data-pace='hot'] {
+    animation: none;
+  }
+}
+:root[data-reduce-motion='true'] .bz-quota-chip:hover {
+  transform: none;
+}
+:root[data-reduce-motion='true'] .bz-quota-chip[data-pace='hot'] {
+  animation: none;
+}
+
+/* ── Proximity beacon (smooth-03) ────────────────────────────────────────────
+   The cursor pressed the docked edge but along the wrong stretch of it. One
+   hairline flashes down the panel's own edge — "it opens here, not where you
+   are" — then the renderer unmounts it on animationend. Never a click target:
+   pointer-events stay off so click-through survives while the hub is collapsed,
+   and it never loops, so there is nothing to suppress but the movement. */
+.bz-edge-beacon {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  width: 1.5px;
+  pointer-events: none;
+  z-index: 6;
+  border-radius: 2px;
+  /* Brightest across the middle, feathered at both ends, so it reads as a
+     beacon along the edge rather than a border someone forgot to remove. */
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    var(--bz-rim) 22%,
+    var(--bz-rim) 78%,
+    transparent
+  );
+  box-shadow: 0 0 12px 1px color-mix(in srgb, var(--bz-rim) 45%, transparent);
+  animation: bz-beacon-flash 640ms var(--bz-spring) forwards;
+}
+.bz-edge-beacon[data-side='left'] {
+  left: 0;
+  transform-origin: left center;
+}
+.bz-edge-beacon[data-side='right'] {
+  right: 0;
+  transform-origin: right center;
+}
+@keyframes bz-beacon-flash {
+  0% {
+    opacity: 0;
+    transform: scaleX(0.3);
+  }
+  26% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scaleX(1);
+  }
+}
+/* Reduced motion still needs an animation that ENDS: the renderer unmounts the
+   beacon on animationend, so `animation: none` would strand it on screen. Drop
+   the scale, keep the fade that carries the meaning. */
+@keyframes bz-beacon-fade {
+  0% {
+    opacity: 0;
+  }
+  26% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bz-edge-beacon {
+    animation: bz-beacon-fade 420ms linear forwards;
+  }
+}
+:root[data-reduce-motion='true'] .bz-edge-beacon {
+  animation: bz-beacon-fade 420ms linear forwards;
 }

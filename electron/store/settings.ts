@@ -177,6 +177,9 @@ function normalize(settings: Settings): Settings {
   return {
     ...settings,
     version: SETTINGS_VERSION,
+    // A hand-edited 0 would make both panels invisible with no way back, so the
+    // floor keeps the glass legible; 1 is fully opaque.
+    panelOpacity: clamp(settings.panelOpacity, 0.5, 1),
     shelf: {
       ...settings.shelf,
       edgeProximityPx: Math.round(clamp(settings.shelf.edgeProximityPx, 1, 64)),

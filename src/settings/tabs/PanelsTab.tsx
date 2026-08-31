@@ -134,7 +134,8 @@ export function PanelsTab({ settings, capabilities, update }: SettingsTabProps) 
               value={Math.round(settings.shelf.heightRatio * 100)}
               min={50}
               max={80}
-              step={5}
+              step={1}
+              snap={5}
               label={t('settings.panels.height')}
               format={(n) => t('settings.panels.percent', { n })}
               onCommit={(percent) => void update({ shelf: { heightRatio: percent / 100 } })}

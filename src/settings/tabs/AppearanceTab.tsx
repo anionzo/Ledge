@@ -8,13 +8,14 @@
  */
 import type { IndicatorStyle, TextScale, ThemeMode } from '../../../shared/types/settings'
 import type { SettingsTabProps } from '../context'
-import { Field, Section, Segmented, Select, Switch, useFieldId } from '../components/Controls'
+import { Field, Section, Segmented, Select, Slider, Switch, useFieldId } from '../components/Controls'
 import { Ring } from '../../ui'
 import { availableLocales, t } from '../../i18n'
 import '../styles/appearance-tab.css'
 
 export function AppearanceTab({ settings, update }: SettingsTabProps) {
   const languageId = useFieldId('language')
+  const opacityId = useFieldId('opacity')
   const motionId = useFieldId('motion')
 
   const themeOptions: { value: ThemeMode; label: string }[] = [
@@ -70,6 +71,24 @@ export function AppearanceTab({ settings, update }: SettingsTabProps) {
               options={languageOptions}
               label={t('settings.appearance.language')}
               onChange={(language) => void update({ language })}
+            />
+          }
+        />
+        <Field
+          label={t('settings.appearance.panel_opacity')}
+          help={t('settings.appearance.panel_opacity.help')}
+          htmlFor={opacityId}
+          control={
+            <Slider
+              id={opacityId}
+              value={Math.round((settings.panelOpacity ?? 0.92) * 100)}
+              min={50}
+              max={100}
+              step={1}
+              snap={5}
+              label={t('settings.appearance.panel_opacity')}
+              format={(n) => t('settings.panels.percent', { n })}
+              onCommit={(percent) => void update({ panelOpacity: percent / 100 })}
             />
           }
         />

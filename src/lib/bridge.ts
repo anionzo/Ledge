@@ -278,6 +278,9 @@ export function useThemeAttributes(settings: Settings | undefined): void {
     if (settings.theme === 'system') root.removeAttribute('data-theme')
     else root.setAttribute('data-theme', settings.theme)
     root.setAttribute('data-reduce-motion', String(settings.reduceMotion))
+    // The glass opacity is a live CSS variable rather than a rebuild: tokens.css
+    // composes --bz-glass from it, so both panels re-tint the instant it moves.
+    root.style.setProperty('--bz-panel-opacity', String(settings.panelOpacity))
     root.lang = settings.language === 'system' ? navigator.language : settings.language
   }, [settings])
 }

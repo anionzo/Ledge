@@ -51,7 +51,10 @@ fabricated token counts.
 
 ### Everything else
 - One unified **Settings** window (Behaviour · Panels · Agents · Appearance · About).
-- **31-language** UI, including full Vietnamese, with RTL support.
+- **English and Vietnamese** fully translated; ~29 more locales (carried over
+  from Edge-Drop) cover the shared clipboard/settings vocabulary and fall back
+  to English for Ledge-specific strings like the quota HUD — never a
+  machine-invented translation. RTL supported.
 - Cross-platform seam: a `PlatformAdapter` with `win32` / `darwin` / `linux`
   implementations; nothing else in the app reads `process.platform`.
 

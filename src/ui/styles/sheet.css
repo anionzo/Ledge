@@ -51,11 +51,26 @@
   outline: none;
 }
 
+/* The header/body/footer fade and settle in just after the sheet itself,
+   staggered by a few ms each, so the sheet reads as assembling rather than
+   the content simply being pasted in already-visible. */
+@keyframes bz-sheet-child-in {
+  from {
+    opacity: 0;
+    translate: 0 var(--bz-sheet-child-y, 6px);
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
 .bz-sheet-header {
   flex: 0 0 auto;
   height: var(--bz-header-h);
   padding: 0 var(--bz-space-2);
   border-bottom: 1px solid var(--bz-rule);
+  animation: bz-sheet-child-in var(--bz-fast) var(--bz-spring) both;
 }
 
 .bz-sheet-title {
@@ -74,6 +89,8 @@
   padding: var(--bz-space-3);
   scrollbar-width: thin;
   scrollbar-color: var(--bz-rule) transparent;
+  animation: bz-sheet-child-in var(--bz-fast) var(--bz-spring) both;
+  animation-delay: 30ms;
 }
 
 .bz-sheet-footer {
@@ -83,8 +100,36 @@
   gap: var(--bz-space-2);
   padding: var(--bz-space-2) var(--bz-space-3);
   border-top: 1px solid var(--bz-rule);
+  animation: bz-sheet-child-in var(--bz-fast) var(--bz-spring) both;
+  animation-delay: 60ms;
 }
 
 .bz-panel[data-side='right'] .bz-sheet-footer {
   flex-direction: row-reverse;
+}
+
+/* Reduced motion: keep the fade so the sheet still visibly arrives, drop the
+   slide/settle so nothing moves across the screen. */
+@media (prefers-reduced-motion: reduce) {
+  .bz-sheet {
+    --bz-sheet-from: 0px;
+  }
+
+  .bz-sheet-header,
+  .bz-sheet-body,
+  .bz-sheet-footer {
+    --bz-sheet-child-y: 0px;
+    animation-delay: 0ms;
+  }
+}
+
+:root[data-reduce-motion='true'] .bz-sheet {
+  --bz-sheet-from: 0px;
+}
+
+:root[data-reduce-motion='true'] .bz-sheet-header,
+:root[data-reduce-motion='true'] .bz-sheet-body,
+:root[data-reduce-motion='true'] .bz-sheet-footer {
+  --bz-sheet-child-y: 0px;
+  animation-delay: 0ms;
 }

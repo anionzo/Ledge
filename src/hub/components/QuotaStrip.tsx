@@ -1,25 +1,28 @@
 /**
  * The quota strip.
  *
- * Collapsed, it is one thin line at the top of the hub: a severity-coloured dot
- * per provider and the single hottest used-percentage. That is the whole
- * at-a-glance answer to "am I close to a limit right now". Pressing it expands
- * the full provider list — the same rows the standalone Gauge showed, with the
- * same honesty rules — as a dropdown over the clipboard, so the shelf keeps its
- * place underneath.
+ * Collapsed, it is one thin line at the top of the hub: a compact chip per
+ * enabled provider — brand icon plus its used-% (or short state) — wrapping
+ * to a second line if the row runs out of room. That is the whole
+ * at-a-glance answer to "am I close to a limit right now", and clicking a
+ * chip opens that provider's own detail sheet directly. A separate chevron
+ * toggles the full provider list — the same rows the standalone Gauge
+ * showed, with the same honesty rules — as a dropdown over the clipboard, so
+ * the shelf keeps its place underneath.
  *
- * Colour lives here and in the rings only; the dot is the smallest possible
- * carrier of the one thing on this panel that colour is allowed to mean.
+ * Colour lives here and in the rings only; the used-% number and the chip's
+ * severity ring are the only carriers of the one thing on this panel that
+ * colour is allowed to mean. Brand icons are tinted by currentColor as
+ * identity, never as status.
  */
-import { memo, useMemo } from 'react'
-import type { QuotaReading } from '../../../shared/types/quota'
+import { memo } from 'react'
+import type { QuotaReading, QuotaSeverity } from '../../../shared/types/quota'
 import type { PanelSide } from '../../../shared/types/settings'
 import { t } from '../../i18n'
 import { Icon } from '../../ui'
 import { ProviderRow } from '../../gauge/components/ProviderRow'
-import { dotSeverity } from '../../gauge/readings'
-
-const EM_DASH = '—'
+import { ProviderBrandIcon } from '../../gauge/components/ProviderBrandIcon'
+import { dotSeverity, hasNumber, isBalance } from '../../gauge/readings'
 
 export interface QuotaStripProps {
   readings: QuotaReading[]
@@ -32,17 +35,33 @@ export interface QuotaStripProps {
 }
 
 /**
- * The hottest reading is the one closest to its limit — the number the strip
- * shows, and whose severity tints the whole strip. Readings without a number
- * (`not-installed`, `logged-out`, …) never win: an unknown is not an emergency.
+ * What a single collapsed chip shows for a reading: the value text, the
+ * severity that colours the number, the severity that rings the chip, and
+ * whether the chip should read as muted (nothing real to show).
  */
-function hottest(readings: QuotaReading[]): QuotaReading | null {
-  let best: QuotaReading | null = null
-  for (const reading of readings) {
-    if (reading.ringPercent === null) continue
-    if (best === null || reading.ringPercent > (best.ringPercent ?? -1)) best = reading
+function chipInfo(reading: QuotaReading): {
+  value: string
+  valSeverity: QuotaSeverity | undefined
+  chipSeverity: QuotaSeverity | 'none'
+  muted: boolean
+} {
+  if (hasNumber(reading)) {
+    return {
+      value: t('unit.percent', { n: Math.round(reading.ringPercent as number) }),
+      valSeverity: reading.severity,
+      chipSeverity: reading.severity,
+      muted: false
+    }
   }
-  return best
+  if (isBalance(reading) && reading.balance) {
+    return {
+      value: reading.balance.totalBalance,
+      valSeverity: reading.balance.isAvailable ? undefined : 'critical',
+      chipSeverity: dotSeverity(reading),
+      muted: false
+    }
+  }
+  return { value: '—', valSeverity: undefined, chipSeverity: 'none', muted: true }
 }
 
 function QuotaStripImpl({
@@ -54,65 +73,54 @@ function QuotaStripImpl({
   onRetry,
   retrying
 }: QuotaStripProps) {
-  const top = useMemo(() => hottest(readings), [readings])
-
   return (
     <div className="bz-quota" data-expanded={expanded || undefined}>
-      <button
-        type="button"
-        className="bz-quota-strip bz-row"
-        onClick={onToggle}
-        aria-expanded={expanded}
-        aria-label={t('gauge.title')}
-      >
-        <span className="bz-quota-dots" aria-hidden="true">
-          {readings.length === 0 ? (
-            <span className="bz-quota-dot" data-severity="none" />
-          ) : (
-            readings.map((reading) => (
-              <span
-                key={reading.providerId}
-                className="bz-quota-dot"
-                data-severity={dotSeverity(reading)}
-                data-pace={reading.pace === 'hot' ? 'hot' : undefined}
-                // A burn-rate warning gets a subtle, static warn-toned ring
-                // around its dot. Static by design: no motion to suppress, so it
-                // is honest under reduced-motion without a special case. Tokens
-                // only — the ring is a translucent mix of the warn hue.
-                style={
-                  reading.pace === 'hot'
-                    ? ({
-                        boxShadow:
-                          '0 0 0 1.5px color-mix(in srgb, var(--bz-warn) 55%, transparent)'
-                      } as const)
-                    : undefined
-                }
-                title={reading.displayName}
-              />
-            ))
-          )}
-        </span>
-
-        <span className="bz-quota-headline bz-row-fill bz-num">
-          {top && top.ringPercent !== null ? (
-            <>
-              <span className="bz-quota-name">{top.displayName}</span>
-              <span className="bz-quota-pct" data-severity={top.severity}>
-                {t('unit.percent', { n: top.ringPercent })}
-              </span>
-            </>
-          ) : (
-            <span className="bz-quota-name bz-quota-idle">
-              {readings.length === 0 ? t('gauge.empty.title') : `${t('gauge.title')} ${EM_DASH}`}
-            </span>
-          )}
-        </span>
+      <div className="bz-quota-strip bz-row">
+        {readings.length === 0 ? (
+          <span className="bz-quota-idle">{t('gauge.empty.title')}</span>
+        ) : (
+          <div className="bz-quota-chips bz-row-fill">
+            {readings.map((reading) => {
+              const { value, valSeverity, chipSeverity, muted } = chipInfo(reading)
+              return (
+                <button
+                  key={reading.providerId}
+                  type="button"
+                  className="bz-quota-chip"
+                  data-severity={chipSeverity}
+                  data-muted={muted || undefined}
+                  data-pace={reading.pace === 'hot' ? 'hot' : undefined}
+                  onClick={() => onOpenDetail(reading.providerId)}
+                  title={reading.displayName}
+                  aria-label={reading.displayName}
+                >
+                  <ProviderBrandIcon
+                    id={reading.providerId}
+                    size={13}
+                    className="bz-quota-chip-glyph"
+                  />
+                  <span className="bz-quota-chip-val" data-severity={valSeverity}>
+                    {value}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        )}
 
         {/* One glyph, rotated by CSS when expanded — the icon set has no
             chevron-up, and a rotate reads as the same control turning rather
             than a different one appearing. */}
-        <Icon name="chevron-down" size={12} className="bz-quota-chevron" />
-      </button>
+        <button
+          type="button"
+          className="bz-quota-toggle"
+          onClick={onToggle}
+          aria-expanded={expanded}
+          aria-label={t('gauge.strip.details')}
+        >
+          <Icon name="chevron-down" size={12} className="bz-quota-chevron" />
+        </button>
+      </div>
 
       {expanded && (
         <div className="bz-quota-panel" role="region" aria-label={t('gauge.title')}>

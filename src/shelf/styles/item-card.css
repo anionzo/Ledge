@@ -48,11 +48,28 @@
 }
 
 .bz-item {
-  transition: background var(--bz-fast) var(--bz-spring);
+  transition:
+    background var(--bz-fast) var(--bz-spring),
+    transform var(--bz-fast) var(--bz-spring),
+    box-shadow var(--bz-fast) var(--bz-spring);
 }
 
+/* A barely-there raised state — this is Operate mode, scanned fast, so the
+   lift stays a single pixel and the shadow stays soft. Achromatic only: color
+   here would wrongly read as a severity or selection cue. */
 .bz-item:hover {
   background: var(--bz-panel-2);
+  transform: translateY(-1px);
+  box-shadow:
+    0 1px 3px var(--bz-shadow),
+    inset 0 0 0 1px var(--bz-rule-soft);
+  z-index: 1;
+}
+
+/* Press settles the lift back down immediately, on the same fast transition
+   — a quick tactile confirmation rather than a bounce. */
+.bz-item:active {
+  transform: translateY(0);
 }
 
 /* A subtle hover lift on the rail only — a transform, so it never reflows the
@@ -65,8 +82,15 @@
   transform: translateY(-1px);
 }
 
+/* Selection has to read as a fact, not an animation — the background swap
+   skips the card's own transition so it never lags a click or an arrow-key
+   move. Hover/press motion on a selected row still animates normally. */
 .bz-item[data-selected] {
   background: var(--bz-rim-soft);
+  transition:
+    background 0s,
+    transform var(--bz-fast) var(--bz-spring),
+    box-shadow var(--bz-fast) var(--bz-spring);
 }
 
 /* The selection marker is a rim-coloured bar on the screen-edge side, so it
@@ -116,6 +140,8 @@
 .bz-item-thumb {
   width: 40px;
   height: 40px;
+  overflow: hidden;
+  border-radius: var(--bz-radius-sm);
   /* A checker-free flat ground: transparent PNGs are common on a clipboard,
      and a checkerboard at 40 px is a moiré. */
   background: var(--bz-panel-2);
@@ -183,12 +209,16 @@
   flex: 0 0 auto;
   gap: 2px;
   opacity: 0;
-  transition: opacity var(--bz-fast) var(--bz-spring);
+  transform: scale(0.9);
+  transition:
+    opacity var(--bz-fast) var(--bz-spring),
+    transform var(--bz-fast) var(--bz-spring);
 }
 
 .bz-item:hover .bz-item-actions,
 .bz-item:focus-within .bz-item-actions {
   opacity: 1;
+  transform: scale(1);
 }
 
 .bz-item-action {
@@ -202,6 +232,9 @@
   background: transparent;
   color: var(--bz-ink-3);
   cursor: default;
+  transition:
+    background var(--bz-fast) var(--bz-spring),
+    color var(--bz-fast) var(--bz-spring);
 }
 
 .bz-item-action:hover {
@@ -218,6 +251,7 @@
 
 .bz-item-actions:has(.bz-item-action[data-always]) {
   opacity: 1;
+  transform: scale(1);
 }
 
 .bz-item-actions:has(.bz-item-action[data-always]) .bz-item-action:not([data-always]) {
@@ -249,6 +283,14 @@
   object-fit: cover;
   border-radius: var(--bz-radius-sm);
   display: block;
+  transition: transform var(--bz-base) var(--bz-spring);
+}
+
+/* A very slight zoom reads as "this thumbnail is alive" without turning the
+   ledger into a gallery. The mark clips it so the enlarged image never
+   bleeds past its own footprint. */
+.bz-item:hover .bz-thumb-img {
+  transform: scale(1.04);
 }
 
 /* ── Stack fan ───────────────────────────────────────────────────────────── */
@@ -335,4 +377,67 @@
 
 .bz-stack-member-text:active {
   cursor: grabbing;
+}
+
+/* ── Reduced motion ──────────────────────────────────────────────────────── */
+
+/* Every transform added above is purely decorative — the underlying opacity
+   and background/box-shadow state changes stay, they just stop moving. Both
+   the OS-level media query and the in-app toggle are covered since the app
+   sets the latter as an attribute rather than relying on the former alone. */
+
+@media (prefers-reduced-motion: reduce) {
+  .bz-item:hover,
+  .bz-item:active {
+    transform: none;
+  }
+
+  .bz-item:hover .bz-item-mark {
+    transform: none;
+  }
+
+  .bz-item-actions,
+  .bz-item:hover .bz-item-actions,
+  .bz-item:focus-within .bz-item-actions,
+  .bz-item-actions:has(.bz-item-action[data-always]) {
+    transform: none;
+  }
+
+  .bz-item:hover .bz-thumb-img {
+    transform: none;
+  }
+
+  .bz-item:hover .bz-stack-fan-card {
+    transform: translate(-50%, -50%)
+      translate(calc(var(--bz-fan-i) * 2.5px), calc(var(--bz-fan-i) * -2.5px))
+      rotate(calc(var(--bz-fan-i) * 6deg))
+      scale(calc(1 - var(--bz-fan-i) * 0.06));
+  }
+}
+
+:root[data-reduce-motion='true'] .bz-item:hover,
+:root[data-reduce-motion='true'] .bz-item:active {
+  transform: none;
+}
+
+:root[data-reduce-motion='true'] .bz-item:hover .bz-item-mark {
+  transform: none;
+}
+
+:root[data-reduce-motion='true'] .bz-item-actions,
+:root[data-reduce-motion='true'] .bz-item:hover .bz-item-actions,
+:root[data-reduce-motion='true'] .bz-item:focus-within .bz-item-actions,
+:root[data-reduce-motion='true'] .bz-item-actions:has(.bz-item-action[data-always]) {
+  transform: none;
+}
+
+:root[data-reduce-motion='true'] .bz-item:hover .bz-thumb-img {
+  transform: none;
+}
+
+:root[data-reduce-motion='true'] .bz-item:hover .bz-stack-fan-card {
+  transform: translate(-50%, -50%)
+    translate(calc(var(--bz-fan-i) * 2.5px), calc(var(--bz-fan-i) * -2.5px))
+    rotate(calc(var(--bz-fan-i) * 6deg))
+    scale(calc(1 - var(--bz-fan-i) * 0.06));
 }

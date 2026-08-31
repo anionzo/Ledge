@@ -16,7 +16,7 @@ import type { PanelSide } from '../../../shared/types/settings'
 import { invoke, send } from '../../lib/bridge'
 import { elidePath, EM_DASH, humaniseBytes } from '../../lib/format'
 import { t } from '../../i18n'
-import { Button, Chip, Icon, Sheet } from '../../ui'
+import { Button, Chip, Icon, Lightbox, Sheet } from '../../ui'
 import { kindIcon, kindLabel, primaryLine } from '../describe'
 import '../styles/preview-sheet.css'
 
@@ -123,25 +123,51 @@ function PreviewBody({
         </div>
       )
     case 'image':
-      return (
-        <div className="bz-preview">
-          <div className="bz-preview-image">
-            <img src={`ledge://thumb/${data.imageId}`} alt={primaryLine(data)} draggable={false} />
-          </div>
-          <dl className="bz-preview-facts">
-            <Fact
-              term={t('shelf.preview.fact.dimensions')}
-              value={t('shelf.item.dimensions', { w: data.width, h: data.height })}
-            />
-            <Fact term={t('shelf.preview.fact.size')} value={humaniseBytes(data.byteSize)} />
-          </dl>
-        </div>
-      )
+      return <ImagePreview data={data} />
     case 'file':
       return <FilePreview data={data} onError={onError} />
     case 'stack':
       return <StackPreview item={item} onCopy={onCopy} onError={onError} />
   }
+}
+
+/**
+ * Image.
+ *
+ * The card and the sheet's own preview both cap at a fraction of the screen,
+ * so the lightbox is the only place the full-resolution image is shown at
+ * its own size.
+ */
+function ImagePreview({ data }: { data: Extract<ItemData, { kind: 'image' }> }) {
+  const [zoom, setZoom] = useState<string | null>(null)
+  const full = `ledge://${data.imageId}`
+
+  return (
+    <div className="bz-preview">
+      <button
+        type="button"
+        className="bz-preview-image"
+        onClick={() => setZoom(full)}
+        title={t('shelf.preview.view_full')}
+        aria-label={t('shelf.preview.view_full')}
+      >
+        <img src={`ledge://thumb/${data.imageId}`} alt={primaryLine(data)} draggable={false} />
+      </button>
+      <dl className="bz-preview-facts">
+        <Fact
+          term={t('shelf.preview.fact.dimensions')}
+          value={t('shelf.item.dimensions', { w: data.width, h: data.height })}
+        />
+        <Fact term={t('shelf.preview.fact.size')} value={humaniseBytes(data.byteSize)} />
+      </dl>
+      <Lightbox
+        src={zoom}
+        alt={primaryLine(data)}
+        onClose={() => setZoom(null)}
+        closeLabel={t('shelf.preview.close_full')}
+      />
+    </div>
+  )
 }
 
 /**

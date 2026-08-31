@@ -104,6 +104,8 @@ export const en: Dictionary = {
   'shelf.action.clear_unpinned': 'Clear unpinned',
   'shelf.preview.title': 'Preview',
   'shelf.preview.loading': 'Loading full text',
+  'shelf.preview.view_full': 'View full size',
+  'shelf.preview.close_full': 'Close',
   'shelf.preview.fact.size': 'Size',
   'shelf.preview.fact.type': 'Type',
   'shelf.preview.fact.dimensions': 'Dimensions',
@@ -188,6 +190,7 @@ export const en: Dictionary = {
   // ── Gauge ────────────────────────────────────────────────────────────────
   'gauge.title': 'Gauge',
   'gauge.updated': 'Updated {time}',
+  'gauge.strip.details': 'Show all providers',
   'gauge.refresh': 'Refresh quotas',
   'gauge.empty.title': 'No agents enabled',
   'gauge.empty.body': 'Turn a provider on in Settings and its quota appears here.',
@@ -350,6 +353,9 @@ export const en: Dictionary = {
   'settings.appearance.theme.dark': 'Dark',
   'settings.appearance.language': 'Language',
   'settings.appearance.language.system': 'System',
+  'settings.appearance.panel_opacity': 'Panel opacity',
+  'settings.appearance.panel_opacity.help':
+    'Higher is more solid; lower lets the desktop show through the frosted glass.',
   'settings.appearance.text_scale': 'Text size',
   'settings.appearance.text_scale.help': 'Scale the shelf text up or down.',
   'settings.appearance.text_scale.sm': 'Small',
@@ -386,6 +392,23 @@ export const en: Dictionary = {
 }
 
 const locales: Record<string, Dictionary> = { en }
+
+/**
+ * Ledge-native locale packs: full `Dictionary` maps keyed by Ledge's own flat
+ * `<area>.<thing>` paths, so they translate every string the UI shows — the
+ * quota HUD included — not just the shared vocabulary the Edge-Drop packs cover.
+ * Loaded here and merged straight into `locales`, where `lookupActive` picks
+ * them ahead of the aliased pack strings. Adding a language is dropping a JSON
+ * file into `./ledge/`; a key it omits still falls back to English.
+ */
+const ledgeNative = import.meta.glob<Dictionary>('./ledge/*.json', {
+  eager: true,
+  import: 'default'
+})
+for (const [ledgePath, dict] of Object.entries(ledgeNative)) {
+  const code = ledgePath.slice(ledgePath.lastIndexOf('/') + 1).replace(/\.json$/, '')
+  locales[code] = { ...(locales[code] ?? {}), ...dict }
+}
 
 /**
  * The 31 real locale packs carried over from Edge-Drop.

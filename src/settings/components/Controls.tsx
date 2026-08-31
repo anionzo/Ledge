@@ -177,6 +177,12 @@ export function Segmented<T extends string>({
  * panels for values the user is only passing through on the way to the one
  * they want. So the draft is local and only the released value is persisted —
  * with a keyboard commit on blur, since arrow keys never fire a pointer-up.
+ *
+ * `snap`, when given, makes the drag magnetic: the thumb still tracks the
+ * pointer 1:1 while held (fine positioning, live readout), but on release the
+ * committed value rounds to the nearest multiple of `snap` — e.g. the nearest
+ * 5% of a 0–100 range. Controls that omit it commit the raw draft, unchanged
+ * from before this existed.
  */
 export function Slider({
   id,
@@ -184,6 +190,7 @@ export function Slider({
   min,
   max,
   step = 1,
+  snap,
   onCommit,
   format,
   label
@@ -193,12 +200,17 @@ export function Slider({
   min: number
   max: number
   step?: number
+  /** Commit increment for magnetic snapping, e.g. 5% of (max - min). */
+  snap?: number
   onCommit: (next: number) => void
   format: (value: number) => string
   label: string
 }) {
   const [draft, setDraft] = useState(value)
   const dirty = useRef(false)
+  // Toggled on a snapped commit so the readout can pulse — the thumb settling
+  // into place is felt, not just seen.
+  const [settling, setSettling] = useState(false)
 
   // An edit made in another window must land here, but not while the user has
   // hold of the handle.
@@ -208,7 +220,12 @@ export function Slider({
 
   const commit = () => {
     dirty.current = false
-    if (draft !== value) onCommit(draft)
+    const next = snap
+      ? Math.min(max, Math.max(min, min + Math.round((draft - min) / snap) * snap))
+      : draft
+    if (next !== draft) setDraft(next)
+    if (next !== value) onCommit(next)
+    if (snap) setSettling(true)
   }
 
   return (
@@ -230,7 +247,13 @@ export function Slider({
         onBlur={commit}
         onKeyUp={commit}
       />
-      <span className="bz-slider-value bz-num">{format(draft)}</span>
+      <span
+        className="bz-slider-value bz-num"
+        data-settling={settling || undefined}
+        onAnimationEnd={() => setSettling(false)}
+      >
+        {format(draft)}
+      </span>
     </span>
   )
 }

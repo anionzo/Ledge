@@ -1,10 +1,28 @@
 {
+  "task:1jdmgn": {
+    "entityType": "task",
+    "entityId": "1jdmgn",
+    "canonicalHash": "59b99c8d390c31ca82ed17368ecc0798045511fde3927c236a46d8ab1cde666f",
+    "revision": 3,
+    "path": "tasks/1jdmgn.md",
+    "indexedAt": "0001-01-01T00:00:00Z",
+    "stale": true
+  },
   "task:2r55hq": {
     "entityType": "task",
     "entityId": "2r55hq",
-    "canonicalHash": "a66b81124602e8d44ae03a3fe7064fe47867addc5a612fbb0643675867a4d725",
-    "revision": 1,
+    "canonicalHash": "7a078f9e581e48cbd2f858f2058748d0423b67111b27ac26575a55f52780bc49",
+    "revision": 2,
     "path": "tasks/2r55hq.md",
+    "indexedAt": "0001-01-01T00:00:00Z",
+    "stale": true
+  },
+  "task:370vlz": {
+    "entityType": "task",
+    "entityId": "370vlz",
+    "canonicalHash": "da55e36fad407131b5d41ba28125f0e753de62933e108eaef390cbf2b15b236e",
+    "revision": 3,
+    "path": "tasks/370vlz.md",
     "indexedAt": "0001-01-01T00:00:00Z",
     "stale": true
   },
@@ -17,12 +35,48 @@
     "indexedAt": "0001-01-01T00:00:00Z",
     "stale": true
   },
+  "task:5vsd9y": {
+    "entityType": "task",
+    "entityId": "5vsd9y",
+    "canonicalHash": "c6848f6e0695838192b46077dc7f3b56866e697efd63b410127eab84027df02f",
+    "revision": 3,
+    "path": "tasks/5vsd9y.md",
+    "indexedAt": "0001-01-01T00:00:00Z",
+    "stale": true
+  },
   "task:9q66ks": {
     "entityType": "task",
     "entityId": "9q66ks",
     "canonicalHash": "10f54626d17a594a2872cd0f230ebd62eb776a02b8134afcb1ec5520dba15f2e",
     "revision": 4,
     "path": "tasks/9q66ks.md",
+    "indexedAt": "0001-01-01T00:00:00Z",
+    "stale": true
+  },
+  "task:ayx44m": {
+    "entityType": "task",
+    "entityId": "ayx44m",
+    "canonicalHash": "8009c3cb02816f83b8a159ae04cd5c61703e74cbabedc5a203ba3fb23aca0dc0",
+    "revision": 3,
+    "path": "tasks/ayx44m.md",
+    "indexedAt": "0001-01-01T00:00:00Z",
+    "stale": true
+  },
+  "task:e6f62s": {
+    "entityType": "task",
+    "entityId": "e6f62s",
+    "canonicalHash": "40b7a95248a1718eddc09793100ad44476b38ed8bf594b98d1d8a95e20f8f40e",
+    "revision": 3,
+    "path": "tasks/e6f62s.md",
+    "indexedAt": "0001-01-01T00:00:00Z",
+    "stale": true
+  },
+  "task:euv8k3": {
+    "entityType": "task",
+    "entityId": "euv8k3",
+    "canonicalHash": "0ef8d4dad70a4c7f1676f5a175716feb65b5b7fbe9d8c026606438048ab798f0",
+    "revision": 3,
+    "path": "tasks/euv8k3.md",
     "indexedAt": "0001-01-01T00:00:00Z",
     "stale": true
   },
@@ -44,12 +98,48 @@
     "indexedAt": "0001-01-01T00:00:00Z",
     "stale": true
   },
+  "task:gop97t": {
+    "entityType": "task",
+    "entityId": "gop97t",
+    "canonicalHash": "df07d12172347c59e49d2c9e7fe84eee52a9135c43b193099c23af56411ac359",
+    "revision": 3,
+    "path": "tasks/gop97t.md",
+    "indexedAt": "0001-01-01T00:00:00Z",
+    "stale": true
+  },
   "task:khxq0g": {
     "entityType": "task",
     "entityId": "khxq0g",
     "canonicalHash": "e3b4bba26a24f4fd93402d0a4d813f4841195474f525e7fbfb1a20a5a119761e",
     "revision": 4,
     "path": "tasks/khxq0g.md",
+    "indexedAt": "0001-01-01T00:00:00Z",
+    "stale": true
+  },
+  "task:ma5ui8": {
+    "entityType": "task",
+    "entityId": "ma5ui8",
+    "canonicalHash": "bb9386db62f9ab3b31fe95393711ed574dc4923cf5fe35c1066714201d387fd3",
+    "revision": 3,
+    "path": "tasks/ma5ui8.md",
+    "indexedAt": "0001-01-01T00:00:00Z",
+    "stale": true
+  },
+  "task:mlncst": {
+    "entityType": "task",
+    "entityId": "mlncst",
+    "canonicalHash": "18577b64c04428c1183f4d06249eec0bcbfd04ff2e86cc67b992095c9be357b7",
+    "revision": 5,
+    "path": "tasks/mlncst.md",
+    "indexedAt": "0001-01-01T00:00:00Z",
+    "stale": true
+  },
+  "task:qsavo6": {
+    "entityType": "task",
+    "entityId": "qsavo6",
+    "canonicalHash": "2dfbccaaeec400e71c4507a67eb01f9940ad2ce4210add7466bb2782d824d6d7",
+    "revision": 3,
+    "path": "tasks/qsavo6.md",
     "indexedAt": "0001-01-01T00:00:00Z",
     "stale": true
   },
@@ -77,6 +167,15 @@
     "canonicalHash": "ba8f9b4a908590377e51edabcb050598efd3d579ce7b3771e3e319e91482d9f6",
     "revision": 3,
     "path": "tasks/teejfm.md",
+    "indexedAt": "0001-01-01T00:00:00Z",
+    "stale": true
+  },
+  "task:unlbvv": {
+    "entityType": "task",
+    "entityId": "unlbvv",
+    "canonicalHash": "849e44fada5cad5d72aab1bb9db450fb9ec738cadbaa0d09105261372facbdf4",
+    "revision": 3,
+    "path": "tasks/unlbvv.md",
     "indexedAt": "0001-01-01T00:00:00Z",
     "stale": true
   },

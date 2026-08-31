@@ -85,6 +85,8 @@ export interface CursorPoll {
 
 interface TargetState {
   lastInZone: boolean
+  /** Last emitted edge-miss, so the beacon fires once per approach. */
+  lastEdgeMiss: boolean
   lastEmittedDistance: number
   lastEmittedOffset: number
 }
@@ -124,7 +126,12 @@ export function createCursorPoll(options: CursorPollOptions): CursorPoll {
   function stateFor(id: EdgePanelId): TargetState {
     let state = states.get(id)
     if (!state) {
-      state = { lastInZone: false, lastEmittedDistance: Number.NaN, lastEmittedOffset: Number.NaN }
+      state = {
+        lastInZone: false,
+        lastEdgeMiss: false,
+        lastEmittedDistance: Number.NaN,
+        lastEmittedOffset: Number.NaN
+      }
       states.set(id, state)
     }
     return state
@@ -172,12 +179,14 @@ export function createCursorPoll(options: CursorPollOptions): CursorPoll {
 
       if (distance === null) {
         // Cursor is on another display. Report the leave once, then go quiet.
-        if (state.lastInZone) {
+        if (state.lastInZone || state.lastEdgeMiss) {
           state.lastInZone = false
+          state.lastEdgeMiss = false
           options.emit(target.id, {
             distancePx: Number.MAX_SAFE_INTEGER,
             offsetPx: 0,
-            inTriggerZone: false
+            inTriggerZone: false,
+            edgeMiss: false
           })
         }
         // An open panel still wants position updates so it can decide to close.
@@ -189,7 +198,13 @@ export function createCursorPoll(options: CursorPollOptions): CursorPoll {
 
       const strip = target.triggerRect()
       const withinStrip = point.y >= strip.y && point.y < strip.y + strip.height
-      const inTriggerZone = armed && withinStrip && distance <= target.proximityPx()
+      const atEdge = distance <= target.proximityPx()
+      const inTriggerZone = armed && withinStrip && atEdge
+      // The cursor reached the edge but along the wrong stretch of it: nothing
+      // will open from here, so the renderer flashes a beacon that says where
+      // it would. Gated on `armed` for the same reason the opener is — a cursor
+      // sailing past to the next display is travel, not intent.
+      const edgeMiss = armed && !withinStrip && atEdge
 
       const offsetPx = point.y - workArea.y
 
@@ -202,13 +217,18 @@ export function createCursorPoll(options: CursorPollOptions): CursorPoll {
         Math.abs(offsetPx - state.lastEmittedOffset) >= EMIT_MIN_DELTA_PX
 
       const near = distance <= FAST_BAND_PX
-      const shouldEmit = inTriggerZone !== state.lastInZone || open || (near && movedEnough)
+      const shouldEmit =
+        inTriggerZone !== state.lastInZone ||
+        edgeMiss !== state.lastEdgeMiss ||
+        open ||
+        (near && movedEnough)
 
       if (shouldEmit) {
         state.lastInZone = inTriggerZone
+        state.lastEdgeMiss = edgeMiss
         state.lastEmittedDistance = distance
         state.lastEmittedOffset = offsetPx
-        options.emit(target.id, { distancePx: distance, offsetPx, inTriggerZone })
+        options.emit(target.id, { distancePx: distance, offsetPx, inTriggerZone, edgeMiss })
       }
     }
 

@@ -89,6 +89,19 @@ export function App() {
   // receive DOM mouse events (the window ignores the mouse), so the open trigger
   // has to come from main's cursor poll, not from `onMouseEnter`. Once open the
   // window takes the mouse back, so closing on `onMouseLeave` works normally.
+  /**
+   * The proximity beacon: a hairline that flashes down the docked edge when the
+   * cursor pressed that edge but missed the trigger strip — "it opens here, not
+   * where you are". It runs the panel's own height rather than tracking the
+   * cursor, because a miss means the cursor is usually outside this window
+   * entirely (the frame is only `heightRatio` of the work area) and a marker
+   * drawn at its Y would land off-viewport. Keyed so a second approach restarts
+   * the animation instead of being swallowed by the one still running.
+   */
+  const [beacon, setBeacon] = useState<number | null>(null)
+  const beaconSeq = useRef(0)
+  const wasEdgeMiss = useRef(false)
+
   const dwellTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const clearDwell = useCallback(() => {
@@ -108,6 +121,17 @@ export function App() {
   }, [clearDwell])
 
   usePush('panel:cursor-edge', (event) => {
+    // Beacon on the rising edge only. Main keeps emitting while the cursor
+    // rests near the edge, and a beacon that re-fired on each of those would
+    // be a strobe rather than a hint. Skipped under reduced motion, and when
+    // hover-to-open is off there is nothing for it to point at.
+    const missed = event.edgeMiss && !wasEdgeMiss.current
+    wasEdgeMiss.current = event.edgeMiss
+    if (missed && !open && hoverActivation && !reduceMotion) {
+      beaconSeq.current += 1
+      setBeacon(beaconSeq.current)
+    }
+
     // Hover-to-open is a setting. When it is off the shelf only opens on the
     // hotkey/tray toggle, both of which come through `panel:toggle` and are
     // unaffected by this handler.
@@ -423,6 +447,17 @@ export function App() {
       onDragLeave={onDragLeave}
       onDrop={onDrop}
     >
+    {/* Outside <Panel> on purpose: the panel translates off-edge when closed,
+        and the beacon has to stay at the edge to point back at it. */}
+    {beacon !== null && (
+      <span
+        key={beacon}
+        className="bz-edge-beacon"
+        data-side={side}
+        aria-hidden="true"
+        onAnimationEnd={() => setBeacon(null)}
+      />
+    )}
     <Panel
       side={side}
       open={open}
