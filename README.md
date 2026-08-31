@@ -63,11 +63,16 @@ fabricated token counts.
 ## Install
 
 ### Windows
-Download **`Ledge Setup 0.1.0.exe`** from the
+Download the **`Ledge Setup <version>.exe`** installer from the
 [latest release](https://github.com/anionzo/Ledge/releases/latest) and run it.
 
 > The installer is **not code-signed** yet, so Windows SmartScreen warns on
 > first run — click **More info → Run anyway**.
+
+After that, Ledge keeps itself current: it checks GitHub releases in the
+background and installs the new version on your next restart. Turn it off under
+**Settings → Behaviour → Updates**. A Microsoft Store build never checks —
+the store owns updates there.
 
 ### macOS / Linux
 The build configuration is ready (DMG / AppImage + deb), but signed artifacts

@@ -48,7 +48,21 @@ export interface ShelfSettings {
   previewEnabled: boolean
   /** The "copied" feedback style shown at the edge when the OS clipboard changes. */
   indicatorStyle: IndicatorStyle
+  /**
+   * Drop unpinned items older than this many hours. `0` is never, which is the
+   * default — a clipboard shelf that silently eats history is worse than one
+   * that grows, and `maxItems` already bounds the size.
+   */
+  autoDeleteHours: AutoDeleteHours
+  /** Wipe every unpinned item when Ledge starts. Opt-in. */
+  clearUnpinnedOnRestart: boolean
 }
+
+/** Ages offered by the auto-delete timer. `0` disables it. */
+export type AutoDeleteHours = 0 | 1 | 6 | 24 | 168
+
+/** The auto-delete choices, in menu order. */
+export const AUTO_DELETE_HOURS: readonly AutoDeleteHours[] = [0, 1, 6, 24, 168]
 
 /** Relative UI text size. */
 export type TextScale = 'sm' | 'md' | 'lg'
@@ -104,6 +118,32 @@ export interface CustomProviderConfig {
   currency: 'USD' | 'CNY'
 }
 
+/** A rectangle in DIP screen coordinates. Structurally an Electron Rectangle. */
+export interface ScreenRect {
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
+/**
+ * Which physical monitor the hub sticks to, and enough evidence to find it
+ * again after a reboot.
+ *
+ * Windows re-assigns the numeric display id freely across sessions — unplug a
+ * dock, wake from sleep, and the id the user picked yesterday now belongs to a
+ * different panel. So the id alone is a session-fast hint; the saved work area
+ * and scale factor are what actually identify the monitor on the next launch.
+ */
+export interface StickDisplayPrefs {
+  /** Last resolved Electron display id. Trustworthy only within a session. */
+  displayId: number | null
+  /** Work area of the resolved display, for the fuzzy match after a reboot. */
+  savedWorkArea: ScreenRect | null
+  /** DPI scale of the resolved display, to break ties between twin monitors. */
+  savedScaleFactor: number | null
+}
+
 export interface Settings {
   version: number
   theme: ThemeMode
@@ -121,11 +161,24 @@ export interface Settings {
   suppressOnFullscreen: boolean
   hotkeyToggleShelf: string
   hotkeyToggleGauge: string
+  /**
+   * Check GitHub releases and install updates in the background. Ignored on
+   * Store/MSIX builds, where the store owns updates and reaching out ourselves
+   * would violate its policy.
+   */
+  autoUpdates: boolean
+  /** Which monitor the hub docks to. */
+  stickDisplay: StickDisplayPrefs
   shelf: ShelfSettings
   gauge: GaugeSettings
 }
 
-export const SETTINGS_VERSION = 1
+/**
+ * Bumped to 2 for `autoUpdates`, `stickDisplay`, `shelf.autoDeleteHours` and
+ * `shelf.clearUnpinnedOnRestart`. Old files merge the new defaults in; nothing
+ * needs rewriting, so the migration is a version stamp rather than a transform.
+ */
+export const SETTINGS_VERSION = 2
 
 export const DEFAULT_SETTINGS: Settings = {
   version: SETTINGS_VERSION,
@@ -137,6 +190,12 @@ export const DEFAULT_SETTINGS: Settings = {
   suppressOnFullscreen: true,
   hotkeyToggleShelf: 'CommandOrControl+Shift+V',
   hotkeyToggleGauge: 'CommandOrControl+Shift+U',
+  autoUpdates: true,
+  stickDisplay: {
+    displayId: null,
+    savedWorkArea: null,
+    savedScaleFactor: null
+  },
   shelf: {
     enabled: true,
     // The unified hub docks right by default — nearest the Windows tray and the
@@ -152,7 +211,9 @@ export const DEFAULT_SETTINGS: Settings = {
     hoverActivation: true,
     textScale: 'md',
     previewEnabled: true,
-    indicatorStyle: 'curve'
+    indicatorStyle: 'curve',
+    autoDeleteHours: 0,
+    clearUnpinnedOnRestart: false
   },
   gauge: {
     enabled: true,

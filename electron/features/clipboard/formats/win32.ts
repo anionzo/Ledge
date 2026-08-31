@@ -73,6 +73,41 @@ export function hasFileHint(types: readonly string[]): boolean {
 }
 
 /**
+ * Native Excel format names that ride along with a spreadsheet cell-range
+ * copy. Excel always stamps at least one of these alongside its CF_DIB
+ * preview bitmap; a Snipping Tool or browser "Copy Image" capture never does.
+ */
+const SPREADSHEET_FORMAT_RE = /biff\d*|xml spreadsheet|\bcsv\b|sylk|\bdif\b|\bwk1\b/i
+
+/**
+ * HTML markers a spreadsheet clipboard fragment carries even with none of the
+ * native Excel formats above — e.g. Google Sheets copied from a browser,
+ * which only ever puts web-standard `text/html` + `text/plain` on the
+ * clipboard, no OS-level Biff/Csv formats.
+ */
+const SPREADSHEET_HTML_RE = /data-sheets-|google-sheets|urn:schemas-microsoft-com:office:spreadsheet/i
+
+/**
+ * True when a clipboard snapshot is a spreadsheet cell-range selection rather
+ * than a screenshot/picture, even though a CF_DIB bitmap is present.
+ *
+ * Copying cells out of Excel or Google Sheets puts BOTH an image (a rendered
+ * preview of the selection) and HTML (the actual grid, as a `<table>`) on the
+ * clipboard. Ledge's screenshot/image classifier used to always win when an
+ * image was present and the plain-text side happened to be empty — which does
+ * happen for some spreadsheet copies — turning a cell copy into a screenshot.
+ * This is the tie-breaker: an HTML `<table>` plus a spreadsheet-specific
+ * fingerprint (format name or HTML marker) means "grid data", never "picture".
+ *
+ * Pure — takes the already-sampled format list and HTML string, so it
+ * unit-tests without a live clipboard.
+ */
+export function preferTabularOverImage(formats: readonly string[], html: string | null): boolean {
+  if (!html || !/<table\b/i.test(html)) return false
+  return formats.some((f) => SPREADSHEET_FORMAT_RE.test(f)) || SPREADSHEET_HTML_RE.test(html)
+}
+
+/**
  * Full multi-file list via `Clipboard.GetFileDropList()` — the only reliable way
  * to retrieve ALL selected files from a multi-file Explorer copy.
  */

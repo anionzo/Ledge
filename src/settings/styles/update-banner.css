@@ -1,0 +1,62 @@
+/**
+ * Update banner.
+ *
+ * An ordinary hairline-bordered strip, not a floating slab — this lives in an
+ * opaque window on `--bz-ground`, not over an unknown desktop, so it borrows
+ * `.bz-section-body`'s language (a rule, not a shadow) rather than the
+ * panels' toast styling.
+ */
+
+.bz-update-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--bz-space-2);
+  margin-bottom: var(--bz-space-5);
+  padding: var(--bz-space-2) var(--bz-space-3);
+  border: 1px solid var(--bz-rule);
+  border-radius: var(--bz-radius-sm);
+  background: var(--bz-panel-2);
+  color: var(--bz-ink-2);
+  font-size: var(--bz-text-sm);
+}
+
+.bz-update-banner-message {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* A ready-to-restart update gets the same rim accent a primary button does —
+   the one place in this file that is allowed to look "on". */
+.bz-update-banner[data-tone='ready'] {
+  border-color: var(--bz-rim-hairline);
+  background: var(--bz-rim-soft);
+  color: var(--bz-rim);
+}
+
+/* Failure gets the critical hue on the mark and a tinted edge, matching the
+   Toast primitive's error tone — never a filled slab for a background check
+   that can just be retried on the next interval. */
+.bz-update-banner[data-tone='error'] {
+  color: var(--bz-crit);
+  border-color: color-mix(in srgb, var(--bz-crit) 40%, var(--bz-rule));
+}
+
+.bz-update-banner-spin {
+  animation: bz-update-banner-spin 1.1s linear infinite;
+}
+
+@keyframes bz-update-banner-spin {
+  to {
+    rotate: 360deg;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bz-update-banner-spin {
+    animation: none;
+  }
+}
+
+:root[data-reduce-motion='true'] .bz-update-banner-spin {
+  animation: none;
+}

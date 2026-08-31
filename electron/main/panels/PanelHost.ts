@@ -13,7 +13,8 @@
  * Everything OS-specific goes through the injected PlatformAdapter. This file
  * never reads `process.platform`.
  */
-import { BrowserWindow, screen, shell, type Display, type Rectangle } from 'electron'
+import { BrowserWindow, screen, shell, type Rectangle } from 'electron'
+import { sharedWorkAreaCache } from '../edge/workAreaCache'
 import type { PlatformAdapter } from '../../platform/types'
 import type { CollapseStrategy, PanelSide, TriggerAlign } from '../../../shared/types/settings'
 import type { PushArgs, PushChannel } from '../../../shared/ipc'
@@ -142,7 +143,7 @@ export class PanelHost {
 
   /** Work area of the display this panel is currently docked to. */
   workArea(): Rectangle {
-    return this.#display().workArea
+    return this.#workArea()
   }
 
   /**
@@ -153,7 +154,7 @@ export class PanelHost {
    */
   triggerRect(): Rectangle {
     const bounds = computePanelBounds({
-      workArea: this.#display().workArea,
+      workArea: this.#workArea(),
       side: this.#spec.side,
       width: this.#spec.gripPx,
       heightRatio: this.#layout.heightRatio,
@@ -257,6 +258,21 @@ export class PanelHost {
   }
 
   /**
+   * Re-dock to a different monitor without tearing the window down. Used when
+   * the user changes the Settings display picker, and when the 4-tier resolve
+   * in `panels/displays.ts` lands on a new id after a topology change.
+   * `#workArea()` already reads `#deps.displayId` fresh on every call, so
+   * updating it here first is what makes `applyGeometry` place the window on
+   * the new monitor instead of the old one.
+   */
+  setDisplayId(id: number | null): void {
+    const current = this.#deps.displayId ?? null
+    if (current === id) return
+    this.#deps.displayId = id
+    this.applyGeometry()
+  }
+
+  /**
    * Backing call for `panel:set-interactive`. Under `clickthrough` this is
    * exactly open/close; under `resize` it is too, because a grip-width window
    * is already unable to block anything.
@@ -292,6 +308,33 @@ export class PanelHost {
     const win = this.window
     if (!win) return
     win.setBounds(this.#boundsFor(this.#open))
+  }
+
+  /**
+   * Drop out of the top always-on-top band for the duration of a native OLE
+   * drag (task smooth-05's main-process half).
+   *
+   * `create()` pins the window at the platform's topmost always-on-top band
+   * (Windows' `'screen-saver'` level, via `platform.applyAlwaysOnTop`) — above
+   * Explorer, Word, the browser, everything. That is exactly wrong mid-drag:
+   * the OS resolves a drop target by hit-testing whatever window is topmost
+   * under the cursor, so dragging a card over Explorer would actually drop it
+   * onto Ledge's own always-on-top window and the file would never reach
+   * Explorer at all. Demoting to the ordinary `'normal'` always-on-top band
+   * keeps the panel above regular windows — it does not vanish mid-drag — while
+   * letting a real drop target receive the drop like any other topmost app.
+   */
+  demoteZ(): void {
+    const win = this.window
+    if (!win) return
+    win.setAlwaysOnTop(true, 'normal')
+  }
+
+  /** Restores the z-band `create()` set, once the native drag ends. */
+  restoreZ(): void {
+    const win = this.window
+    if (!win) return
+    this.#deps.platform.applyAlwaysOnTop(win, true)
   }
 
   /** Type-checked push to this panel's renderer. */
@@ -353,7 +396,7 @@ export class PanelHost {
         : this.#spec.gripPx
 
     return computePanelBounds({
-      workArea: this.#display().workArea,
+      workArea: this.#workArea(),
       side: this.#spec.side,
       width,
       heightRatio: this.#layout.heightRatio,
@@ -361,16 +404,27 @@ export class PanelHost {
     })
   }
 
-  #display(): Display {
+  /**
+   * Work area of the display this panel is docked to.
+   *
+   * Read through the shared `WorkAreaCache` rather than straight off `screen`:
+   * the cursor poll calls `workArea()` and `triggerRect()` for every target on
+   * every 16 ms tick, and each raw call was a full `getAllDisplays()` scan
+   * across the process boundary for a rectangle that only changes when a
+   * monitor is plugged, unplugged or re-scaled — which is exactly when the
+   * cache invalidates itself.
+   */
+  #workArea(): Rectangle {
+    const cache = sharedWorkAreaCache()
     const wanted = this.#deps.displayId
     if (wanted !== null && wanted !== undefined) {
-      const match = screen.getAllDisplays().find((d) => d.id === wanted)
+      const area = cache.get(wanted)
       // Fall through to primary rather than throwing: a display can be
       // unplugged at any moment, and a panel that cannot find its monitor must
       // still be reachable.
-      if (match) return match
+      if (area) return area
     }
-    return screen.getPrimaryDisplay()
+    return cache.primary()
   }
 
   async #load(win: BrowserWindow): Promise<void> {

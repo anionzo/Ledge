@@ -7,12 +7,19 @@
  *   ledge://thumb/<imageId>      240px thumbnail of a stored capture
  *   ledge://thumb/file/<path>    240px thumbnail of an external image file
  *                                (used to preview a `file` payload's image)
+ *   ledge://file/<path>          an external animated image file, byte for byte
  *
  * Stored-capture routes are confined to the app's own images directory — the
  * id is validated to `[a-z0-9-]` and the resolved file must sit *directly* in
  * that dir, so no `..` or absolute path can escape it. The file-thumb route
  * exists to preview the user's own copied image files and is restricted to
  * image extensions on files that actually exist.
+ *
+ * `ledge://file/` is the same idea with a narrower door: a thumbnail is a
+ * re-encoded still, so an animated GIF served through it stops moving. This
+ * route hands back the original bytes instead, and only for the formats where
+ * that is the whole point — see `ANIMATED_IMAGE_EXTS`. Keeping it to those
+ * means a card can never accidentally stream a 60 MB TIFF into a 40 px box.
  *
  * The scheme must be declared privileged BEFORE `app` is ready; the main
  * process does that by passing `{ scheme: PRIVILEGED_SCHEME, privileges:
@@ -59,6 +66,17 @@ const IMAGE_MIME_TYPES: Readonly<Record<string, string>> = {
   tiff: 'image/tiff'
 }
 
+/**
+ * Extensions the full-file route will serve.
+ *
+ * Only formats that actually animate, because that is the only reason to skip
+ * the thumbnail. GIF is the one the clipboard realistically carries as a file;
+ * animated WebP exists but cannot be told apart from a still WebP without
+ * decoding the container, and guessing would send every WebP down the
+ * unbounded path.
+ */
+const ANIMATED_IMAGE_EXTS: ReadonlySet<string> = new Set(['gif'])
+
 export interface StoredImage {
   filePath: string
   contentType: string
@@ -72,6 +90,20 @@ export function fullUrlForStoredImage(imageId: string): string {
 /** URL for a bounded thumbnail of a stored capture. */
 export function thumbnailUrlForStoredImage(imageId: string): string {
   return `${PRIVILEGED_SCHEME}://thumb/${imageId}`
+}
+
+/**
+ * URL for an external animated image file, served whole. Callers should reach
+ * for `thumbnailUrlForFile` for everything else — this one is deliberately
+ * unbounded so the animation survives.
+ */
+export function fullUrlForFile(filePath: string): string {
+  return `${PRIVILEGED_SCHEME}://file/${encodeURIComponent(filePath.replace(/\\/g, '/'))}`
+}
+
+/** True when the full-file route is willing to serve this path. */
+export function isAnimatedImageFile(filePath: string): boolean {
+  return ANIMATED_IMAGE_EXTS.has(extname(filePath).slice(1).toLowerCase())
 }
 
 /** URL for a bounded thumbnail of an external image file. */
@@ -140,6 +172,26 @@ export function registerLedgeProtocol(): void {
         const stored = resolveStoredImage(PATHS.imagesDir(), stripQuery(target))
         if (!stored) return Promise.resolve(new Response('Not found', { status: 404 }))
         return Promise.resolve(thumbnailResponse(stored.filePath, true, request))
+      }
+
+      // ── external animated image file, byte for byte ────────────────────
+      if (rest.startsWith('file/')) {
+        const filePath = normalize(decodeURIComponent(rest.slice('file/'.length)))
+        // Same existence and image-extension guards as the thumb route, plus
+        // the animation narrowing: a still image has no reason to come through
+        // here and every reason to stay bounded.
+        if (!isImageFile(filePath) || !isAnimatedImageFile(filePath) || !existsSync(filePath)) {
+          return Promise.resolve(new Response('Not found', { status: 404 }))
+        }
+        const ext = extname(filePath).slice(1).toLowerCase()
+        return Promise.resolve(
+          streamResponse(filePath, {
+            'Content-Type': IMAGE_MIME_TYPES[ext],
+            // A file on the user's disk can be replaced under the same path,
+            // so this cannot claim the immutability the stored captures do.
+            'Cache-Control': 'private, max-age=60'
+          })
+        )
       }
 
       // ── full-resolution stored capture ─────────────────────────────────

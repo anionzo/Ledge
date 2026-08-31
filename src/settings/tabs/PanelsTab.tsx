@@ -12,26 +12,69 @@
  * and `gauge.enabled` (quota). Picking the edge writes both `shelf.side` and
  * `gauge.side` so nothing downstream can read a stale gauge edge.
  */
+import type { DisplayOption } from '../../../shared/ipc'
 import type { PanelSide, TriggerAlign } from '../../../shared/types/settings'
 import type { SettingsTabProps } from '../context'
-import { Field, Section, Segmented, Slider, Switch, useFieldId } from '../components/Controls'
+import { useInvoke } from '../../lib/bridge'
+import { Field, Section, Segmented, Select, Slider, Switch, useFieldId } from '../components/Controls'
 import { Icon } from '../../ui'
 import { t } from '../../i18n'
 import '../styles/panels-tab.css'
 
+/** The picker's own sentinel for "no saved monitor" — `<select>` values are strings. */
+const AUTO_DISPLAY = 'auto'
+
 export function PanelsTab({ settings, capabilities, update }: SettingsTabProps) {
   const clipboardEnabledId = useFieldId('clipboard-on')
   const quotaEnabledId = useFieldId('quota-on')
+  const displayId = useFieldId('display')
   const proximityId = useFieldId('proximity')
   const heightId = useFieldId('height')
   const maxItemsId = useFieldId('max-items')
   const thresholdId = useFieldId('threshold')
   const intervalId = useFieldId('interval')
 
+  // Read once on mount. A monitor plugged in after the tab opened shows up
+  // once the user reopens Settings — good enough for a picker, and it avoids
+  // wiring a `display-added` push just for this list.
+  const { data: displays } = useInvoke('displays:list')
+
   const sideOptions: { value: PanelSide; label: string }[] = [
     { value: 'left', label: t('settings.panels.side.left') },
     { value: 'right', label: t('settings.panels.side.right') }
   ]
+
+  const displayOptions: { value: string; label: string }[] = [
+    { value: AUTO_DISPLAY, label: t('settings.panels.display.auto') },
+    ...(displays ?? []).map((option, index) => ({
+      value: String(option.id),
+      label: displayLabel(option, index)
+    }))
+  ]
+
+  const stickDisplayValue =
+    settings.stickDisplay.displayId !== null ? String(settings.stickDisplay.displayId) : AUTO_DISPLAY
+
+  // Writes back the saved work area + scale factor alongside the id, not just
+  // the id: those are what tier 2 of the main-process resolve matches against
+  // once Windows reassigns display ids on the next reboot (see
+  // `electron/main/panels/displays.ts`). "Primary display (follow)" clears all
+  // three so the hub always re-resolves to whichever monitor is primary now.
+  const onDisplayChange = (value: string) => {
+    if (value === AUTO_DISPLAY) {
+      void update({ stickDisplay: { displayId: null, savedWorkArea: null, savedScaleFactor: null } })
+      return
+    }
+    const chosen = (displays ?? []).find((option) => String(option.id) === value)
+    if (!chosen) return
+    void update({
+      stickDisplay: {
+        displayId: chosen.id,
+        savedWorkArea: chosen.workArea,
+        savedScaleFactor: chosen.scaleFactor
+      }
+    })
+  }
 
   const alignOptions: { value: TriggerAlign; label: string }[] = [
     { value: 'top', label: t('settings.panels.trigger.top') },
@@ -61,6 +104,21 @@ export function PanelsTab({ settings, capabilities, update }: SettingsTabProps) 
               options={sideOptions}
               label={t('settings.panels.side')}
               onChange={setSide}
+            />
+          }
+        />
+
+        <Field
+          label={t('settings.panels.display')}
+          help={t('settings.panels.display.help')}
+          htmlFor={displayId}
+          control={
+            <Select
+              id={displayId}
+              value={stickDisplayValue}
+              options={displayOptions}
+              label={t('settings.panels.display')}
+              onChange={onDisplayChange}
             />
           }
         />
@@ -211,6 +269,24 @@ export function PanelsTab({ settings, capabilities, update }: SettingsTabProps) 
       </Section>
     </>
   )
+}
+
+/**
+ * Build the picker label from the structured fields rather than from
+ * `option.label`.
+ *
+ * Main assembles that string as `"Primary · 3840×2160"` for logs and for any
+ * non-renderer use, and it cannot translate it — `t()` does not exist in the
+ * main process. Re-deriving it here means both "Primary" and "Display" get
+ * localized, instead of a regex swapping one English word and leaving the
+ * other. The resolution stays in physical pixels, so a 3840×2160 panel at 200%
+ * does not read as an ordinary 1920×1080 monitor.
+ */
+function displayLabel(option: DisplayOption, index: number): string {
+  const name = option.isPrimary
+    ? t('settings.panels.display.primary_tag')
+    : t('settings.panels.display.numbered', { n: index + 1 })
+  return `${name} · ${option.physicalWidth}×${option.physicalHeight}`
 }
 
 /**

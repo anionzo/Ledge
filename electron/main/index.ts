@@ -15,7 +15,7 @@
  * setting was meant to help. If the flicker resurfaces, fix it per-GPU with a
  * targeted switch rather than disabling acceleration for everyone.
  */
-import { app, BrowserWindow, protocol } from 'electron'
+import { app, BrowserWindow, protocol, screen } from 'electron'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type { PanelId } from '../../shared/ipc'
@@ -29,11 +29,21 @@ import {
   LEDGE_PRIVILEGES,
   type ClipboardEngine
 } from '../features/clipboard'
+import { setDragZBandHooks } from '../features/clipboard/drag'
 import { loadSettings, onSettingsChanged, saveSettings } from '../store/settings'
 import { PanelHost, type EdgePanelId } from './panels/PanelHost'
+import { resolveStickDisplayPrefs } from './panels/displays'
 import { closeSettingsWindow, getSettingsWindow, openSettingsWindow } from './panels/settingsWindow'
 import { createCursorPoll, type CursorPoll, type EdgeTarget } from './edge/cursorPoll'
-import { broadcast, registerClipboardIpc, registerCoreIpc, registerShelfPlaceholders } from './ipc'
+import { disposeSharedWorkAreaCache } from './edge/workAreaCache'
+import { initAutoUpdater, type UpdaterController } from './updater'
+import {
+  broadcast,
+  registerClipboardIpc,
+  registerCoreIpc,
+  registerShelfPlaceholders,
+  registerUpdaterIpc
+} from './ipc'
 
 // The ledge:// scheme must be declared privileged before the app is ready, so
 // the renderer can load clipboard thumbnails through it. Registering the
@@ -48,12 +58,20 @@ const HERE = dirname(fileURLToPath(import.meta.url))
 const PANEL_WIDTH: Record<EdgePanelId, number> = { shelf: 360, gauge: 320 }
 /** The sliver left at the edge when a panel is collapsed by resizing. */
 const GRIP_PX = 6
+/**
+ * Displays change in bursts, not events — a dock attach or a monitor waking
+ * fires a dozen of them while the list is still transitional. Matches the
+ * settle window `PanelHost` uses for the same reason.
+ */
+const DISPLAY_SETTLE_MS = 600
 
 let quitting = false
 let tray: TrayController | null = null
 let poll: CursorPoll | null = null
 let quotaTimer: ReturnType<typeof setInterval> | null = null
 let clipboard: ClipboardEngine | null = null
+let updater: UpdaterController | null = null
+let displaySettleTimer: ReturnType<typeof setTimeout> | null = null
 
 const panels = new Map<EdgePanelId, PanelHost>()
 
@@ -104,6 +122,43 @@ function openSettings(): void {
  * keep working unchanged; only its renderer and content changed. `gauge:*`
  * pushes still reach it because `broadcast` sends to every live panel.
  */
+/** True when two optional rectangles describe the same area. */
+function sameRect(
+  a: { x: number; y: number; width: number; height: number } | null,
+  b: { x: number; y: number; width: number; height: number } | null
+): boolean {
+  if (a === null || b === null) return a === b
+  return a.x === b.x && a.y === b.y && a.width === b.width && a.height === b.height
+}
+
+/**
+ * Which display id the hub should dock to, re-recording how we found it.
+ *
+ * The stored id is only ever a hint: Windows renumbers displays between
+ * sessions, so the work area and scale factor written back beside it are what
+ * actually identify the monitor after a reboot. Writing back only on a real
+ * change is what keeps this out of a loop — `saveSettings` notifies
+ * `applySettings`, which lands right back here.
+ *
+ * The default, all-null preference means "follow the primary display", which is
+ * not a pin: there is nothing to resolve and nothing to persist, and
+ * `PanelHost`'s own fallback already does the right thing. Resolving it would
+ * quietly convert "follow primary" into "pinned to whatever was primary the
+ * first time you launched".
+ */
+function stickDisplayIdFor(settings: Settings): number | null {
+  const prefs = settings.stickDisplay
+  if (prefs.displayId === null && prefs.savedWorkArea === null) return null
+
+  const resolved = resolveStickDisplayPrefs(prefs)
+  const changed =
+    resolved.displayId !== prefs.displayId ||
+    resolved.savedScaleFactor !== prefs.savedScaleFactor ||
+    !sameRect(resolved.savedWorkArea, prefs.savedWorkArea)
+  if (changed) saveSettings({ stickDisplay: resolved })
+  return resolved.displayId
+}
+
 function syncPanels(settings: Settings): void {
   const platform = getPlatform()
   const strategy = collapseStrategyFor(platform.capabilities.clickThrough)
@@ -124,7 +179,10 @@ function syncPanels(settings: Settings): void {
     triggerAlign: settings.shelf.triggerAlign
   }
 
+  const displayId = stickDisplayIdFor(settings)
+
   if (existing) {
+    existing.setDisplayId(displayId)
     existing.update({ side: settings.shelf.side, collapseStrategy: strategy }, layout)
     return
   }
@@ -139,7 +197,7 @@ function syncPanels(settings: Settings): void {
       htmlEntry: htmlEntry('hub')
     },
     layout,
-    { platform, preloadPath: preloadPath() }
+    { platform, preloadPath: preloadPath(), displayId }
   )
   host.create()
   panels.set(id, host)
@@ -186,9 +244,41 @@ function scheduleQuota(settings: Settings): void {
   run()
 }
 
+/**
+ * A monitor was plugged, unplugged or re-scaled.
+ *
+ * `PanelHost` already debounces its own geometry against the same burst; what
+ * it cannot do is re-run the 4-tier resolve, because it only knows the id it
+ * was handed. So the whole dock decision is re-derived here — that is what
+ * brings the hub home when the monitor the user pinned it to comes back.
+ */
+function onDisplayTopologyChanged(): void {
+  if (displaySettleTimer !== null) clearTimeout(displaySettleTimer)
+  displaySettleTimer = setTimeout(() => {
+    displaySettleTimer = null
+    if (quitting) return
+    syncPanels(loadSettings())
+  }, DISPLAY_SETTLE_MS)
+}
+
 function teardown(): void {
   if (quitting) return
   quitting = true
+
+  if (displaySettleTimer !== null) {
+    clearTimeout(displaySettleTimer)
+    displaySettleTimer = null
+  }
+  screen.removeListener('display-added', onDisplayTopologyChanged)
+  screen.removeListener('display-removed', onDisplayTopologyChanged)
+  screen.removeListener('display-metrics-changed', onDisplayTopologyChanged)
+
+  // Clear the drag hooks before the panels go: a hook firing into a destroyed
+  // PanelHost during shutdown would throw inside a native drag callback.
+  setDragZBandHooks(null)
+
+  updater?.dispose()
+  updater = null
 
   poll?.stop()
   poll = null
@@ -213,6 +303,8 @@ function teardown(): void {
 
   for (const host of panels.values()) host.destroy()
   panels.clear()
+  // After the panels, since they read through it right up until they are gone.
+  disposeSharedWorkAreaCache()
   closeSettingsWindow()
 }
 
@@ -277,6 +369,31 @@ function bootstrap(): void {
   })
 
   syncPanels(settings)
+
+  // Re-resolve the dock when the desk changes shape.
+  screen.on('display-added', onDisplayTopologyChanged)
+  screen.on('display-removed', onDisplayTopologyChanged)
+  screen.on('display-metrics-changed', onDisplayTopologyChanged)
+
+  // A native OLE drag has to be able to land on a window that is *not* ours.
+  // The hub is always-on-top, so for the duration of the drag it steps down a
+  // band and lets Explorer, Word or the browser be the drop target.
+  setDragZBandHooks({
+    onDragBegin: () => {
+      panels.get('shelf')?.demoteZ()
+    },
+    onDragEnd: () => {
+      panels.get('shelf')?.restoreZ()
+    }
+  })
+
+  updater = initAutoUpdater({
+    getSettings: loadSettings,
+    onStatus: (status) => {
+      broadcast('updater:status', status)
+    }
+  })
+  registerUpdaterIpc(updater)
 
   tray = createTray({
     platform,

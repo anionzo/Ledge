@@ -9,3 +9,7 @@ Thumbs.db
 .claude/settings.local.json
 
 release/
+
+# Impeccable design-hook local state (per-machine, not shared).
+.impeccable/config.local.json
+.impeccable/hook.cache.json

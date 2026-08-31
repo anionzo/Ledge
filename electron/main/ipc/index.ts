@@ -25,6 +25,8 @@ import type {
   SendChannel
 } from '../../../shared/ipc'
 import type { PlatformAdapter } from '../../platform/types'
+import { listDisplayOptions } from '../panels/displays'
+import type { UpdaterController } from '../updater'
 import { loadSettings, saveSettings } from '../../store/settings'
 import { getHistory } from '../../store/usageHistory'
 import { getSnapshot, probeCommand, refresh } from '../../features/quota'
@@ -154,6 +156,11 @@ export function registerCoreIpc(deps: IpcDeps): void {
     deps.getPanel(panel)?.close()
   })
 
+  // Read live rather than cached: the Settings picker is exactly the place a
+  // user goes right after plugging a monitor in, and a stale list would offer
+  // them the desk they no longer have.
+  handle('displays:list', () => listDisplayOptions())
+
   handle('app:quit', () => {
     deps.quit()
   })
@@ -170,6 +177,7 @@ export function registerShelfPlaceholders(): void {
   handle('shelf:pin', () => [])
   handle('shelf:delete', () => [])
   handle('shelf:clear', () => [])
+  handle('shelf:clear-query', () => [])
   handle('shelf:full-text', () => '')
   handle('shelf:copy', () => false)
   handle('shelf:paste', () => false)
@@ -193,6 +201,7 @@ export function registerClipboardIpc(engine: ClipboardEngine): void {
   handle('shelf:pin', (_e, id, pinned) => engine.setPinned(id, pinned))
   handle('shelf:delete', (_e, ids) => engine.remove(ids))
   handle('shelf:clear', (_e, keepPinned) => engine.clear(keepPinned))
+  handle('shelf:clear-query', (_e, query) => engine.clearQuery(query))
   handle('shelf:full-text', (_e, id) => engine.fullText(id))
   handle('shelf:copy', (_e, req) => engine.copy(req))
   handle('shelf:paste', (_e, req) => engine.paste(req))
@@ -203,4 +212,22 @@ export function registerClipboardIpc(engine: ClipboardEngine): void {
 
   receive('shelf:start-drag', (event, req) => engine.startDrag(event.sender, req))
   receive('shelf:prestage-drag', (_e, req) => engine.prestageDrag(req))
+}
+
+/**
+ * Wire the updater to its four channels.
+ *
+ * Registered unconditionally, even on a Store build where the controller
+ * refuses to do anything: the Settings window asks for `updater:status` on
+ * every mount, and a missing handler would surface as a rejected promise and
+ * an error banner rather than the honest "the store manages this" the status
+ * object already carries.
+ */
+export function registerUpdaterIpc(updater: UpdaterController): void {
+  handle('updater:status', () => updater.status())
+  handle('updater:check', () => updater.check())
+  handle('updater:download', () => updater.download())
+  handle('updater:quit-and-install', () => {
+    updater.quitAndInstall()
+  })
 }

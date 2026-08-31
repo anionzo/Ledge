@@ -62,6 +62,12 @@ interface Resolved {
   subIndex?: number
   /** Full text for a text item (preview is truncated in memory). */
   fullText?: string
+  /**
+   * When the source `ClipboardItem` entered history. Used to name an
+   * unlabeled image capture as a Snipping-Tool-style screenshot; a stack's
+   * members all share their parent item's timestamp.
+   */
+  createdAt: number
 }
 
 export function resolveDragData(store: ItemStore, req: DragRequest): Resolved | null {
@@ -72,13 +78,13 @@ export function resolveDragData(store: ItemStore, req: DragRequest): Resolved | 
     if (item.data.kind !== 'stack') return null
     const member = item.data.members[req.memberIndex]
     if (!member) return null
-    return { data: member, subIndex: req.memberIndex + 1 }
+    return { data: member, subIndex: req.memberIndex + 1, createdAt: item.createdAt }
   }
 
   if (item.data.kind === 'text') {
-    return { data: item.data, fullText: store.getFullText(item.id) }
+    return { data: item.data, fullText: store.getFullText(item.id), createdAt: item.createdAt }
   }
-  return { data: item.data }
+  return { data: item.data, createdAt: item.createdAt }
 }
 
 /* ------------------------------------------------------------------ */
@@ -107,16 +113,34 @@ function contentKey(m: Exclude<ItemData, { kind: 'stack' }>): string {
   return m.kind === 'file' ? m.path : m.kind === 'image' ? m.imageId : m.kind === 'link' ? m.url : m.preview.slice(0, 40)
 }
 
-function stampName(): string {
-  return `Image ${formatScreenshotName().replace(/^Screenshot /, '')}`
+/**
+ * Basename (no extension) for an image staged out to a temp file.
+ *
+ * An item that carries an original filename (a web image, a copied file's
+ * re-capture) keeps it untouched — Edge-Drop's "Original Filename
+ * Preservation". An unlabeled capture (Win+Shift+S, a raw bitmap copy) has no
+ * such name, so it gets named the way Windows itself names a screenshot:
+ * `Screenshot YYYY-MM-DD HH.MM.SS`, formatted from when the item entered
+ * history (not "now" — the drag can happen long after the capture). Pure, so
+ * it unit-tests without touching the filesystem or a live clipboard.
+ */
+export function imageDragBaseName(capturedName: string | null, createdAt: number): string {
+  if (capturedName) return capturedName.replace(/\.[^.]+$/, '')
+  return formatScreenshotName(new Date(createdAt)).replace(/\.png$/i, '')
 }
 
 /** Copy a stored capture into temp under a friendly, collision-free name. */
-function stageImage(store: ItemStore, data: Extract<ItemData, { kind: 'image' }>, subIndex: number | undefined, temp: string): string | null {
+function stageImage(
+  store: ItemStore,
+  data: Extract<ItemData, { kind: 'image' }>,
+  subIndex: number | undefined,
+  temp: string,
+  createdAt: number
+): string | null {
   const src = store.resolveStoredImagePath(data.imageId)
   if (!src) return null
   const ext = (extname(src).slice(1) || 'png').toLowerCase()
-  const baseName = (data.capturedName || stampName()).replace(/\.[^.]+$/, '')
+  const baseName = imageDragBaseName(data.capturedName, createdAt)
   const suffix = subIndex && subIndex > 1 ? ` (${subIndex})` : ''
   let dest = join(temp, `${baseName}${suffix}.${ext}`)
   // Distinct siblings in a collection share names; disambiguate by size.
@@ -153,9 +177,11 @@ function stageText(text: string, temp: string): string | null {
 
 /**
  * Resolve an item to concrete file(s) for the OS. `fullText` supplies the
- * un-truncated text for text items (the in-memory preview is capped).
+ * un-truncated text for text items (the in-memory preview is capped);
+ * `createdAt` is the owning item's capture time, used to name an unlabeled
+ * image capture (see `imageDragBaseName`).
  */
-export function stageDragFile(store: ItemStore, data: ItemData, subIndex?: number, fullText?: string): Staged | null {
+export function stageDragFile(store: ItemStore, data: ItemData, subIndex: number | undefined, fullText: string | undefined, createdAt: number): Staged | null {
   const key = cacheKey(data, subIndex)
   const cached = stagedCache.get(key)
   if (cached && existsSync(cached.file)) return cached
@@ -171,7 +197,7 @@ export function stageDragFile(store: ItemStore, data: ItemData, subIndex?: numbe
       break
     }
     case 'image': {
-      const dest = stageImage(store, data, subIndex, temp)
+      const dest = stageImage(store, data, subIndex, temp, createdAt)
       if (!dest) return null
       result = { file: dest, files: [dest] }
       break
@@ -195,7 +221,7 @@ export function stageDragFile(store: ItemStore, data: ItemData, subIndex?: numbe
         if (member.kind === 'file') {
           if (existsSync(member.path)) files.push(member.path)
         } else if (member.kind === 'image') {
-          const dest = stageImage(store, member, idx, temp)
+          const dest = stageImage(store, member, idx, temp, createdAt)
           if (dest) files.push(dest)
         } else if (member.kind === 'link') {
           const dest = stageText(member.url, temp)
@@ -230,6 +256,81 @@ export function stageDragFile(store: ItemStore, data: ItemData, subIndex?: numbe
 }
 
 /* ------------------------------------------------------------------ */
+/* Z-band demotion hooks                                              */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Lets main lower the hub's always-on-top level for the duration of a native
+ * OLE drag. Ledge's panels stay always-on-top so they survive alt-tabbing —
+ * but that same level sits above every other window while `startDrag` runs
+ * its native drag session, so without a demotion the OS delivers the drop
+ * back onto our own always-on-top window instead of Explorer/Word underneath.
+ *
+ * Wired from `electron/main/index.ts` onto `PanelHost`; this module never
+ * imports `PanelHost` directly (main constructs the clipboard engine, so a
+ * clipboard -> main-owned-window-class import would be a dependency cycle).
+ */
+export interface DragZBandHooks {
+  onDragBegin(): void
+  onDragEnd(): void
+}
+
+let zBandHooks: DragZBandHooks | null = null
+
+/** `null` clears the hooks; every call site below treats that as a no-op. */
+export function setDragZBandHooks(hooks: DragZBandHooks | null): void {
+  zBandHooks = hooks
+}
+
+/** Longest a drag may hold the demotion, even with no other completion signal. */
+const DRAG_ZBAND_TIMEOUT_MS = 30_000
+
+/**
+ * Run `fn` (the synchronous `startDrag` call) with the hub demoted for its
+ * duration, guaranteed to restore exactly once no matter how the drag ends:
+ * `fn` returning normally, the sender's `webContents` going away mid-drag, or
+ * — belt and suspenders, since Electron gives no drag-completion event on
+ * `WebContents` — a bounded timeout. A stuck demotion would permanently sink
+ * the hub behind every other window, which is far worse than restoring early.
+ */
+function withZBandDemotion(sender: WebContents, fn: () => void): void {
+  const hooks = zBandHooks
+  if (!hooks) {
+    fn()
+    return
+  }
+
+  let ended = false
+  const end = (): void => {
+    if (ended) return
+    ended = true
+    clearTimeout(timer)
+    sender.removeListener('destroyed', end)
+    try {
+      hooks.onDragEnd()
+    } catch (err) {
+      console.error('[clipboard] onDragEnd hook failed', err)
+    }
+  }
+
+  const timer = setTimeout(end, DRAG_ZBAND_TIMEOUT_MS)
+  ;(timer as unknown as { unref?: () => void }).unref?.()
+  sender.once('destroyed', end)
+
+  try {
+    hooks.onDragBegin()
+  } catch (err) {
+    console.error('[clipboard] onDragBegin hook failed', err)
+  }
+
+  try {
+    fn()
+  } finally {
+    end()
+  }
+}
+
+/* ------------------------------------------------------------------ */
 /* Public entry points                                                */
 /* ------------------------------------------------------------------ */
 
@@ -237,12 +338,12 @@ export function stageDragFile(store: ItemStore, data: ItemData, subIndex?: numbe
 export function startDrag(store: ItemStore, sender: WebContents, req: DragRequest): void {
   const resolved = resolveDragData(store, req)
   if (!resolved) return
-  const staged = stageDragFile(store, resolved.data, resolved.subIndex, resolved.fullText)
+  const staged = stageDragFile(store, resolved.data, resolved.subIndex, resolved.fullText, resolved.createdAt)
   if (!staged) return
 
   const item: Electron.Item = { file: staged.file, icon: dragIcon(resolved.data) }
   if (staged.files && staged.files.length > 1) item.files = staged.files
-  sender.startDrag(item)
+  withZBandDemotion(sender, () => sender.startDrag(item))
 }
 
 /** Warm the temp file + icon while the pointer hovers, so drag start is 0ms. */
@@ -250,7 +351,7 @@ export function prestageDrag(store: ItemStore, req: DragRequest): void {
   try {
     const resolved = resolveDragData(store, req)
     if (!resolved) return
-    stageDragFile(store, resolved.data, resolved.subIndex, resolved.fullText)
+    stageDragFile(store, resolved.data, resolved.subIndex, resolved.fullText, resolved.createdAt)
     dragIcon(resolved.data)
   } catch {
     /* prestaging is best-effort */

@@ -22,6 +22,7 @@ import { AgentsTab } from './tabs/AgentsTab'
 import { AppearanceTab } from './tabs/AppearanceTab'
 import { BehaviourTab } from './tabs/BehaviourTab'
 import { PanelsTab } from './tabs/PanelsTab'
+import { UpdateBanner } from './components/UpdateBanner'
 import './styles/settings.css'
 
 type TabId = 'behaviour' | 'panels' | 'agents' | 'appearance' | 'about'
@@ -130,6 +131,10 @@ export function App() {
         aria-labelledby={`bz-tab-${active}`}
         tabIndex={0}
       >
+        {/* Mounted once, outside the per-tab switch, so it survives a tab
+            change instead of flashing out and back in — an update banner
+            every tab sees, not one Behaviour or About happens to own. */}
+        <UpdateBanner />
         <h1 className="bz-settings-heading">{t(`settings.tab.${active}`)}</h1>
         {PANES[active](tabProps)}
       </main>

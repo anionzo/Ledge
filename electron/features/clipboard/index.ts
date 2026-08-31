@@ -13,6 +13,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import type { PlatformAdapter } from '../../platform/types'
 import type { Settings } from '../../../shared/types/settings'
 import type { ClipboardItem, DragRequest, ItemData, MergeResult } from '../../../shared/types/clipboard'
+import type { ClearQuery } from '../../../shared/ipc'
 import { ClipboardWatcher } from './ClipboardWatcher'
 import { ItemStore } from './ItemStore'
 import { ensureDirs } from './paths'
@@ -39,6 +40,13 @@ export interface ClipboardEngine {
   setPinned(id: string, pinned: boolean): ClipboardItem[]
   remove(ids: string[]): ClipboardItem[]
   clear(keepPinned: boolean): ClipboardItem[]
+  /**
+   * Scoped clear: intersects `ids` (null = every item) and `withinMs`
+   * (null = any age), always honouring `keepPinned`. Backs both the plain
+   * "clear unpinned/all" menu items (`ids: null, withinMs: null`) and the
+   * filter/search/time-window scoped ones.
+   */
+  clearQuery(query: ClearQuery): ClipboardItem[]
   fullText(id: string): string
   copy(req: DragRequest): boolean
   paste(req: DragRequest): Promise<boolean>
@@ -67,9 +75,46 @@ export function createClipboardEngine(deps: ClipboardEngineDeps): ClipboardEngin
 
   /* ------------------------------- lifecycle ------------------------------ */
 
+  /** Once-a-minute cadence for the auto-delete sweep — a sloppy deadline, not a precise one. */
+  const AUTO_DELETE_SWEEP_MS = 60_000
+  let autoDeleteTimer: ReturnType<typeof setInterval> | null = null
+
+  /** Re-reads the setting live (never cached) so a mid-session change takes effect on the next tick. */
+  function sweepAutoDelete(): void {
+    const hours = getSettings().shelf.autoDeleteHours
+    if (hours <= 0) return
+    const removed = store.clearOlderThan(hours * 3_600_000, true)
+    if (removed.length) {
+      watcher.resyncSignature()
+      broadcast()
+    }
+  }
+
+  function startAutoDeleteSweep(): void {
+    stopAutoDeleteSweep()
+    sweepAutoDelete() // catch up on whatever aged out while the app was closed
+    autoDeleteTimer = setInterval(sweepAutoDelete, AUTO_DELETE_SWEEP_MS)
+    // Never keep the process alive just for the housekeeping sweep.
+    ;(autoDeleteTimer as unknown as { unref?: () => void }).unref?.()
+  }
+
+  function stopAutoDeleteSweep(): void {
+    if (autoDeleteTimer) {
+      clearInterval(autoDeleteTimer)
+      autoDeleteTimer = null
+    }
+  }
+
   function start(): void {
     ensureDirs()
     store.load()
+    // Opt-in "wipe unpinned on every launch" runs before the temp reconcile
+    // sweep below, so that sweep sees the post-clear truth (no live item keeps
+    // a just-cleared item's staged drag file alive).
+    if (getSettings().shelf.clearUnpinnedOnRestart) {
+      store.clear(true)
+      broadcast()
+    }
     // Sweep temp once against living history (crash orphans, deleted-item junk).
     reconcileTempOnStartup(store.list())
     prewarmDragIcons()
@@ -81,9 +126,12 @@ export function createClipboardEngine(deps: ClipboardEngineDeps): ClipboardEngin
       }
       if (store.add(data)) broadcast()
     })
+
+    startAutoDeleteSweep()
   }
 
   function stop(): void {
+    stopAutoDeleteSweep()
     watcher.stop()
     store.persistSync()
     flushStagedTempRegistry()
@@ -122,6 +170,29 @@ export function createClipboardEngine(deps: ClipboardEngineDeps): ClipboardEngin
 
   function clear(keepPinned: boolean): ClipboardItem[] {
     store.clear(keepPinned)
+    watcher.resyncSignature()
+    broadcast()
+    return store.list()
+  }
+
+  function clearQuery(query: ClearQuery): ClipboardItem[] {
+    const { keepPinned, withinMs, ids } = query
+    // The renderer owns filter/search and hands us the ids it can see; main
+    // narrows further by age. Neither `store.clearIds` nor `store.clearOlderThan`
+    // alone can express "these ids AND older than N ms" together, so the
+    // intersection is computed here and handed to `clearIds`, which still
+    // re-checks `keepPinned` itself as the final guard.
+    // `withinMs` is a floor, not a ceiling: the timed rows clear what was
+    // captured recently. Reaping things once they are OLD is the auto-delete
+    // sweep's separate job (`sweepAutoDelete`), and reading this field the
+    // other way round would make "Clear last hour" wipe everything else.
+    const floor = withinMs === null ? null : Date.now() - withinMs
+    const idSet = ids === null ? null : new Set(ids)
+    const targets = store
+      .list()
+      .filter((it) => (idSet === null || idSet.has(it.id)) && (floor === null || it.createdAt >= floor))
+      .map((it) => it.id)
+    store.clearIds(targets, keepPinned)
     watcher.resyncSignature()
     broadcast()
     return store.list()
@@ -241,6 +312,7 @@ export function createClipboardEngine(deps: ClipboardEngineDeps): ClipboardEngin
     setPinned,
     remove,
     clear,
+    clearQuery,
     fullText,
     copy,
     paste,

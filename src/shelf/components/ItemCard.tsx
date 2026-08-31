@@ -18,7 +18,7 @@
  *   drop-on          merge the dragged card into this one
  *   click while selecting / ctrl-click   toggle selection
  */
-import { memo, useState, type DragEvent, type MouseEvent, type Ref } from 'react'
+import { memo, useRef, useState, type DragEvent, type MouseEvent, type PointerEvent, type Ref } from 'react'
 import type {
   ClipboardItem,
   DragRequest,
@@ -65,9 +65,26 @@ export interface ItemCardProps {
   onMerge: (sourceId: string, targetId: string) => void
   /** Report a failed sub-action so the panel can toast it. */
   onError: (message: string) => void
+  /**
+   * Open the Lightbox straight from the card's own thumbnail, bypassing the
+   * preview sheet. Only wired for a real `image` item — see `ItemMark`.
+   */
+  onPreviewImage: (src: string) => void
   /** From the virtualiser: replaces the estimated height with the real one. */
   measureRef?: Ref<HTMLDivElement>
 }
+
+/**
+ * Below this many pixels of pointer travel since `pointerdown`, a drag is
+ * still "probably a click" — a slightly imprecise mouse-down-and-up, or a
+ * trackpad's inherent wobble. Chromium's own drag-intent distance (a few
+ * device pixels) is smaller than this and fires `dragstart` regardless, so
+ * that handler re-checks against this threshold before committing to an OLE
+ * drag; below it, the drag is cancelled outright and the pending click/
+ * double-click handlers run exactly as if no drag had been attempted. Ported
+ * from Edge-Drop's "intelligent 5px movement guard".
+ */
+const DRAG_THRESHOLD_PX = 5
 
 function ItemCardImpl({
   item,
@@ -86,6 +103,7 @@ function ItemCardImpl({
   onPreview,
   onMerge,
   onError,
+  onPreviewImage,
   measureRef
 }: ItemCardProps) {
   const { data } = item
@@ -97,27 +115,80 @@ function ItemCardImpl({
 
   const setDraggingId = useShelfStore((s) => s.setDraggingId)
 
+  // ── 5 px click-vs-drag guard ─────────────────────────────────────────────
+  //
+  // Refs, not state: this is read once per `dragstart` and otherwise never
+  // drives a render, so putting it in state would just be extra work on every
+  // pointer move of every mouse gesture across the list.
+  const pointerStart = useRef<{ x: number; y: number } | null>(null)
+  const pastThreshold = useRef(false)
+
+  const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
+    // Only the primary button ever starts a drag; a right-click opens the OS
+    // context menu (or nothing) and must not arm the tracker for it.
+    if (event.button !== 0) return
+    pointerStart.current = { x: event.clientX, y: event.clientY }
+    pastThreshold.current = false
+  }
+
+  const onPointerMove = (event: PointerEvent<HTMLDivElement>) => {
+    if (!pointerStart.current || pastThreshold.current) return
+    const dx = event.clientX - pointerStart.current.x
+    const dy = event.clientY - pointerStart.current.y
+    if (Math.hypot(dx, dy) >= DRAG_THRESHOLD_PX) pastThreshold.current = true
+  }
+
+  const resetPointerTracking = () => {
+    pointerStart.current = null
+    pastThreshold.current = false
+  }
+
   /**
    * Native drag out.
    *
-   * `send` here is synchronous by contract and must stay that way. The OS hands
-   * the renderer a drag session valid only inside this event's tick; an
-   * `invoke` round trip — or anything that awaits — returns after the session
-   * has been dropped, and the drag silently does nothing. `preventDefault`
-   * stops Chromium starting its own HTML5 drag, because main is about to start
-   * a real one with `webContents.startDrag`.
+   * The 5 px guard runs first: Chromium fires `dragstart` on its own, smaller
+   * drag-intent distance, so a barely-moved mouse-down-and-up can reach this
+   * handler on its way to being a click. Below `DRAG_THRESHOLD_PX` of travel
+   * since `pointerdown` we cancel the whole HTML5 drag and do nothing else —
+   * no dragging id, no OLE session — so the click/double-click handlers fire
+   * normally on mouseup exactly as if no drag had been attempted.
+   *
+   * Past the threshold, `send` here is synchronous by contract and must stay
+   * that way. The OS hands the renderer a drag session valid only inside this
+   * event's tick; an `invoke` round trip — or anything that awaits — returns
+   * after the session has been dropped, and the drag silently does nothing.
+   * `preventDefault` stops Chromium starting its own HTML5 drag, because main
+   * is about to start a real one with `webContents.startDrag`.
    *
    * The drag id is recorded so another card can merge this one in when it is
    * dropped on. Only whole-item drags are recorded; a member dragged out of a
    * stack must not merge the stack into whatever it lands on.
    */
   const onDragStart = (event: DragEvent<HTMLDivElement>) => {
+    // `pointermove` is the usual evidence, but it is not guaranteed to have
+    // fired before `dragstart` — a fast flick can produce the drag intent from
+    // a single coalesced move, and pointer capture behaves differently across
+    // platforms. So the drag event's own coordinates are checked as a fallback
+    // rather than cancelling on missing evidence: refusing a real drag because
+    // no `pointermove` arrived is a far worse bug than letting a marginal one
+    // through.
+    const start = pointerStart.current
+    const travelled =
+      start === null ? Infinity : Math.hypot(event.clientX - start.x, event.clientY - start.y)
+
+    if (!pastThreshold.current && travelled < DRAG_THRESHOLD_PX) {
+      event.preventDefault()
+      return
+    }
     event.preventDefault()
     setDraggingId(item.id)
     send('shelf:start-drag', request)
   }
 
-  const onDragEnd = () => setDraggingId(null)
+  const onDragEnd = () => {
+    setDraggingId(null)
+    resetPointerTracking()
+  }
 
   const onPointerEnter = () => {
     send('shelf:prestage-drag', request)
@@ -218,12 +289,16 @@ function ItemCardImpl({
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}
       onDrop={onDrop}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={resetPointerTracking}
+      onPointerCancel={resetPointerTracking}
       onPointerEnter={onPointerEnter}
       onClick={onClick}
       onDoubleClick={onDoubleClick}
     >
       <div className="bz-item-lead bz-row">
-        <ItemMark data={data} />
+        <ItemMark data={data} previewEnabled={previewEnabled} onPreviewImage={onPreviewImage} />
 
         <div className="bz-item-body bz-row-fill">
           <span className="bz-item-primary bz-truncate">{primary}</span>
@@ -394,8 +469,58 @@ function StackMembers({
  * into a small deck. Everything else gets its kind glyph, with the link kind
  * borrowing a lettered service badge from the offline URL parser.
  */
-function ItemMark({ data }: { data: ItemData }) {
-  if (data.kind === 'image' || (data.kind === 'file' && isImageExt(data.extension))) {
+function ItemMark({
+  data,
+  previewEnabled,
+  onPreviewImage
+}: {
+  data: ItemData
+  previewEnabled: boolean
+  onPreviewImage: (src: string) => void
+}) {
+  // A real `image` item has a full-resolution `ledge://<id>` route, so its
+  // thumbnail is a shortcut straight into the Lightbox — the reader already
+  // knows which tile this is; making them open the preview sheet first just
+  // to click through to the same full image is a wasted step. `role="button"`
+  // rather than a native `<button>`: the surrounding `.bz-item-thumb` sizing
+  // is tuned for a plain box, and a real button would need its own padding/
+  // border/background reset to avoid inheriting the browser's default chrome
+  // around the 40 px tile. Gated on `previewEnabled` — with the sheet turned
+  // off, the whole preview affordance (sheet and lightbox alike) is off, and
+  // the click falls through to the card's own copy-on-click instead.
+  if (data.kind === 'image') {
+    if (!previewEnabled) {
+      return (
+        <span className="bz-item-mark bz-item-thumb">
+          <MemberThumb data={data} size={40} />
+        </span>
+      )
+    }
+    const full = `ledge://${data.imageId}`
+    return (
+      <span
+        className="bz-item-mark bz-item-thumb"
+        role="button"
+        tabIndex={0}
+        title={t('shelf.preview.view_full')}
+        aria-label={t('shelf.preview.view_full')}
+        onClick={(event) => {
+          event.stopPropagation()
+          onPreviewImage(full)
+        }}
+        onKeyDown={(event) => {
+          if (event.key !== 'Enter' && event.key !== ' ') return
+          event.preventDefault()
+          event.stopPropagation()
+          onPreviewImage(full)
+        }}
+      >
+        <MemberThumb data={data} size={40} />
+      </span>
+    )
+  }
+
+  if (data.kind === 'file' && isImageExt(data.extension)) {
     return (
       <span className="bz-item-mark bz-item-thumb">
         <MemberThumb data={data} size={40} />
@@ -480,11 +605,22 @@ function MemberThumb({ data, size }: { data: ItemData; size: number }) {
   return <Icon name={kindIcon(data.kind)} size={Math.round(size * 0.55)} />
 }
 
-/** The `ledge://` thumbnail URL for an item, or null when it has none. */
+/**
+ * The `ledge://` URL for an item's thumbnail, or null when it has none.
+ *
+ * A GIF file is the one case that does NOT go through the thumbnail route: a
+ * thumbnail is a re-encoded still, so a GIF served through it stops moving.
+ * Those go to `ledge://file/`, which streams the original bytes — a stack of
+ * reaction GIFs is worth very little if every tile is frozen on frame one.
+ * Stored captures are always PNG by the time they reach the store (the
+ * clipboard hands over a `nativeImage`, not a container), so this only ever
+ * applies to a real file on disk.
+ */
 function thumbSrc(data: ItemData): string | null {
   if (data.kind === 'image') return `ledge://thumb/${data.imageId}`
   if (data.kind === 'file' && isImageExt(data.extension)) {
-    return `ledge://thumb/file/${encodeURIComponent(data.path)}`
+    const route = data.extension.toLowerCase() === 'gif' ? 'file' : 'thumb/file'
+    return `ledge://${route}/${encodeURIComponent(data.path)}`
   }
   return null
 }

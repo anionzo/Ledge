@@ -374,6 +374,64 @@ export class ItemStore {
   }
 
   /**
+   * Remove every unpinned item captured more than `ms` ago (measured from
+   * `createdAt` — a re-copy of identical content bumps to the front without
+   * resetting it, so age tracks first capture, not last use). Powers both the
+   * "Clear last 1h/6h/24h" menu items and the auto-delete sweep.
+   *
+   * `keepPinned` is enforced here rather than trusted from the caller: this is
+   * the one place that can never let a pinned item die, no matter who asks.
+   * Returns the ids actually removed.
+   */
+  clearOlderThan(ms: number, keepPinned: boolean): string[] {
+    const cutoff = Date.now() - ms
+    const kept: ClipboardItem[] = []
+    const removed: ClipboardItem[] = []
+    for (const it of this.items) {
+      const stale = it.createdAt <= cutoff
+      if (stale && !(keepPinned && it.pinned)) {
+        this.disownFiles(it)
+        removed.push(it)
+      } else {
+        kept.push(it)
+      }
+    }
+    this.items = kept
+    this.rebuildIndex()
+    this.persistSync()
+    this.notifyRemoved(removed)
+    return removed.map((it) => it.id)
+  }
+
+  /**
+   * Remove exactly the given ids. `keepPinned` — when true — refuses to remove
+   * any id that turns out to be pinned; an id that does not exist is silently
+   * skipped. Both checks matter because this id list arrives from a renderer's
+   * "clear this view" selection, which may be stale by the time it reaches
+   * main (an item could have been pinned, or already deleted, in between).
+   * Returns the ids actually removed.
+   */
+  clearIds(ids: string[], keepPinned: boolean): string[] {
+    if (!ids.length) return []
+    const set = new Set(ids)
+    const kept: ClipboardItem[] = []
+    const removed: ClipboardItem[] = []
+    for (const it of this.items) {
+      if (set.has(it.id) && !(keepPinned && it.pinned)) {
+        this.disownFiles(it)
+        removed.push(it)
+      } else {
+        kept.push(it)
+      }
+    }
+    this.items = kept
+    this.rebuildIndex()
+    this.persistSync()
+    this.notifyRemoved(removed)
+    return removed.map((it) => it.id)
+  }
+
+  /**
    * Merge `source` into `target`, producing a stack on the target item. Text and
    * links cannot be stacked. De-dupes members by signature and refuses to exceed
    * `STACK_LIMIT`.

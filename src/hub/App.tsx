@@ -16,6 +16,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from 'react'
 import type { ClipboardItem, DragRequest } from '../../shared/types/clipboard'
+import type { ClearQuery } from '../../shared/ipc'
 import {
   invoke,
   useLocale,
@@ -284,9 +285,9 @@ export function App() {
     if (last) runCopy({ itemId: last, memberIndex: null })
   }, [runCopy, selection])
 
-  const onClear = useCallback(
-    (keepPinned: boolean) => {
-      invoke('shelf:clear', keepPinned)
+  const onClearQuery = useCallback(
+    (query: ClearQuery) => {
+      invoke('shelf:clear-query', query)
         .then((next) => {
           prevCount.current = next.length
           setItems(next)
@@ -376,6 +377,16 @@ export function App() {
   }, [])
 
   const isFiltered = query.trim().length > 0 || filter !== 'all'
+
+  // What "this view" means to the clear menu: the same filtered+searched list
+  // the virtual window scrolls, minus anything pinned. When there is no
+  // filter and no search that view is just the whole shelf, so `null` is
+  // passed instead of an id list — main can then do the O(1) whole-store
+  // sweep rather than walking a list that would be every unpinned id anyway.
+  const visibleUnpinnedIds = useMemo(
+    () => (isFiltered ? filtered.filter((item) => !item.pinned).map((item) => item.id) : null),
+    [isFiltered, filtered]
+  )
 
   // ── Quota (gauge) ──────────────────────────────────────────────────────────
   const snapshot = useGaugeStore((s) => s.snapshot)
@@ -473,7 +484,8 @@ export function App() {
               <ClearMenu
                 disabled={items.length === 0}
                 panelOpen={open}
-                onClear={onClear}
+                visibleUnpinnedIds={visibleUnpinnedIds}
+                onClearQuery={onClearQuery}
               />
               <Button
                 size="sm"

@@ -89,8 +89,13 @@ export function localPathFromClipboardFileUrl(raw: string): string | null {
  * Snipping Tool window capture) from a text-intent one (Excel/Sheets tabular
  * data, rich text, a document, code) when both a bitmap AND text are present.
  */
-export function isScreenshotOrImageIntent(hasImage: boolean, rawText: string, rawHtml: string): boolean {
+export function isScreenshotOrImageIntent(hasImage: boolean, rawText: string, rawHtml: string, types: readonly string[] = []): boolean {
   if (!hasImage) return false
+  // Checked before the empty-text early return below: some spreadsheet copies
+  // (Excel and Google Sheets both, in different ways) land here with an empty
+  // text/plain but a fully-formed HTML `<table>` — that must win over the
+  // decorative preview bitmap, not fall through to "no text => screenshot".
+  if (win32.preferTabularOverImage(types, rawHtml || null)) return false
   if (!rawText) return true
   if (/^<img\b[^>]*>$/i.test(rawText) || /^<img\b[^>]*\/?>$/i.test(rawHtml)) return true
   if (URL_RE.test(rawText) && rawText.length < 500) return true
@@ -274,7 +279,7 @@ export function analyzeSnapshot(snap: ClipSnapshot, files: string[]): ItemData |
   const localFile = localPathFromClipboardFileUrl(trimmedHtml) || localPathFromClipboardFileUrl(trimmedText)
   if (localFile) return buildFilePayload(localFile)
 
-  if (hasImage && isScreenshotOrImageIntent(hasImage, trimmedText, trimmedHtml)) {
+  if (hasImage && isScreenshotOrImageIntent(hasImage, trimmedText, trimmedHtml, snap.types)) {
     return makeImagePayload(snap, trimmedText, trimmedHtml)
   }
 
@@ -318,7 +323,7 @@ export function signatureForSnapshot(snap: ClipSnapshot, seq: number, files: str
   const trimmedText = snap.text.trim()
   const trimmedHtml = (snap.html ?? '').trim()
 
-  if (hasImage && isScreenshotOrImageIntent(hasImage, trimmedText, trimmedHtml) && snap.image) {
+  if (hasImage && isScreenshotOrImageIntent(hasImage, trimmedText, trimmedHtml, snap.types) && snap.image) {
     return `${seqPrefix}image:${snap.image.width}x${snap.image.height}:${hashBytes(snap.image.png)}`
   }
   if (trimmedText) return `${seqPrefix}text:${trimmedText}`

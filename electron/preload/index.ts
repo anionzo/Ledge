@@ -35,6 +35,7 @@ const INVOKE_CHANNELS = [
   'shelf:pin',
   'shelf:delete',
   'shelf:clear',
+  'shelf:clear-query',
   'shelf:full-text',
   'shelf:copy',
   'shelf:paste',
@@ -49,7 +50,12 @@ const INVOKE_CHANNELS = [
   'panel:set-interactive',
   'panel:open',
   'panel:close',
-  'app:quit'
+  'displays:list',
+  'app:quit',
+  'updater:status',
+  'updater:check',
+  'updater:download',
+  'updater:quit-and-install'
 ] as const satisfies readonly InvokeChannel[]
 
 const PUSH_CHANNELS = [
@@ -58,7 +64,8 @@ const PUSH_CHANNELS = [
   'settings:changed',
   'panel:cursor-edge',
   'panel:toggle',
-  'ui:toast'
+  'ui:toast',
+  'updater:status'
 ] as const satisfies readonly PushChannel[]
 
 const SEND_CHANNELS = [

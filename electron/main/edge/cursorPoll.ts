@@ -26,6 +26,12 @@ import { powerMonitor, screen, type Rectangle } from 'electron'
 import type { EdgeCursorEvent } from '../../../shared/ipc'
 import type { PanelSide } from '../../../shared/types/settings'
 import type { EdgePanelId } from '../panels/PanelHost'
+import {
+  createSeamTickState,
+  isNearProximity,
+  probeSeamAware,
+  type SeamTickState
+} from './stickProbe'
 
 /** Full-speed poll, used only while the cursor is near a docked edge. */
 const POLL_FAST_MS = 16
@@ -35,23 +41,23 @@ const POLL_SLOW_BATTERY_MS = 100
 const POLL_SLOW_AC_MS = 75
 /** Stay fast for this long after leaving proximity, so a jitter does not flap tiers. */
 const SLOW_COOLDOWN_MS = 1500
-/** Distance from an edge at which the fast tier engages. */
+/**
+ * Distance from an edge at which the fast tier engages.
+ *
+ * Edge-Drop's own equivalent (`FAST_POLL_PROXIMITY_PX` in stickProbe.ts) is
+ * 450 px, tuned for a single stick target. Ledge keeps its narrower 160 px
+ * deliberately: this file already spends a whole comment block on staying
+ * out of the fast tier specifically to let idle CPUs reach deep C-states, and
+ * Ledge polls up to two independent panels every tick rather than one. On a
+ * common 13–15" laptop panel (roughly 1366–1920 px wide) a 450 px band would
+ * put a large fraction of the usable screen — on two edges at once — inside
+ * the 16 ms tier, which is exactly the always-awake cost the two-tier design
+ * exists to avoid. 160 px is still comfortably more than a hand needs to
+ * "wind up" before the last stretch of an approach.
+ */
 const FAST_BAND_PX = 160
 /** Suppress emits for sub-pixel jitter while the cursor sits near the edge. */
 const EMIT_MIN_DELTA_PX = 3
-
-/**
- * Seam policy, in spirit rather than in full.
- *
- * On a multi-monitor desktop the inner edge of a display is not a wall — the
- * cursor sails straight through it onto the neighbour. Edge-Drop's stickProbe
- * models this properly; the part worth keeping cheaply is the observation that
- * a *traversal* is fast and an *intent* is slow. Above this speed the cursor is
- * on its way somewhere else, so the trigger stays disarmed, and a short lockout
- * keeps it disarmed until the movement actually settles.
- */
-const TRAVERSAL_SPEED_PX_PER_MS = 2.2
-const TRAVERSAL_LOCKOUT_MS = 250
 
 /** One panel the poll watches. Implemented by PanelHost in main/index.ts. */
 export interface EdgeTarget {
@@ -89,27 +95,8 @@ interface TargetState {
   lastEdgeMiss: boolean
   lastEmittedDistance: number
   lastEmittedOffset: number
-}
-
-/**
- * Signed distance from the cursor to a panel's docked edge, in px.
- *
- * Positive means "inside the work area, this far from the edge". The cursor
- * being on a different display is reported as `null` rather than a huge number,
- * so callers can tell "far away on this screen" from "not on this screen".
- */
-function distanceToEdge(
-  point: { x: number; y: number },
-  workArea: Rectangle,
-  side: PanelSide
-): number | null {
-  const insideX = point.x >= workArea.x && point.x < workArea.x + workArea.width
-  const insideY = point.y >= workArea.y && point.y < workArea.y + workArea.height
-  if (!insideX || !insideY) return null
-
-  return side === 'left'
-    ? point.x - workArea.x
-    : workArea.x + workArea.width - 1 - point.x
+  /** Seam-probe history for this target's edge. See stickProbe.ts. */
+  seam: SeamTickState
 }
 
 export function createCursorPoll(options: CursorPollOptions): CursorPoll {
@@ -117,9 +104,6 @@ export function createCursorPoll(options: CursorPollOptions): CursorPoll {
   let fast = false
   /** When the cursor left every fast band; 0 means "still in one". */
   let proximityExitAt = 0
-  let lastPoint: { x: number; y: number } | null = null
-  let lastTickAt = 0
-  let lockoutUntil = 0
 
   const states = new Map<EdgePanelId, TargetState>()
 
@@ -130,7 +114,8 @@ export function createCursorPoll(options: CursorPollOptions): CursorPoll {
         lastInZone: false,
         lastEdgeMiss: false,
         lastEmittedDistance: Number.NaN,
-        lastEmittedOffset: Number.NaN
+        lastEmittedOffset: Number.NaN,
+        seam: createSeamTickState()
       }
       states.set(id, state)
     }
@@ -155,56 +140,45 @@ export function createCursorPoll(options: CursorPollOptions): CursorPoll {
     const now = Date.now()
     const point = screen.getCursorScreenPoint()
 
-    // ── Speed gate ───────────────────────────────────────────────────────
-    // Normalised per ms so it means the same thing on a 16 ms fast tick and a
-    // 100 ms slow tick.
-    if (lastPoint !== null && lastTickAt !== 0) {
-      const elapsed = Math.max(1, now - lastTickAt)
-      const travelled = Math.hypot(point.x - lastPoint.x, point.y - lastPoint.y)
-      if (travelled / elapsed > TRAVERSAL_SPEED_PX_PER_MS) {
-        lockoutUntil = now + TRAVERSAL_LOCKOUT_MS
-      }
-    }
-    lastPoint = point
-    lastTickAt = now
-    const armed = now >= lockoutUntil
-
     let wantFast = false
 
     for (const target of targets) {
       const workArea = target.workArea()
-      const distance = distanceToEdge(point, workArea, target.side)
       const state = stateFor(target.id)
       const open = target.isOpen()
 
-      if (distance === null) {
-        // Cursor is on another display. Report the leave once, then go quiet.
-        if (state.lastInZone || state.lastEdgeMiss) {
-          state.lastInZone = false
-          state.lastEdgeMiss = false
-          options.emit(target.id, {
-            distancePx: Number.MAX_SAFE_INTEGER,
-            offsetPx: 0,
-            inTriggerZone: false,
-            edgeMiss: false
-          })
-        }
-        // An open panel still wants position updates so it can decide to close.
-        if (open) wantFast = true
-        continue
-      }
+      // The seam-aware probe replaces the old global speed-lockout: rather
+      // than one clock-based "disarmed until" shared by every panel, each
+      // target keeps its own rest history, since two docked panels can sit
+      // on different edges of different displays with unrelated seams.
+      const probe = probeSeamAware(
+        {
+          cursor: point,
+          workArea,
+          stickPosition: target.side,
+          hotZoneWidth: target.proximityPx(),
+          now
+        },
+        state.seam
+      )
+      state.seam = probe.nextState
 
-      if (distance <= FAST_BAND_PX || open) wantFast = true
+      const distance = probe.distFromEdge
+
+      if (open || isNearProximity(distance, FAST_BAND_PX)) wantFast = true
 
       const strip = target.triggerRect()
       const withinStrip = point.y >= strip.y && point.y < strip.y + strip.height
-      const atEdge = distance <= target.proximityPx()
-      const inTriggerZone = armed && withinStrip && atEdge
+      const inTriggerZone = probe.armedInEdge && withinStrip
       // The cursor reached the edge but along the wrong stretch of it: nothing
       // will open from here, so the renderer flashes a beacon that says where
-      // it would. Gated on `armed` for the same reason the opener is — a cursor
-      // sailing past to the next display is travel, not intent.
-      const edgeMiss = armed && !withinStrip && atEdge
+      // it would. Gated on `armedInEdge` for the same reason the opener is —
+      // a cursor sailing past to the next display is travel, not intent. Also
+      // requires the cursor to still be on its own side of the seam: the
+      // overshoot band exists to keep an *already open* panel open, not to
+      // flash a beacon for a stretch of a neighbouring display.
+      const ownSide = distance >= 0
+      const edgeMiss = probe.armedInEdge && !withinStrip && ownSide && probe.inEdge
 
       const offsetPx = point.y - workArea.y
 
@@ -216,7 +190,7 @@ export function createCursorPoll(options: CursorPollOptions): CursorPoll {
         Math.abs(distance - state.lastEmittedDistance) >= EMIT_MIN_DELTA_PX ||
         Math.abs(offsetPx - state.lastEmittedOffset) >= EMIT_MIN_DELTA_PX
 
-      const near = distance <= FAST_BAND_PX
+      const near = isNearProximity(distance, FAST_BAND_PX)
       const shouldEmit =
         inTriggerZone !== state.lastInZone ||
         edgeMiss !== state.lastEdgeMiss ||
@@ -266,8 +240,10 @@ export function createCursorPoll(options: CursorPollOptions): CursorPoll {
   const onResume = (): void => {
     if (timer === null) {
       fast = false
-      lastPoint = null
-      lastTickAt = 0
+      // A possibly different display layout comes back from suspend; a seam
+      // rest count carried across that gap describes a cursor position that
+      // may no longer mean anything, so every target starts fresh.
+      states.clear()
       restart(slowIntervalMs())
     }
   }
@@ -277,8 +253,7 @@ export function createCursorPoll(options: CursorPollOptions): CursorPoll {
       if (timer !== null) return
       fast = false
       proximityExitAt = 0
-      lastPoint = null
-      lastTickAt = 0
+      states.clear()
       // Always start slow; the first approach to an edge accelerates it.
       restart(slowIntervalMs())
       powerMonitor.on('suspend', onSuspend)

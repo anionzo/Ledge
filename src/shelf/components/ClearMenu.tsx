@@ -1,30 +1,42 @@
 /**
  * Clear menu.
  *
- * The header carries one destructive control, and clearing history has two
- * shapes: drop everything unpinned (the everyday tidy) or wipe the lot. Both
- * behind one button so the header stays a single affordance, and "Clear all"
- * arms a confirm before it fires — a two hundred item history is not something
- * to lose to a stray click.
+ * The header carries one destructive control, and clearing history is not
+ * just "unpinned vs all" — a filtered or searched view narrows what "clear"
+ * should mean, and a stale clip from an hour ago is a different problem from
+ * one from last week. So the menu offers three timed sweeps scoped to
+ * whatever is currently visible, a scope-only unpinned sweep, and the
+ * confirmed wipe-everything at the bottom. All five go through
+ * `shelf:clear-query`; the plain `shelf:clear(keepPinned)` channel stays for
+ * other callers but this menu no longer uses it.
  *
- * Ported from Edge-Drop's `ClearMenu`, adapted to Ledge tokens and the
- * `shelf:clear(keepPinned)` contract.
+ * Ported from Edge-Drop's `ClearMenu`, adapted to Ledge tokens and query.
  */
 import { useEffect, useRef, useState } from 'react'
+import type { ClearQuery } from '../../../shared/ipc'
 import { t } from '../../i18n'
-import { Button, Icon } from '../../ui'
+import { Button, Chip, Icon } from '../../ui'
 import { playButtonClickSound } from '../../lib/soundEffects'
 import '../styles/clear-menu.css'
+
+/** One hour in ms, the unit the three timed rows are built from. */
+const HOUR_MS = 60 * 60 * 1000
 
 export interface ClearMenuProps {
   disabled: boolean
   /** Closes the menu whenever the panel itself closes. */
   panelOpen: boolean
-  /** `keepPinned` — true drops only unpinned, false wipes everything. */
-  onClear: (keepPinned: boolean) => void
+  /**
+   * Ids of the unpinned items visible under the active filter and search, or
+   * `null` when that view is the whole shelf (filter All, search empty) —
+   * `null` lets main do the O(1) whole-store sweep instead of walking a list
+   * that would just be every id anyway.
+   */
+  visibleUnpinnedIds: string[] | null
+  onClearQuery: (query: ClearQuery) => void
 }
 
-export function ClearMenu({ disabled, panelOpen, onClear }: ClearMenuProps) {
+export function ClearMenu({ disabled, panelOpen, visibleUnpinnedIds, onClearQuery }: ClearMenuProps) {
   const [open, setOpen] = useState(false)
   const [confirmAll, setConfirmAll] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -55,10 +67,20 @@ export function ClearMenu({ disabled, panelOpen, onClear }: ClearMenuProps) {
     }
   }, [open])
 
-  const clearUnpinned = () => {
+  // The three timed sweeps and the unpinned-in-view sweep all keep pinned
+  // items and scope to whatever `visibleUnpinnedIds` currently is — the
+  // caller has already reduced that to `null` when the view is the whole
+  // shelf, so this component never has to know or care which case it is.
+  const clearWindow = (hours: number) => {
     playButtonClickSound()
     setOpen(false)
-    onClear(true)
+    onClearQuery({ keepPinned: true, withinMs: hours * HOUR_MS, ids: visibleUnpinnedIds })
+  }
+
+  const clearViewUnpinned = () => {
+    playButtonClickSound()
+    setOpen(false)
+    onClearQuery({ keepPinned: true, withinMs: null, ids: visibleUnpinnedIds })
   }
 
   const clearAll = () => {
@@ -69,8 +91,16 @@ export function ClearMenu({ disabled, panelOpen, onClear }: ClearMenuProps) {
     }
     playButtonClickSound()
     setOpen(false)
-    onClear(false)
+    onClearQuery({ keepPinned: false, withinMs: null, ids: null })
   }
+
+  // What the timed rows are actually about to touch. `visibleUnpinnedIds` is
+  // `null` exactly when nothing is narrowing the list, so a chip reading "in
+  // this view" there would be technically true and practically misleading —
+  // the row would sweep the whole shelf while claiming a narrower reach.
+  const scopeLabel = visibleUnpinnedIds === null
+    ? t('shelf.clear.scope_all')
+    : t('shelf.clear.scope_view')
 
   return (
     <div ref={ref} className="bz-clear-menu">
@@ -95,11 +125,35 @@ export function ClearMenu({ disabled, panelOpen, onClear }: ClearMenuProps) {
         // roving-arrow keyboard model this popover doesn't implement, so the
         // honest role is a plain group.
         <div className="bz-clear-pop" role="group" aria-label={t('shelf.clear.menu')}>
-          <button type="button" className="bz-clear-item" onClick={clearUnpinned}>
+          {/* The three timed rows are one family — same scope, same shape,
+              only the age differs — so they sit together with a shared scope
+              chip rather than each spelling out "in this view" in its own
+              label. */}
+          <button type="button" className="bz-clear-item" onClick={() => clearWindow(1)}>
             <Icon name="trash" size={12} />
-            <span>{t('shelf.clear.unpinned')}</span>
+            <span className="bz-row-fill">{t('shelf.clear.last_hour')}</span>
+            <Chip quiet>{scopeLabel}</Chip>
+          </button>
+          <button type="button" className="bz-clear-item" onClick={() => clearWindow(6)}>
+            <Icon name="trash" size={12} />
+            <span className="bz-row-fill">{t('shelf.clear.last_6h')}</span>
+            <Chip quiet>{scopeLabel}</Chip>
+          </button>
+          <button type="button" className="bz-clear-item" onClick={() => clearWindow(24)}>
+            <Icon name="trash" size={12} />
+            <span className="bz-row-fill">{t('shelf.clear.last_24h')}</span>
+            <Chip quiet>{scopeLabel}</Chip>
           </button>
           <div className="bz-clear-sep" />
+          <button type="button" className="bz-clear-item" onClick={clearViewUnpinned}>
+            <Icon name="trash" size={12} />
+            <span>{t('shelf.clear.view_unpinned')}</span>
+          </button>
+          <div className="bz-clear-sep" />
+          {/* The one row that reaches past pinned items and past the current
+              view — set apart by its own separator and, once armed, an
+              explicit "everywhere" so the scope of the confirm step is never
+              in doubt. */}
           <button
             type="button"
             className="bz-clear-item"
@@ -108,7 +162,10 @@ export function ClearMenu({ disabled, panelOpen, onClear }: ClearMenuProps) {
             onClick={clearAll}
           >
             <Icon name="alert" size={12} />
-            <span>{confirmAll ? t('shelf.clear.all_confirm') : t('shelf.clear.all')}</span>
+            <span className="bz-row-fill">
+              {confirmAll ? t('shelf.clear.all_confirm') : t('shelf.clear.all')}
+            </span>
+            {!confirmAll && <Chip quiet>{t('shelf.clear.scope_all')}</Chip>}
           </button>
         </div>
       )}

@@ -37,6 +37,50 @@ export interface EdgeCursorEvent {
   edgeMiss: boolean
 }
 
+/** One scoped clear request. Every field narrows; `null` means "do not narrow". */
+export interface ClearQuery {
+  /** Pinned items survive. Always true except for the explicit "clear all". */
+  keepPinned: boolean
+  /**
+   * Only items captured within this many ms of now — "clear the last hour"
+   * means the hour just gone, not everything before it. `null` is any age.
+   *
+   * Deliberately the opposite window from `ShelfSettings.autoDeleteHours`,
+   * which reaps things once they are OLD. Both exist; they are different
+   * jobs, and collapsing them into one field is how "Clear last hour" ends up
+   * deleting the entire shelf except the last hour.
+   */
+  withinMs: number | null
+  /** Only these ids — the current filter + search result. `null` is everything. */
+  ids: string[] | null
+}
+
+/** One display the hub could dock to, as the Settings picker needs it. */
+export interface DisplayOption {
+  id: number
+  /** "Primary · 3840×2160" — already localized-ish, assembled in main. */
+  label: string
+  /** Work-area size in real pixels, i.e. DIP × scaleFactor. */
+  physicalWidth: number
+  physicalHeight: number
+  scaleFactor: number
+  isPrimary: boolean
+  workArea: { x: number; y: number; width: number; height: number }
+}
+
+/** What the Settings window knows about the update state. */
+export interface UpdaterStatus {
+  /** Store/MSIX build: updates belong to the store, so Ledge never checks. */
+  storeBuild: boolean
+  /** Unpackaged dev run: also never checks. */
+  supported: boolean
+  checking: boolean
+  downloading: boolean
+  availableVersion: string | null
+  downloadedVersion: string | null
+  error: string | null
+}
+
 export interface InvokeMap {
   /** Everything a renderer needs on first paint. */
   'app:bootstrap': {
@@ -58,6 +102,13 @@ export interface InvokeMap {
   'shelf:pin': { args: [id: string, pinned: boolean]; result: ClipboardItem[] }
   'shelf:delete': { args: [ids: string[]]; result: ClipboardItem[] }
   'shelf:clear': { args: [keepPinned: boolean]; result: ClipboardItem[] }
+  /**
+   * Scoped clear. The renderer owns the filter and the search box, so it is the
+   * only side that knows what "this view" means — it passes the ids it can see.
+   * Main still re-checks `pinned` itself: a pinned item is never deleted by a
+   * clear, whatever ids arrive.
+   */
+  'shelf:clear-query': { args: [query: ClearQuery]; result: ClipboardItem[] }
   /** Full text for an item whose preview was truncated. */
   'shelf:full-text': { args: [id: string]; result: string }
   'shelf:copy': { args: [req: DragRequest]; result: boolean }
@@ -91,7 +142,17 @@ export interface InvokeMap {
   'panel:set-interactive': { args: [interactive: boolean]; result: void }
   'panel:open': { args: [panel: PanelId]; result: void }
   'panel:close': { args: [panel: PanelId]; result: void }
+  /** Every display the hub could dock to. Read by the Settings picker. */
+  'displays:list': { args: []; result: DisplayOption[] }
   'app:quit': { args: []; result: void }
+
+  // ── Updates ──────────────────────────────────────────────────────────────
+  'updater:status': { args: []; result: UpdaterStatus }
+  /** Explicit "check now". Resolves with the state after the check. */
+  'updater:check': { args: []; result: UpdaterStatus }
+  'updater:download': { args: []; result: UpdaterStatus }
+  /** Quit and install what has been downloaded. Does not return. */
+  'updater:quit-and-install': { args: []; result: void }
 }
 
 export interface PushMap {
@@ -101,6 +162,12 @@ export interface PushMap {
   'panel:cursor-edge': [event: EdgeCursorEvent]
   'panel:toggle': [open: boolean]
   'ui:toast': [toast: { id: string; message: string; tone: 'info' | 'error' }]
+  /**
+   * The updater moved. One channel rather than available/downloaded/error
+   * three ways: the Settings banner renders the whole status object anyway, and
+   * a single push means it can never show two halves of two different states.
+   */
+  'updater:status': [status: UpdaterStatus]
 }
 
 export interface SendMap {

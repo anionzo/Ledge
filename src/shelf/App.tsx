@@ -13,6 +13,7 @@
  * there is exactly one source of truth and no reconciliation to get wrong.
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from 'react'
+import type { ClearQuery } from '../../shared/ipc'
 import type { ClipboardItem, DragRequest } from '../../shared/types/clipboard'
 import {
   invoke,
@@ -189,9 +190,9 @@ export function App() {
     if (last) runCopy({ itemId: last, memberIndex: null })
   }, [runCopy, selection])
 
-  const onClear = useCallback(
-    (keepPinned: boolean) => {
-      invoke('shelf:clear', keepPinned)
+  const onClearQuery = useCallback(
+    (query: ClearQuery) => {
+      invoke('shelf:clear-query', query)
         .then((next) => {
           prevCount.current = next.length
           setItems(next)
@@ -275,6 +276,14 @@ export function App() {
 
   const isFiltered = query.trim().length > 0 || filter !== 'all'
 
+  // What "this view" means to the clear menu. `null` when nothing is narrowing
+  // the list, which lets main sweep the whole store instead of walking an id
+  // list that would just be every id anyway.
+  const visibleUnpinnedIds = useMemo(
+    () => (isFiltered ? filtered.filter((item) => !item.pinned).map((item) => item.id) : null),
+    [isFiltered, filtered]
+  )
+
   const headerMeta =
     incognito || items.length > 0 ? (
       <span className="bz-hub-meta bz-row">
@@ -305,7 +314,14 @@ export function App() {
           <PanelHeader
             title={t('shelf.title')}
             meta={headerMeta}
-            action={<ClearMenu disabled={items.length === 0} panelOpen={open} onClear={onClear} />}
+            action={
+              <ClearMenu
+                disabled={items.length === 0}
+                panelOpen={open}
+                visibleUnpinnedIds={visibleUnpinnedIds}
+                onClearQuery={onClearQuery}
+              />
+            }
           />
         }
         toolbar={

@@ -16,11 +16,19 @@
 import { app } from 'electron'
 import { closeSync, existsSync, fsyncSync, mkdirSync, openSync, readFileSync, renameSync, unlinkSync, writeSync } from 'node:fs'
 import { dirname, join } from 'node:path'
-import { DEFAULT_SETTINGS, SETTINGS_VERSION, type Settings } from '../../shared/types/settings'
+import {
+  AUTO_DELETE_HOURS,
+  DEFAULT_SETTINGS,
+  SETTINGS_VERSION,
+  type Settings
+} from '../../shared/types/settings'
 import type {
+  AutoDeleteHours,
   CustomProviderConfig,
   CustomProviderMode,
-  CustomProviderShape
+  CustomProviderShape,
+  ScreenRect,
+  StickDisplayPrefs
 } from '../../shared/types/settings'
 import type { DeepPartial } from '../../shared/ipc'
 
@@ -61,6 +69,13 @@ function mergeKnown<T>(base: T, patch: unknown): T {
     } else if (Array.isArray(current) && Array.isArray(next)) {
       out[key] = next
     } else if (typeof current === typeof next) {
+      out[key] = next
+    } else if (current === null || next === null) {
+      // A nullable field (`stickDisplay.displayId` and friends) fails the
+      // typeof test in exactly the case it must not: `typeof null` is
+      // 'object', so "null becomes 3" would be dropped and the value could
+      // never be set. Nullable keys are let through here and re-checked in
+      // `normalize`, which is where every one of them is sanitized.
       out[key] = next
     }
     // A type mismatch (string where a number belongs) is dropped silently: the
@@ -167,6 +182,49 @@ function normalizeCustomId(rawId: unknown, rawName: unknown): string {
 }
 
 /**
+ * A finite number, or null. The gate for every nullable numeric field that
+ * `mergeKnown` now lets through untyped.
+ */
+function asFiniteOrNull(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null
+}
+
+/** A screen rectangle, or null when any component is missing or not finite. */
+function asRectOrNull(value: unknown): ScreenRect | null {
+  if (!isPlainObject(value)) return null
+  const x = asFiniteOrNull(value.x)
+  const y = asFiniteOrNull(value.y)
+  const width = asFiniteOrNull(value.width)
+  const height = asFiniteOrNull(value.height)
+  if (x === null || y === null || width === null || height === null) return null
+  if (width <= 0 || height <= 0) return null
+  return { x: Math.round(x), y: Math.round(y), width: Math.round(width), height: Math.round(height) }
+}
+
+/**
+ * Hold `stickDisplay` to its shape. It is the one branch `mergeKnown` cannot
+ * type-check on its own (three nullable fields), so a hand-edited file or a
+ * malformed patch is normalized back to "no preference" rather than trusted.
+ */
+function sanitizeStickDisplay(raw: unknown): StickDisplayPrefs {
+  const value = isPlainObject(raw) ? raw : {}
+  const displayId = asFiniteOrNull(value.displayId)
+  const scale = asFiniteOrNull(value.savedScaleFactor)
+  return {
+    displayId: displayId === null ? null : Math.round(displayId),
+    savedWorkArea: asRectOrNull(value.savedWorkArea),
+    // Scale factors run 1–4 in practice; anything outside that is junk, not a
+    // monitor, and a junk value would poison the twin-display tie-break.
+    savedScaleFactor: scale === null ? null : clamp(scale, 0.5, 8)
+  }
+}
+
+/** Snap to the nearest offered auto-delete age; anything unknown means never. */
+function normalizeAutoDeleteHours(value: unknown): AutoDeleteHours {
+  return AUTO_DELETE_HOURS.includes(value as AutoDeleteHours) ? (value as AutoDeleteHours) : 0
+}
+
+/**
  * Bring a merged object back inside its documented ranges.
  *
  * A hand-edited settings.json with `heightRatio: 40` would produce a panel
@@ -180,11 +238,13 @@ function normalize(settings: Settings): Settings {
     // A hand-edited 0 would make both panels invisible with no way back, so the
     // floor keeps the glass legible; 1 is fully opaque.
     panelOpacity: clamp(settings.panelOpacity, 0.5, 1),
+    stickDisplay: sanitizeStickDisplay(settings.stickDisplay),
     shelf: {
       ...settings.shelf,
       edgeProximityPx: Math.round(clamp(settings.shelf.edgeProximityPx, 1, 64)),
       heightRatio: clamp(settings.shelf.heightRatio, 0.2, 1),
-      maxItems: Math.round(clamp(settings.shelf.maxItems, 10, 5000))
+      maxItems: Math.round(clamp(settings.shelf.maxItems, 10, 5000)),
+      autoDeleteHours: normalizeAutoDeleteHours(settings.shelf.autoDeleteHours)
     },
     gauge: {
       ...settings.gauge,
@@ -204,9 +264,14 @@ function normalize(settings: Settings): Settings {
 /**
  * Migrate a stored object to the current version.
  *
- * There is only one version so far, so this is a seam, not a pipeline. A file
- * from a *newer* version is copied aside before being coerced, so downgrading
- * and re-upgrading does not silently destroy settings this build cannot model.
+ * Still a seam rather than a pipeline: every version bump so far has only
+ * *added* keys, and `mergeKnown` against `DEFAULT_SETTINGS` already fills those
+ * in, so a v1 file becomes a valid v2 file by being read. A real transform —
+ * a renamed or re-scaled key — is what would turn this into a pipeline.
+ *
+ * A file from a *newer* version is copied aside before being coerced, so
+ * downgrading and re-upgrading does not silently destroy settings this build
+ * cannot model.
  */
 function migrate(raw: Record<string, unknown>, path: string): Record<string, unknown> {
   const version = typeof raw['version'] === 'number' ? raw['version'] : 0

@@ -156,6 +156,15 @@ export const en: Dictionary = {
   'shelf.clear.unpinned': 'Clear unpinned',
   'shelf.clear.all': 'Clear all',
   'shelf.clear.all_confirm': 'Tap again to clear everything',
+  'shelf.clear.last_hour': 'Clear last hour',
+  'shelf.clear.last_6h': 'Clear last 6 hours',
+  'shelf.clear.last_24h': 'Clear last 24 hours',
+  'shelf.clear.view_unpinned': 'Clear unpinned in this view',
+  // The scope suffix on the timed rows: with a filter or a search active a
+  // "clear" that quietly reached outside what the user can see would be a
+  // nasty surprise, so the menu says which of the two it is about to do.
+  'shelf.clear.scope_view': 'in this view',
+  'shelf.clear.scope_all': 'everywhere',
 
   // ── Drop target ──────────────────────────────────────────────────────────
   'shelf.drop.hint': 'Drop to add to the shelf',
@@ -273,6 +282,30 @@ export const en: Dictionary = {
   'settings.behaviour.encrypt_history.help':
     'Store the shelf using your operating system key store.',
   'settings.behaviour.sounds': 'Play sounds',
+  'settings.behaviour.auto_delete': 'Delete items after',
+  'settings.behaviour.auto_delete.help': 'Pinned items are never deleted.',
+  'settings.behaviour.auto_delete.never': 'Never',
+  'settings.behaviour.auto_delete.hours': '{n} hours',
+  'settings.behaviour.auto_delete.week': '7 days',
+  'settings.behaviour.clear_unpinned_restart': 'Clear unpinned on restart',
+  'settings.behaviour.clear_unpinned_restart.help':
+    'Start each session with only your pinned items.',
+  'settings.behaviour.updates': 'Updates',
+  'settings.behaviour.auto_updates': 'Install updates automatically',
+  'settings.behaviour.auto_updates.help':
+    'Download new releases in the background and install them on the next restart.',
+
+  // ── Update banner (Settings chrome) ───────────────────────────────────────
+  'settings.update.available': 'Version {version} is available',
+  'settings.update.downloading': 'Downloading update…',
+  'settings.update.ready': 'Version {version} is ready',
+  'settings.update.restart': 'Restart to update',
+  'settings.update.check': 'Check for updates',
+  'settings.update.checking': 'Checking…',
+  'settings.update.current': 'Ledge is up to date',
+  'settings.update.failed': 'Update check failed: {reason}',
+  'settings.update.store': 'Updates are managed by the store.',
+  'settings.update.dev': 'Updates are disabled in a development build.',
 
   'settings.panels.intro':
     'One frame docks to a screen edge and carries both features: the quota HUD as a strip at the top, the clipboard below it.',
@@ -286,6 +319,12 @@ export const en: Dictionary = {
   'settings.panels.clipboard.enabled': 'Show the clipboard',
   'settings.panels.quota.enabled': 'Show the quota strip',
   'settings.panels.enabled': 'Enabled',
+  'settings.panels.display': 'Display',
+  'settings.panels.display.help':
+    'Which monitor the hub docks to. Ledge finds it again after a reboot even when Windows renumbers the displays.',
+  'settings.panels.display.auto': 'Primary display',
+  'settings.panels.display.primary_tag': 'Primary',
+  'settings.panels.display.numbered': 'Display {n}',
   'settings.panels.side': 'Screen edge',
   'settings.panels.side.left': 'Left',
   'settings.panels.side.right': 'Right',

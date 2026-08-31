@@ -16,6 +16,7 @@ import type { ClipboardItem } from '../../../shared/types/clipboard'
 import type { PanelSide } from '../../../shared/types/settings'
 import type { VirtualWindow } from '../../lib/virtual'
 import { t } from '../../i18n'
+import { Lightbox } from '../../ui'
 import { ItemCard } from './ItemCard'
 import '../styles/item-list.css'
 
@@ -56,6 +57,13 @@ export function ItemList({
   const containerRef = useRef<HTMLDivElement>(null)
   const [focusIndex, setFocusIndex] = useState(0)
   const wantsFocus = useRef(false)
+
+  // Card thumbnail → full image, no detour through the preview sheet. Hosted
+  // here rather than per-card or in the hub: every card in the window shares
+  // one Lightbox instance, and the list is what both mounts the cards and
+  // sits above them in the tree, so it is the natural owner.
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null)
+  const onPreviewImage = useCallback((src: string) => setLightboxSrc(src), [])
 
   const selected = new Set(selection)
   const clamped = Math.min(focusIndex, Math.max(0, items.length - 1))
@@ -172,44 +180,56 @@ export function ItemList({
   const visible = items.slice(virtual.start, virtual.end)
 
   return (
-    <div
-      ref={containerRef}
-      className="bz-item-list"
-      role="listbox"
-      aria-multiselectable
-      aria-label={t('shelf.title')}
-      onKeyDown={onKeyDown}
-      style={{ height: virtual.totalHeight }}
-    >
-      {/* One translated block instead of a spacer div: no extra element in the
-          listbox for assistive tech to walk past. */}
-      <div className="bz-item-window" style={{ transform: `translateY(${virtual.offsetTop}px)` }}>
-        {visible.map((item, offset) => {
-          const index = virtual.start + offset
-          return (
-            <ItemCard
-              key={item.id}
-              item={item}
-              index={index}
-              total={items.length}
-              side={side}
-              selected={selected.has(item.id)}
-              selecting={selecting}
-              focusable={index === clamped}
-              previewEnabled={previewEnabled}
-              measureRef={virtual.measureRef(index)}
-              onCopy={onCopy}
-              onPaste={onPaste}
-              onToggleSelection={onToggleSelection}
-              onTogglePin={onTogglePin}
-              onDelete={onDelete}
-              onPreview={onPreview}
-              onMerge={onMerge}
-              onError={onError}
-            />
-          )
-        })}
+    <>
+      <div
+        ref={containerRef}
+        className="bz-item-list"
+        role="listbox"
+        aria-multiselectable
+        aria-label={t('shelf.title')}
+        onKeyDown={onKeyDown}
+        style={{ height: virtual.totalHeight }}
+      >
+        {/* One translated block instead of a spacer div: no extra element in
+            the listbox for assistive tech to walk past. */}
+        <div className="bz-item-window" style={{ transform: `translateY(${virtual.offsetTop}px)` }}>
+          {visible.map((item, offset) => {
+            const index = virtual.start + offset
+            return (
+              <ItemCard
+                key={item.id}
+                item={item}
+                index={index}
+                total={items.length}
+                side={side}
+                selected={selected.has(item.id)}
+                selecting={selecting}
+                focusable={index === clamped}
+                previewEnabled={previewEnabled}
+                measureRef={virtual.measureRef(index)}
+                onCopy={onCopy}
+                onPaste={onPaste}
+                onToggleSelection={onToggleSelection}
+                onTogglePin={onTogglePin}
+                onDelete={onDelete}
+                onPreview={onPreview}
+                onMerge={onMerge}
+                onError={onError}
+                onPreviewImage={onPreviewImage}
+              />
+            )
+          })}
+        </div>
       </div>
-    </div>
+      {/* Outside the listbox on purpose: a dialog nested inside role="listbox"
+          would confuse assistive tech about what is actually selectable, and
+          the Lightbox already manages its own focus trap and restoration. */}
+      <Lightbox
+        src={lightboxSrc}
+        alt={t('shelf.kind.image')}
+        onClose={() => setLightboxSrc(null)}
+        closeLabel={t('shelf.preview.close_full')}
+      />
+    </>
   )
 }

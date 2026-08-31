@@ -69,6 +69,10 @@ import {
 import { ClipboardWatcher } from '../electron/features/clipboard/ClipboardWatcher'
 import { contentSignature } from '../electron/features/clipboard/signature'
 import { ItemStore } from '../electron/features/clipboard/ItemStore'
+import { createClipboardEngine, type ClipboardEngine } from '../electron/features/clipboard'
+import { preferTabularOverImage } from '../electron/features/clipboard/formats/win32'
+import { imageDragBaseName } from '../electron/features/clipboard/drag'
+import { isAnimatedImageFile } from '../electron/features/clipboard/imageProtocol'
 import type { ItemData } from '../shared/types/clipboard'
 import { PREVIEW_LIMIT, STACK_LIMIT } from '../shared/types/clipboard'
 import type { Settings } from '../shared/types/settings'
@@ -198,6 +202,29 @@ describe('formatTabularDataForClipboard — spreadsheet write-back', () => {
   })
 })
 
+/* ======================== spreadsheet vs screenshot ======================= */
+
+describe('preferTabularOverImage — Excel/Sheets cell bitmap vs a real screenshot', () => {
+  it('prefers tabular text when an Excel format hint rides with an HTML table', () => {
+    const html = '<html><body><table><tr><td>Product</td><td>Price</td></tr></table></body></html>'
+    expect(preferTabularOverImage(['CF_DIB', 'Biff12', 'Html Format'], html)).toBe(true)
+  })
+
+  it('prefers tabular text for a browser Google Sheets copy (no native Excel format, just the HTML marker)', () => {
+    const html = '<table data-sheets-root="1"><tr><td>1</td></tr></table>'
+    expect(preferTabularOverImage(['text/html', 'image/png'], html)).toBe(true)
+  })
+
+  it('does not override a plain screenshot: no table, or a table with no spreadsheet fingerprint', () => {
+    expect(preferTabularOverImage(['CF_DIB', 'PNG'], null)).toBe(false)
+    expect(preferTabularOverImage(['CF_DIB', 'PNG'], '<p>just a paragraph</p>')).toBe(false)
+    // A <table> alone (e.g. a Word table screenshot) is not enough without a
+    // spreadsheet-specific hint — otherwise every rich-text table screenshot
+    // would misclassify as tabular data.
+    expect(preferTabularOverImage(['CF_DIB', 'PNG'], '<table><tr><td>x</td></tr></table>')).toBe(false)
+  })
+})
+
 /* ============================ screenshot naming ========================== */
 
 describe('formatScreenshotName', () => {
@@ -210,7 +237,38 @@ describe('formatScreenshotName', () => {
   })
 })
 
+describe('imageDragBaseName — Snipping Tool naming vs original filename preservation', () => {
+  it('names an unlabeled capture like a Windows screenshot, from the item createdAt (not "now")', () => {
+    const createdAt = new Date(2026, 7, 31, 14, 5, 9).getTime()
+    expect(imageDragBaseName(null, createdAt)).toBe('Screenshot 2026-08-31 14.05.09')
+  })
+
+  it('keeps an original filename untouched (minus its extension)', () => {
+    expect(imageDragBaseName('vacation.jpg', Date.now())).toBe('vacation')
+    expect(imageDragBaseName('archive.tar.gz', Date.now())).toBe('archive.tar')
+  })
+})
+
 /* ================================ ItemStore ============================== */
+
+describe('isAnimatedImageFile — which files skip the thumbnail route', () => {
+  it('serves a GIF whole, so it can still animate', () => {
+    expect(isAnimatedImageFile('C:\Users\a\reaction.gif')).toBe(true)
+    expect(isAnimatedImageFile('/home/a/REACTION.GIF')).toBe(true)
+  })
+
+  it('leaves every still format on the bounded thumbnail route', () => {
+    // A still has nothing to gain from the unbounded route and everything to
+    // lose — this is what keeps a 60 MB TIFF out of a 40 px box.
+    for (const path of ['a.png', 'a.jpg', 'a.webp', 'a.tiff', 'a.bmp', 'a.svg']) {
+      expect(isAnimatedImageFile(path)).toBe(false)
+    }
+  })
+
+  it('refuses a path with no extension at all', () => {
+    expect(isAnimatedImageFile('C:\Users\a\clipboard')).toBe(false)
+  })
+})
 
 describe('ItemStore — dedupe/bump, cap, truncation, merge/split', () => {
   let store: ItemStore
@@ -360,6 +418,164 @@ describe('ItemStore — dedupe/bump, cap, truncation, merge/split', () => {
     const s = new ItemStore(settings())
     expect(() => s.load()).not.toThrow()
     expect(s.list()).toHaveLength(0)
+  })
+})
+
+/* ==================== ItemStore — scoped/timed clear (smooth-06) ========= */
+
+describe('ItemStore — clearOlderThan / clearIds', () => {
+  let store: ItemStore
+
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(2026, 7, 1, 12, 0, 0))
+    roots.userData = join(tmpdir(), `bz-clip-clear-${Date.now()}-${Math.random().toString(16).slice(2)}`)
+    mkdirSync(join(roots.userData, 'images'), { recursive: true })
+    mkdirSync(join(roots.userData, 'payloads'), { recursive: true })
+    store = new ItemStore(settings())
+    store.load()
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+    try {
+      rmSync(roots.userData, { recursive: true, force: true })
+    } catch {
+      /* ignore */
+    }
+  })
+
+  const text = (s: string): ItemData => ({ kind: 'text', preview: s, truncated: false, charCount: s.length, html: null })
+
+  it('drops only unpinned items older than the cutoff, never a pinned one regardless of age', () => {
+    store.add(text('ancient')) // t0, will be pinned
+    const ancientId = store.list()[0].id
+    store.setPinned(ancientId, true)
+
+    store.add(text('old')) // t0, unpinned
+    const oldId = store.list()[0].id
+
+    vi.advanceTimersByTime(2 * 3_600_000) // +2h
+    store.add(text('fresh')) // t0 + 2h, unpinned
+    const freshId = store.list()[0].id
+
+    // "older than 1h" measured from now (t0 + 2h): cutoff is t0 + 1h, so both
+    // 'ancient' and 'old' (created at t0) are stale; 'fresh' is not.
+    const removed = store.clearOlderThan(3_600_000, true)
+    expect(removed).toEqual([oldId])
+    expect(store.list().map((i) => i.id).sort()).toEqual([ancientId, freshId].sort())
+  })
+
+  it('clearOlderThan(ms, false) also removes stale pinned items', () => {
+    store.add(text('old'))
+    const oldId = store.list()[0].id
+    store.setPinned(oldId, true)
+    vi.advanceTimersByTime(2 * 3_600_000)
+
+    const removed = store.clearOlderThan(3_600_000, false)
+    expect(removed).toEqual([oldId])
+    expect(store.list()).toHaveLength(0)
+  })
+
+  it('clearIds removes exactly the requested unpinned ids, ignoring pinned ids and unknown ids', () => {
+    store.add(text('a'))
+    const aId = store.list()[0].id
+    store.setPinned(aId, true)
+
+    store.add(text('b'))
+    const bId = store.list()[0].id
+
+    const removed = store.clearIds([aId, bId, 'does-not-exist'], true)
+    expect(removed).toEqual([bId])
+    expect(store.list().map((i) => i.id)).toEqual([aId])
+  })
+
+  it('clearIds with keepPinned=false removes a pinned id explicitly named', () => {
+    store.add(text('a'))
+    const aId = store.list()[0].id
+    store.setPinned(aId, true)
+
+    const removed = store.clearIds([aId], false)
+    expect(removed).toEqual([aId])
+    expect(store.list()).toHaveLength(0)
+  })
+})
+
+/* ============ clearQuery — which end of the window it clears ============== */
+
+/**
+ * The regression this exists for: `ClearQuery.withinMs` is a floor, not a
+ * ceiling. A menu row labelled "Clear last hour" that deleted everything
+ * EXCEPT the last hour would be silent, irreversible data loss, and the two
+ * readings differ only by the direction of one comparison.
+ */
+describe('clearQuery — "clear the last hour" clears the last hour', () => {
+  const text = (s: string): ItemData => ({
+    kind: 'text',
+    preview: s,
+    truncated: false,
+    charCount: s.length,
+    html: null
+  })
+
+  let engine: ClipboardEngine
+
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(2026, 7, 1, 12, 0, 0))
+    roots.userData = join(tmpdir(), `bz-clip-q-${Date.now()}-${Math.random().toString(16).slice(2)}`)
+    mkdirSync(join(roots.userData, 'images'), { recursive: true })
+    mkdirSync(join(roots.userData, 'payloads'), { recursive: true })
+    engine = createClipboardEngine({
+      // The engine only reaches for the adapter on paths this test never
+      // walks (drag staging, reveal), so a bare stub keeps the fixture honest
+      // about what is actually exercised.
+      platform: {} as never,
+      getSettings: settings(),
+      onItems: () => {}
+    })
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+    rmSync(roots.userData, { recursive: true, force: true })
+  })
+
+  it('removes the recent items and leaves the older ones alone', () => {
+    engine.addData(text('three hours ago'))
+    vi.advanceTimersByTime(2 * 3_600_000)
+    engine.addData(text('one hour ago'))
+    vi.advanceTimersByTime(3_600_000 - 1_000)
+    engine.addData(text('just now'))
+
+    const left = engine.clearQuery({ keepPinned: true, withinMs: 3_600_000, ids: null })
+    expect(
+      left.map((i) => (i.data.kind === 'text' ? i.data.preview : ''))
+    ).toEqual(['three hours ago'])
+  })
+
+  it('never removes a pinned item, however recent', () => {
+    engine.addData(text('pinned and fresh'))
+    const id = engine.list()[0].id
+    engine.setPinned(id, true)
+
+    const left = engine.clearQuery({ keepPinned: true, withinMs: 3_600_000, ids: null })
+    expect(left.map((i) => i.id)).toEqual([id])
+  })
+
+  it('narrows to the ids the view could see, intersected with the window', () => {
+    engine.addData(text('old and listed'))
+    const oldId = engine.list()[0].id
+    vi.advanceTimersByTime(3 * 3_600_000)
+    engine.addData(text('new and listed'))
+    const newId = engine.list()[0].id
+    engine.addData(text('new but not listed'))
+    const unlistedId = engine.list()[0].id
+
+    // `oldId` is in the view but outside the hour; `unlistedId` is inside the
+    // hour but outside the view. Only `newId` is inside both, so only it goes.
+    const left = engine.clearQuery({ keepPinned: true, withinMs: 3_600_000, ids: [oldId, newId] })
+    expect(left.map((i) => i.id).sort()).toEqual([oldId, unlistedId].sort())
   })
 })
 
