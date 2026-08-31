@@ -1,0 +1,14 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "bounce-easing",
+        "value": "var(--bz-spring)",
+        "createdAt": "2026-08-31T16:52:45.470Z",
+        "reason": "main-agent: --bz-spring is cubic-bezier(0.22,1,0.36,1), a smooth ease-out with no overshoot (control-point y peaks at 1 at the end, never exceeds it) — the standard Ledge chrome easing used project-wide, not bounce/elastic; the detector cannot resolve the CSS var to its curve"
+      }
+    ]
+  }
+}
