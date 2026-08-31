@@ -1,13 +1,14 @@
 ---
 id: gf62ik
 title: Design pass Obsidian Blade (nen den + tim glow + spring nay)
-status: todo
+status: done
 priority: medium
 labels:
   - design
   - ui
 createdAt: '2026-08-31T07:33:43.554Z'
-updatedAt: '2026-08-31T07:33:43.554Z'
+updatedAt: '2026-08-31T08:23:54.591Z'
+completedAt: '2026-08-31T08:23:36.630Z'
 timeSpent: 0
 ---
 # Design pass Obsidian Blade (nen den + tim glow + spring nay)
@@ -23,4 +24,10 @@ Nguoi dung muon lay design dep nhu Edge-Drop. Edge-Drop tokens: nen den nhieu lo
 - [ ] #1 tokens.css doi sang Obsidian, ca 2 theme van dung duoc
 - [ ] #2 spring/glow ap dung, tat khi reduced-motion
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Obsidian Blade ap dung: nen den nhieu lop, accent tim #8b5cf6+glow, shadow sau, blade 22px, spring nay. Light theme giu dung duoc. Values-only, 0 rename token.
+<!-- SECTION:NOTES:END -->
 

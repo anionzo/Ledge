@@ -11,8 +11,8 @@
   "task:378teh": {
     "entityType": "task",
     "entityId": "378teh",
-    "canonicalHash": "8654bc7776fa0e3870fed70664632b303498c491b2a347b6900f545951ed8010",
-    "revision": 2,
+    "canonicalHash": "eb052a48bf5a046ad899a06943b63e591b309e499b19c5b1cba851f6b36ae703",
+    "revision": 3,
     "path": "tasks/378teh.md",
     "indexedAt": "0001-01-01T00:00:00Z",
     "stale": true
@@ -38,8 +38,8 @@
   "task:gf62ik": {
     "entityType": "task",
     "entityId": "gf62ik",
-    "canonicalHash": "233bccd0def89ff4841852b4f958bc707b473b2d5cdc2399dfc1d529287f9679",
-    "revision": 1,
+    "canonicalHash": "a6e069e07a630a299c7935d2551b8ea1ab20c4160a88f6946bf8d70d22f06381",
+    "revision": 3,
     "path": "tasks/gf62ik.md",
     "indexedAt": "0001-01-01T00:00:00Z",
     "stale": true
@@ -56,8 +56,8 @@
   "task:rmttou": {
     "entityType": "task",
     "entityId": "rmttou",
-    "canonicalHash": "b3d0fdd47585f1ecec85ee1b2f08502b9dc59037203e0e916e5f8396e9357f93",
-    "revision": 1,
+    "canonicalHash": "b81eb2a0a16e707e45282f1b0110966693bfe15916876bc42acb8b61a7cc3cbc",
+    "revision": 3,
     "path": "tasks/rmttou.md",
     "indexedAt": "0001-01-01T00:00:00Z",
     "stale": true
@@ -110,8 +110,8 @@
   "task:zu4x6f": {
     "entityType": "task",
     "entityId": "zu4x6f",
-    "canonicalHash": "a9c7a7c03b90794af11fc1529ea1639a0f68906f1497853803ac14bb121fc9d9",
-    "revision": 2,
+    "canonicalHash": "8619d6533ec2e51cfaea671bbc0f8e697f75a0c7e02d4f67bef67435e2230aee",
+    "revision": 3,
     "path": "tasks/zu4x6f.md",
     "indexedAt": "0001-01-01T00:00:00Z",
     "stale": true

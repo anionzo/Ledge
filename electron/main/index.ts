@@ -433,8 +433,15 @@ async function captureHub(dir: string): Promise<void> {
     await wait(400)
     const win = host?.window
     if (win && !win.webContents.isDestroyed()) {
-      // Expand the strip so the shot shows the full quota list (rings, the hot
-      // pace chip, the DeepSeek balance) over the clipboard — the Obsidian look.
+      // Dismiss the first-run onboarding (fresh profile shows it) so the shot
+      // isn't covered, then expand the strip to show the full quota list — rings,
+      // the hot pace chip, the DeepSeek balance — over the clipboard.
+      await win.webContents
+        .executeJavaScript(
+          "Array.from(document.querySelectorAll('button')).filter(b=>/Bỏ qua|Skip/.test(b.textContent||'')).forEach(b=>b.click()); true"
+        )
+        .catch(() => undefined)
+      await wait(400)
       await win.webContents
         .executeJavaScript("document.querySelector('.bz-quota-strip')?.click(); true")
         .catch(() => undefined)

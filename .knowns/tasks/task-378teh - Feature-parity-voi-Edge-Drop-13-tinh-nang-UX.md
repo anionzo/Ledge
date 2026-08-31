@@ -1,13 +1,14 @@
 ---
 id: 378teh
 title: Feature parity voi Edge-Drop (13 tinh nang UX)
-status: in-progress
+status: done
 priority: high
 labels:
   - feature
   - ux
 createdAt: '2026-08-31T07:07:21.281Z'
-updatedAt: '2026-08-31T07:33:10.968Z'
+updatedAt: '2026-08-31T08:23:54.424Z'
+completedAt: '2026-08-31T08:23:36.218Z'
 timeSpent: 0
 ---
 # Feature parity voi Edge-Drop (13 tinh nang UX)

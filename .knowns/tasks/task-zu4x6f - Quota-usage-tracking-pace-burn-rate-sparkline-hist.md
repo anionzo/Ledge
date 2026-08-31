@@ -1,13 +1,14 @@
 ---
 id: zu4x6f
 title: 'Quota usage tracking: pace (burn rate) + sparkline history + toast nguong'
-status: in-progress
+status: done
 priority: high
 labels:
   - feature
   - quota
 createdAt: '2026-08-31T07:33:43.316Z'
-updatedAt: '2026-08-31T07:34:05.378Z'
+updatedAt: '2026-08-31T08:23:54.506Z'
+completedAt: '2026-08-31T08:23:36.538Z'
 timeSpent: 0
 ---
 # Quota usage tracking: pace (burn rate) + sparkline history + toast nguong
