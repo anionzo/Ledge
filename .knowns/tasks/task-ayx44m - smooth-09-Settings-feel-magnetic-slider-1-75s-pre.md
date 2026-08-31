@@ -1,7 +1,7 @@
 ---
 id: ayx44m
 title: "[smooth-09] Settings feel (magnetic slider, 1.75s preview)"
-status: todo
+status: done
 priority: low
 labels:
   - from-spec
@@ -9,7 +9,8 @@ labels:
   - spec-date:2026-08-31
   - edge-drop
 createdAt: '2026-08-31T16:29:54.706Z'
-updatedAt: '2026-08-31T16:37:43.327Z'
+updatedAt: '2026-08-31T17:42:00.680Z'
+completedAt: '2026-08-31T17:42:00.680Z'
 timeSpent: 0
 parent: mlncst
 spec: specs/2026-08-31/edge-drop-smoothness-wave
@@ -28,9 +29,9 @@ Port Edge-Drop settings micro-feel: magnetic 5% tick slider with live drag, 1.75
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Height/opacity sliders track 1:1 while dragging and snap to 5% on release
-- [ ] #2 Changing Left/Right or display shows a 1.75s live preview then commits
-- [ ] #3 Settings still has Behaviour, Panels, Agents, Appearance, About
+- [x] #1 Height/opacity sliders track 1:1 while dragging and snap to 5% on release
+- [x] #2 Changing Left/Right or display shows a 1.75s live preview then commits
+- [x] #3 Settings still has Behaviour, Panels, Agents, Appearance, About
 <!-- AC:END -->
 
 ## Implementation Plan

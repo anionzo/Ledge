@@ -1,7 +1,7 @@
 ---
 id: ma5ui8
 title: "[smooth-03] Proximity beacon + trigger clipPath"
-status: todo
+status: done
 priority: medium
 labels:
   - from-spec
@@ -9,7 +9,8 @@ labels:
   - spec-date:2026-08-31
   - edge-drop
 createdAt: '2026-08-31T16:29:28.398Z'
-updatedAt: '2026-08-31T16:37:42.743Z'
+updatedAt: '2026-08-31T17:41:47.167Z'
+completedAt: '2026-08-31T17:41:47.167Z'
 timeSpent: 0
 parent: mlncst
 spec: specs/2026-08-31/edge-drop-smoothness-wave
@@ -27,9 +28,9 @@ When the cursor hits the stuck edge outside the trigger Y strip, flash a 1.5px h
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Misaligned edge hover shows a one-shot proximity beacon, then stops
-- [ ] #2 Trigger align Top/Center/Bottom visually matches the hover strip
-- [ ] #3 Beacon does not steal clicks (click-through still holds when collapsed)
+- [x] #1 Misaligned edge hover shows a one-shot proximity beacon, then stops
+- [x] #2 Trigger align Top/Center/Bottom visually matches the hover strip
+- [x] #3 Beacon does not steal clicks (click-through still holds when collapsed)
 <!-- AC:END -->
 
 ## Implementation Plan

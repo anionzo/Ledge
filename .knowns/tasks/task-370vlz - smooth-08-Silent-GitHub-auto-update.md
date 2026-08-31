@@ -1,7 +1,7 @@
 ---
 id: 370vlz
 title: "[smooth-08] Silent GitHub auto-update"
-status: todo
+status: done
 priority: high
 labels:
   - from-spec
@@ -9,7 +9,8 @@ labels:
   - spec-date:2026-08-31
   - edge-drop
 createdAt: '2026-08-31T16:29:54.597Z'
-updatedAt: '2026-08-31T16:37:43.240Z'
+updatedAt: '2026-08-31T17:42:00.606Z'
+completedAt: '2026-08-31T17:42:00.606Z'
 timeSpent: 0
 parent: mlncst
 spec: specs/2026-08-31/edge-drop-smoothness-wave
@@ -27,10 +28,10 @@ electron-updater is in package.json with zero call sites. Port Edge-Drop updater
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Packaged GitHub NSIS build checks anionzo/Ledge releases and can Restart to install
-- [ ] #2 isStoreBuild() skips updater entirely
-- [ ] #3 Unpackaged dev does not download updates by default
-- [ ] #4 Settings shows a banner only when an update is downloaded or available
+- [x] #1 Packaged GitHub NSIS build checks anionzo/Ledge releases and can Restart to install
+- [x] #2 isStoreBuild() skips updater entirely
+- [x] #3 Unpackaged dev does not download updates by default
+- [x] #4 Settings shows a banner only when an update is downloaded or available
 <!-- AC:END -->
 
 ## Implementation Plan

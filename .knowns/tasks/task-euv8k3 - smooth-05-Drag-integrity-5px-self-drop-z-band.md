@@ -1,7 +1,7 @@
 ---
 id: euv8k3
 title: "[smooth-05] Drag integrity (5px, self-drop, z-band)"
-status: todo
+status: done
 priority: high
 labels:
   - from-spec
@@ -9,7 +9,8 @@ labels:
   - spec-date:2026-08-31
   - edge-drop
 createdAt: '2026-08-31T16:29:54.290Z'
-updatedAt: '2026-08-31T16:37:42.963Z'
+updatedAt: '2026-08-31T17:42:00.369Z'
+completedAt: '2026-08-31T17:42:00.369Z'
 timeSpent: 0
 parent: mlncst
 spec: specs/2026-08-31/edge-drop-smoothness-wave
@@ -27,10 +28,10 @@ Port Edge-Drop drag feel Ledge is missing: 5px click-vs-drag guard, self-drop on
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Click under 5px still copies/pastes; drag beyond 5px starts OLE without a paste
-- [ ] #2 Dropping a card back on the hub does not duplicate, split, or bump hitCount
-- [ ] #3 During drag-out the window z-band demotes so Explorer/Word can receive the drop
-- [ ] #4 Drag-out into Explorer still works with prestage
+- [x] #1 Click under 5px still copies/pastes; drag beyond 5px starts OLE without a paste
+- [x] #2 Dropping a card back on the hub does not duplicate, split, or bump hitCount
+- [x] #3 During drag-out the window z-band demotes so Explorer/Word can receive the drop
+- [x] #4 Drag-out into Explorer still works with prestage
 <!-- AC:END -->
 
 ## Implementation Plan

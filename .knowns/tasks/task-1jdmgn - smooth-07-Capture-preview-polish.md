@@ -1,7 +1,7 @@
 ---
 id: 1jdmgn
 title: "[smooth-07] Capture + preview polish"
-status: todo
+status: done
 priority: medium
 labels:
   - from-spec
@@ -9,7 +9,8 @@ labels:
   - spec-date:2026-08-31
   - edge-drop
 createdAt: '2026-08-31T16:29:54.496Z'
-updatedAt: '2026-08-31T16:37:43.142Z'
+updatedAt: '2026-08-31T17:42:00.530Z'
+completedAt: '2026-08-31T17:42:00.530Z'
 timeSpent: 0
 parent: mlncst
 spec: specs/2026-08-31/edge-drop-smoothness-wave
@@ -27,10 +28,10 @@ Spreadsheet/HTML cells must not become screenshots. Snipping Tool clips drag out
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Excel/Sheets cell copies store as text/HTML, not image
-- [ ] #2 Win+Shift+S drag-out filename matches Screenshot YYYY-MM-DD HH.MM.SS.png
-- [ ] #3 GIF members in a stack play through ledge:// not a static thumb
-- [ ] #4 Clicking an image card thumbnail opens Lightbox without requiring the preview sheet first
+- [x] #1 Excel/Sheets cell copies store as text/HTML, not image
+- [x] #2 Win+Shift+S drag-out filename matches Screenshot YYYY-MM-DD HH.MM.SS.png
+- [x] #3 GIF members in a stack play through ledge:// not a static thumb
+- [x] #4 Clicking an image card thumbnail opens Lightbox without requiring the preview sheet first
 <!-- AC:END -->
 
 ## Implementation Plan

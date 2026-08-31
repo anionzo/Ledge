@@ -1,7 +1,7 @@
 ---
 id: gop97t
 title: "[smooth-06] Filter-scoped and timed history clear"
-status: todo
+status: done
 priority: medium
 labels:
   - from-spec
@@ -9,7 +9,8 @@ labels:
   - spec-date:2026-08-31
   - edge-drop
 createdAt: '2026-08-31T16:29:54.399Z'
-updatedAt: '2026-08-31T16:37:43.044Z'
+updatedAt: '2026-08-31T17:42:00.453Z'
+completedAt: '2026-08-31T17:42:00.453Z'
 timeSpent: 0
 parent: mlncst
 spec: specs/2026-08-31/edge-drop-smoothness-wave
@@ -27,9 +28,9 @@ Clear menu currently only unpinned vs all. Port Edge-Drop 1h/6h/24h windows and 
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Clear menu offers 1h, 6h, 24h, unpinned, all with confirm on destructive all
-- [ ] #2 Active Images/Files/Links/Text filter or search restricts which unpinned ids are removed
-- [ ] #3 autoDeleteHours and clearUnpinnedOnRestart settings exist and spare pinned items
+- [x] #1 Clear menu offers 1h, 6h, 24h, unpinned, all with confirm on destructive all
+- [x] #2 Active Images/Files/Links/Text filter or search restricts which unpinned ids are removed
+- [x] #3 autoDeleteHours and clearUnpinnedOnRestart settings exist and spare pinned items
 <!-- AC:END -->
 
 ## Implementation Plan

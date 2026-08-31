@@ -1,7 +1,7 @@
 ---
 id: unlbvv
 title: "[smooth-10] Quota glance strip + vi/en i18n"
-status: todo
+status: done
 priority: high
 labels:
   - from-spec
@@ -9,7 +9,8 @@ labels:
   - spec-date:2026-08-31
   - edge-drop
 createdAt: '2026-08-31T16:29:54.798Z'
-updatedAt: '2026-08-31T16:37:43.423Z'
+updatedAt: '2026-08-31T17:42:00.760Z'
+completedAt: '2026-08-31T17:42:00.760Z'
 timeSpent: 0
 parent: mlncst
 spec: specs/2026-08-31/edge-drop-smoothness-wave
@@ -27,10 +28,10 @@ Ledge-native, not in Edge-Drop. Collapsed QuotaStrip must show icon+% per enable
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Collapsed strip shows ProviderBrandIcon + used percent or dash for every enabled provider in one row
-- [ ] #2 Expand still shows full ProviderRow list
-- [ ] #3 vi.json (or src/i18n/ledge/vi.json) uses Ledge keys for hub + settings; switching to Vietnamese translates those strings
-- [ ] #4 README no longer claims 31 fully translated languages
+- [x] #1 Collapsed strip shows ProviderBrandIcon + used percent or dash for every enabled provider in one row
+- [x] #2 Expand still shows full ProviderRow list
+- [x] #3 vi.json (or src/i18n/ledge/vi.json) uses Ledge keys for hub + settings; switching to Vietnamese translates those strings
+- [x] #4 README no longer claims 31 fully translated languages
 <!-- AC:END -->
 
 ## Implementation Plan

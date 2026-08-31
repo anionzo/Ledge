@@ -1,7 +1,7 @@
 ---
 id: e6f62s
 title: "[smooth-01] Port seam-aware edge probe"
-status: todo
+status: done
 priority: high
 labels:
   - from-spec
@@ -9,7 +9,8 @@ labels:
   - spec-date:2026-08-31
   - edge-drop
 createdAt: '2026-08-31T16:29:28.198Z'
-updatedAt: '2026-08-31T16:37:42.552Z'
+updatedAt: '2026-08-31T17:41:46.970Z'
+completedAt: '2026-08-31T17:41:46.970Z'
 timeSpent: 0
 parent: mlncst
 spec: specs/2026-08-31/edge-drop-smoothness-wave
@@ -27,9 +28,9 @@ Port Edge-Drop stickProbe.ts (own-pixel arming, 1.5 px/ms intent speed, rest-as-
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 stickProbe.ts exists in Ledge with probeSeamAware + garbage guard, no Electron imports
-- [ ] #2 cursorPoll uses armedInEdge; interior-seam flick does not open, rest does
-- [ ] #3 Unit tests cover two-display crossing vs rest without Electron
+- [x] #1 stickProbe.ts exists in Ledge with probeSeamAware + garbage guard, no Electron imports
+- [x] #2 cursorPoll uses armedInEdge; interior-seam flick does not open, rest does
+- [x] #3 Unit tests cover two-display crossing vs rest without Electron
 <!-- AC:END -->
 
 ## Implementation Plan

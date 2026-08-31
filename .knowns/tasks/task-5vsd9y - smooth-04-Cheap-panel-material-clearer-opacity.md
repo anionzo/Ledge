@@ -1,7 +1,7 @@
 ---
 id: 5vsd9y
 title: "[smooth-04] Cheap panel material + clearer opacity"
-status: todo
+status: done
 priority: high
 labels:
   - from-spec
@@ -9,7 +9,8 @@ labels:
   - spec-date:2026-08-31
   - edge-drop
 createdAt: '2026-08-31T16:29:28.489Z'
-updatedAt: '2026-08-31T16:37:42.847Z'
+updatedAt: '2026-08-31T17:41:47.241Z'
+completedAt: '2026-08-31T17:41:47.241Z'
 timeSpent: 0
 parent: mlncst
 spec: specs/2026-08-31/edge-drop-smoothness-wave
@@ -27,9 +28,9 @@ Stop using blur(24px) as the only hub material (Edge-Drop removed blur for 60/12
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Default hub material is a cheap fill (no 24px blur required to look finished)
-- [ ] #2 Opacity slider 50-100% updates both panels live; clamp 0.5-1
-- [ ] #3 Default is clearer than dark 0.72; tokens and Settings.panelOpacity agree
+- [x] #1 Default hub material is a cheap fill (no 24px blur required to look finished)
+- [x] #2 Opacity slider 50-100% updates both panels live; clamp 0.5-1
+- [x] #3 Default is clearer than dark 0.72; tokens and Settings.panelOpacity agree
 <!-- AC:END -->
 
 ## Implementation Plan

@@ -1,7 +1,7 @@
 ---
 id: mlncst
 title: "[smooth-00] Edge-Drop smoothness wave"
-status: todo
+status: done
 priority: high
 labels:
   - from-spec
@@ -10,7 +10,8 @@ labels:
   - edge-drop
   - parent
 createdAt: '2026-08-31T16:29:09.400Z'
-updatedAt: '2026-08-31T16:38:12.470Z'
+updatedAt: '2026-08-31T17:42:00.830Z'
+completedAt: '2026-08-31T17:42:00.830Z'
 timeSpent: 0
 spec: specs/2026-08-31/edge-drop-smoothness-wave
 order: 0
@@ -25,9 +26,9 @@ Parent tracker. Port current Edge-Drop main shelf feel into Ledge hub. Do not im
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 All child smooth-01..10 are done or explicitly wont-do
-- [ ] #2 Ledge still one hub + quota; no Edge-Drop sponsor UI; NOTICE attribution intact
-- [ ] #3 typecheck + test green on the wave branch
+- [x] #1 All child smooth-01..10 are done or explicitly wont-do
+- [x] #2 Ledge still one hub + quota; no Edge-Drop sponsor UI; NOTICE attribution intact
+- [x] #3 typecheck + test green on the wave branch
 <!-- AC:END -->
 
 ## Implementation Plan

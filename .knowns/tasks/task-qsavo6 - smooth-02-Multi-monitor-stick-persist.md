@@ -1,7 +1,7 @@
 ---
 id: qsavo6
 title: "[smooth-02] Multi-monitor stick + persist"
-status: todo
+status: done
 priority: high
 labels:
   - from-spec
@@ -9,7 +9,8 @@ labels:
   - spec-date:2026-08-31
   - edge-drop
 createdAt: '2026-08-31T16:29:28.298Z'
-updatedAt: '2026-08-31T16:37:42.644Z'
+updatedAt: '2026-08-31T17:41:47.090Z'
+completedAt: '2026-08-31T17:41:47.090Z'
 timeSpent: 0
 parent: mlncst
 spec: specs/2026-08-31/edge-drop-smoothness-wave
@@ -27,9 +28,9 @@ Expose display picker in Settings > Panels. Persist physical monitor identity ac
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Settings lists displays with physical resolution and left/right
-- [ ] #2 Chosen display+side docks the hub after restart even if Electron display ids change
-- [ ] #3 macOS/Linux still work via PlatformAdapter; missing APIs degrade to primary display
+- [x] #1 Settings lists displays with physical resolution and left/right
+- [x] #2 Chosen display+side docks the hub after restart even if Electron display ids change
+- [x] #3 macOS/Linux still work via PlatformAdapter; missing APIs degrade to primary display
 <!-- AC:END -->
 
 ## Implementation Plan
