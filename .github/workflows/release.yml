@@ -1,0 +1,71 @@
+name: Release
+
+# Build installers for all three platforms and publish them to the GitHub
+# Release for the pushed tag. This is why macOS/Linux artifacts exist at all:
+# each job runs on that platform's own runner (you cannot build a notarized
+# macOS DMG on Windows/Linux), and electron-builder uploads to the release.
+#
+# Trigger: push a semver tag, e.g.
+#   git tag v0.2.0 && git push origin v0.2.0
+on:
+  push:
+    tags:
+      - 'v*'
+  # Also runnable by hand from the Actions tab.
+  workflow_dispatch:
+
+permissions:
+  # electron-builder needs write access to create/upload the release.
+  contents: write
+
+jobs:
+  release:
+    strategy:
+      # Don't cancel the other platforms if one fails — a green Windows build is
+      # still worth shipping while a macOS signing issue is sorted out.
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Build renderer + main
+        run: npm run build
+
+      # electron-builder detects the host OS and builds that platform's targets
+      # from package.json `build` (Windows: NSIS; macOS: DMG; Linux: AppImage +
+      # deb). `--publish always` uploads them to the release for this tag.
+      #
+      # macOS signing/notarization: left OFF by default so the workflow produces
+      # artifacts without an Apple Developer account. To enable it, add repo
+      # secrets CSC_LINK (base64 .p12), CSC_KEY_PASSWORD, APPLE_ID,
+      # APPLE_APP_SPECIFIC_PASSWORD, APPLE_TEAM_ID and remove the
+      # CSC_IDENTITY_AUTO_DISCOVERY line below.
+      - name: Build & publish (macOS)
+        if: matrix.os == 'macos-latest'
+        run: npx --no-install electron-builder --mac --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+
+      - name: Build & publish (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: npx --no-install electron-builder --linux --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & publish (Windows)
+        if: matrix.os == 'windows-latest'
+        run: npx --no-install electron-builder --win --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

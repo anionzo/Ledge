@@ -1,0 +1,33 @@
+name: CI
+
+# Typecheck + unit tests on every push and PR. This does NOT build installers
+# (that is release.yml) — it is the fast gate that keeps main green.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # Full install: the platform test suite imports the `electron` package, so
+      # its binary must be present (its postinstall downloads it). On a Linux CI
+      # runner this is reliable — unlike a locked-down local shell where node may
+      # be off the child PATH.
+      - name: Install
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test

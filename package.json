@@ -6,6 +6,14 @@
   "license": "Apache-2.0",
   "private": true,
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/anionzo/Ledge.git"
+  },
+  "homepage": "https://github.com/anionzo/Ledge",
+  "bugs": {
+    "url": "https://github.com/anionzo/Ledge/issues"
+  },
   "main": "out/main/index.js",
   "engines": {
     "node": ">=20"
@@ -51,6 +59,13 @@
   "build": {
     "appId": "com.ledge.app",
     "productName": "Ledge",
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "anionzo",
+        "repo": "Ledge"
+      }
+    ],
     "directories": {
       "output": "dist",
       "buildResources": "resources"
