@@ -11,12 +11,21 @@
  * one at a time. A `link` unfurls into a service badge and a smart title. Both
  * are ported from Edge-Drop and dressed in Ledge tokens.
  *
- * Interaction, in order of how often it happens:
- *   click            copy (or, on a stack, expand)
- *   double click     copy and paste into whatever had focus
- *   drag             hand the payload to another app natively
- *   drop-on          merge the dragged card into this one
- *   click while selecting / ctrl-click   toggle selection
+ * Interaction, in order of how often it happens. Click does the obvious thing
+ * for the kind in front of you and double-click does the other one, so neither
+ * gesture is ever dead and neither kind needs a button the other does not:
+ *
+ *   click         text / link / file  copy
+ *                 image               enlarge it (the tile cannot show it)
+ *                 stack               unfold the deck
+ *   double click  text / link / file  open the detail sheet
+ *                 image               copy
+ *   drag          hand the payload to another app natively
+ *   drop-on       merge the dragged card into this one
+ *   ctrl-click, or any click while selecting   toggle selection
+ *
+ * With `previewEnabled` off there is no sheet, so every kind copies on click
+ * and double-click does nothing.
  */
 import { memo, useRef, useState, type DragEvent, type MouseEvent, type PointerEvent, type Ref } from 'react'
 import type {
@@ -232,11 +241,10 @@ function ItemCardImpl({
     setExpanded(next)
   }
 
-  // Single click opens the preview — the closest thing to inspecting a clip
-  // without leaving the shelf — when it is enabled; with the sheet turned off
-  // the same click copies, so a click is never a dead gesture. A stack unfolds
-  // instead. Copy stays a one-gesture action either way: the hover Copy button
-  // and the double-click both put it on the clipboard.
+  // Click copies. That is what a clipboard history is for, and routing every
+  // click through a detail sheet first made the common case two gestures and
+  // the rare one, one. Images are the exception — see the comment inside — a
+  // stack unfolds, and `previewEnabled` off makes every kind copy.
   const onClick = (event: MouseEvent<HTMLDivElement>) => {
     if (selecting || event.ctrlKey || event.metaKey) {
       onToggleSelection(item.id)
@@ -246,12 +254,31 @@ function ItemCardImpl({
       toggleExpand()
       return
     }
-    if (previewEnabled) onPreview(item.id)
+    // An image is the one card whose content a 40 px tile cannot deliver: you
+    // click it to *see* it, and there is nothing to put on the clipboard that
+    // looking would have told you. Everything else — text, a link, a file —
+    // already reads on the card, so the click has one obvious job and does it.
+    // Copy stays reachable for images through the hover Copy button and the
+    // double-click, and the detail sheet stays reachable for everything else
+    // the same way.
+    if (previewEnabled && data.kind === 'image') onPreview(item.id)
     else onCopy(item)
   }
 
+  /**
+   * The other thing — whichever one the click was not.
+   *
+   * Text, a link, a file: the click copied, so this opens the detail sheet.
+   * It is the only way in now, and it costs no pixels; a permanent button in
+   * the hover action row would cost every card about 22px of its title, since
+   * that row reserves its width whether or not it is visible.
+   *
+   * An image: the click already enlarged it, so this copies.
+   */
   const onDoubleClick = () => {
-    if (!selecting && !isStack) onCopy(item)
+    if (selecting || isStack) return
+    if (data.kind === 'image') onCopy(item)
+    else if (previewEnabled) onPreview(item.id)
   }
 
   const secondary = secondaryLine(data)
