@@ -1,6 +1,6 @@
 {
   "name": "ledge",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Ledge — one frame, two screen edges. A clipboard shelf on the left, an AI agent quota gauge on the right.",
   "author": "Ledge",
   "license": "Apache-2.0",
