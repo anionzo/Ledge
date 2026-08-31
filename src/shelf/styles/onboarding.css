@@ -1,0 +1,111 @@
+/**
+ * First-run onboarding overlay.
+ *
+ * A dimmed backdrop with one small card. The backdrop is inert — the shelf
+ * underneath keeps working — and only the card takes the pointer, so this
+ * guides without blocking.
+ */
+
+.bz-onboard {
+  position: absolute;
+  inset: 0;
+  z-index: 25;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: var(--bz-space-4);
+  /* Inert backdrop: a wash over the panel, no pointer capture. */
+  background: color-mix(in srgb, var(--bz-ground) 55%, transparent);
+  pointer-events: none;
+  animation: bz-onboard-fade var(--bz-open-ms) var(--bz-spring);
+}
+
+.bz-onboard-card {
+  pointer-events: auto;
+  width: 100%;
+  max-width: 260px;
+  padding: var(--bz-space-4);
+  text-align: center;
+  background: var(--bz-panel);
+  border: 1px solid var(--bz-rule);
+  border-radius: var(--bz-radius);
+  box-shadow: 0 12px 32px var(--bz-rim-hairline);
+  animation: bz-onboard-rise var(--bz-open-ms) var(--bz-spring);
+}
+
+.bz-onboard-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--bz-radius-sm);
+  border: 1px solid var(--bz-rim-hairline);
+  color: var(--bz-rim);
+  margin-bottom: var(--bz-space-2);
+}
+
+.bz-onboard-step {
+  margin: 0;
+  font-size: var(--bz-text-xs);
+  letter-spacing: var(--bz-track-label);
+  text-transform: uppercase;
+  color: var(--bz-ink-3);
+}
+
+.bz-onboard-title {
+  margin: var(--bz-space-1) 0 0;
+  font-family: var(--bz-font-display);
+  font-size: var(--bz-text-md);
+  font-weight: 600;
+  color: var(--bz-ink);
+}
+
+.bz-onboard-body {
+  margin: var(--bz-space-2) 0 0;
+  font-size: var(--bz-text-sm);
+  line-height: 1.5;
+  color: var(--bz-ink-2);
+}
+
+.bz-onboard-dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin: var(--bz-space-3) 0;
+}
+
+.bz-onboard-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--bz-rule);
+  transition: background var(--bz-close-ms) var(--bz-spring);
+}
+
+.bz-onboard-dot[data-active] {
+  background: var(--bz-rim);
+}
+
+.bz-onboard-actions {
+  gap: var(--bz-space-2);
+}
+
+@keyframes bz-onboard-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes bz-onboard-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

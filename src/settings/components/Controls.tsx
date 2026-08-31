@@ -343,12 +343,15 @@ export function HotkeyField({
   id,
   value,
   onCommit,
-  label
+  label,
+  defaultValue
 }: {
   id: string
   value: string
   onCommit: (next: string) => void
   label: string
+  /** When given, a reset control appears whenever `value` has drifted from it. */
+  defaultValue?: string
 }) {
   const [recording, setRecording] = useState(false)
 
@@ -375,20 +378,63 @@ export function HotkeyField({
     onCommit(parts.join('+'))
   }
 
+  const canReset = defaultValue !== undefined && value !== defaultValue
+
   return (
-    <button
-      id={id}
-      type="button"
-      className="bz-hotkey"
-      data-recording={recording || undefined}
-      aria-label={label}
-      onClick={() => setRecording((on) => !on)}
-      onBlur={() => setRecording(false)}
-      onKeyDown={onKeyDown}
-    >
-      <span className="bz-num">{recording ? t('settings.behaviour.hotkey.recording') : value}</span>
-    </button>
+    <span className="bz-hotkey-wrap">
+      <button
+        id={id}
+        type="button"
+        className="bz-hotkey"
+        data-recording={recording || undefined}
+        aria-label={label}
+        onClick={() => setRecording((on) => !on)}
+        onBlur={() => setRecording(false)}
+        onKeyDown={onKeyDown}
+      >
+        {recording ? (
+          <span className="bz-hotkey-recording">
+            <span className="bz-hotkey-pulse" aria-hidden="true" />
+            {t('settings.behaviour.hotkey.recording')}
+          </span>
+        ) : (
+          <>
+            <span className="bz-hotkey-keys">
+              {keyBadges(value).map((badge, i) => (
+                <span key={i} className="bz-hotkey-cap-item">
+                  {i > 0 && <span className="bz-hotkey-plus">+</span>}
+                  <kbd className="bz-hotkey-cap">{badge}</kbd>
+                </span>
+              ))}
+            </span>
+            <span className="bz-hotkey-edit">{t('settings.behaviour.hotkey.edit')}</span>
+          </>
+        )}
+      </button>
+      {canReset && !recording && (
+        <button
+          type="button"
+          className="bz-hotkey-reset"
+          aria-label={t('settings.behaviour.hotkey.reset')}
+          title={t('settings.behaviour.hotkey.reset')}
+          onClick={() => onCommit(defaultValue as string)}
+        >
+          <Icon name="refresh" size={12} />
+        </button>
+      )}
+    </span>
   )
+}
+
+/** Split an accelerator into display badges: `CommandOrControl+Shift+V`. */
+function keyBadges(accelerator: string): string[] {
+  if (!accelerator) return ['—']
+  return accelerator.split('+').map((raw) => {
+    const key = raw.trim()
+    if (key === 'CommandOrControl') return 'Ctrl'
+    if (key === 'Meta' || key === 'Super' || key === 'Command') return 'Win'
+    return key.length === 1 ? key.toUpperCase() : key
+  })
 }
 
 function normaliseKey(key: string): string {

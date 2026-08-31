@@ -11,7 +11,7 @@
  * fan-out below uses `Promise.allSettled` so even a cache-level bug degrades
  * to one bad card rather than an empty gauge.
  */
-import type { QuotaReading, QuotaSnapshot } from '../../../shared/types/quota'
+import type { QuotaReading, QuotaSeverity, QuotaSnapshot } from '../../../shared/types/quota'
 import { STALE_TTL_MS } from '../../../shared/types/quota'
 import type { GaugeSettings } from '../../../shared/types/settings'
 import { DEFAULT_SETTINGS } from '../../../shared/types/settings'
@@ -20,7 +20,9 @@ import type { QuotaProvider, ReadContext } from './provider'
 import { buildProviders } from './registry'
 import { keepLastKnown, readingCache, resetQuotaCache, snapshotChanged } from './cache'
 import { makeReading } from './util'
+import { computePace, ringWindow } from './pace'
 import { computeSpend, recordBalance } from '../../store/balanceHistory'
+import { recordUsage } from '../../store/usageHistory'
 
 export type { QuotaProvider, ReadContext } from './provider'
 export {
@@ -53,6 +55,7 @@ let lastSnapshot: QuotaSnapshot | null = null
 export function configureQuota(next: QuotaEngineConfig): void {
   config = next
   lastSnapshot = null
+  lastSeverities = new Map()
   resetQuotaCache()
 }
 
@@ -60,6 +63,7 @@ export function configureQuota(next: QuotaEngineConfig): void {
 export function resetQuotaEngine(): void {
   config = null
   lastSnapshot = null
+  lastSeverities = new Map()
   resetQuotaCache()
 }
 
@@ -128,6 +132,83 @@ function withCost(reading: QuotaReading, now: number): QuotaReading {
 }
 
 /**
+ * Fold burn rate and the usage trail into a percentage-shaped reading.
+ *
+ * `withCost`'s sibling, same rules: strictly non-fatal (a history write or a
+ * pace bug must never fail the batch), and only a fresh `ok` reading is
+ * recorded — re-logging a retained `stale` percent would fabricate a sample
+ * we did not just observe. Pace, by contrast, is recomputed even for a stale
+ * reading: it depends on the wall clock as much as on the percentage, and the
+ * elapsed fraction keeps moving while the number stands still. Unlike cost,
+ * `pace` IS part of the reading fingerprint (see cache.ts): the "hot" chip is
+ * user-visible, so a flip must push even when nothing else moved.
+ */
+function withUsage(reading: QuotaReading, now: number): QuotaReading {
+  if (reading.state !== 'ok') return reading
+  try {
+    if (!reading.stale && reading.ringPercent !== null) {
+      recordUsage(reading.providerId, reading.ringPercent, now)
+    }
+    return { ...reading, pace: computePace(reading, now) }
+  } catch (err) {
+    console.error('[quota] usage tracking failed for', reading.providerId, err)
+    return reading
+  }
+}
+
+/**
+ * Last severity seen per provider, for the threshold-crossing toast.
+ *
+ * The toast fires only on the below-critical → critical crossing, so a
+ * provider SITTING at critical never re-fires on subsequent refreshes. And
+ * because usage only climbs until the window resets — which drops severity
+ * back below critical and updates this map — that works out to once per
+ * provider per window. Module-level and unpersisted on purpose: after a
+ * restart (or reconfigure) the first snapshot has no predecessor, so nothing
+ * fires until a crossing is actually observed.
+ */
+let lastSeverities = new Map<string, QuotaSeverity>()
+
+/**
+ * Broadcast the crossing toast. The IPC module is imported lazily for the
+ * same reason the platform adapter is (see `resolveConfig`): it imports
+ * `electron`, which a plain vitest process cannot load. Fire-and-forget and
+ * fully guarded — a toast is decoration, never worth failing a refresh over.
+ */
+async function toastCritical(reading: QuotaReading): Promise<void> {
+  try {
+    const label = ringWindow(reading)?.label ?? 'usage'
+    const { broadcast } = await import('../../main/ipc')
+    broadcast('ui:toast', {
+      id: `quota-critical-${reading.providerId}`,
+      message: `${reading.displayName} hit ${reading.ringPercent}% of its ${label} limit`,
+      tone: 'error'
+    })
+  } catch (err) {
+    console.error('[quota] critical toast failed for', reading.providerId, err)
+  }
+}
+
+/** Toast every below-critical → critical crossing, then remember severities. */
+function noticeCriticalCrossings(readings: readonly QuotaReading[]): void {
+  const next = new Map<string, QuotaSeverity>()
+  for (const reading of readings) {
+    next.set(reading.providerId, reading.severity)
+    const prev = lastSeverities.get(reading.providerId)
+    if (
+      reading.severity === 'critical' &&
+      prev !== undefined && // No predecessor: nothing crossed, nothing to say.
+      prev !== 'critical' && // Still critical: already toasted this window.
+      reading.ringPercent !== null
+    ) {
+      void toastCritical(reading)
+    }
+  }
+  // Wholesale replacement, so a provider removed in Settings is forgotten.
+  lastSeverities = next
+}
+
+/**
  * Run one refresh cycle.
  *
  * `force` bypasses the per-provider TTL and the backoff window — it is what
@@ -159,9 +240,10 @@ export async function refresh(options: { force?: boolean } = {}): Promise<QuotaS
 
   const merged = keepLastKnown(lastSnapshot?.readings, readings, now, STALE_TTL_MS)
   const snapshot: QuotaSnapshot = {
-    readings: merged.map((reading) => withCost(reading, now)),
+    readings: merged.map((reading) => withUsage(withCost(reading, now), now)),
     lastUpdated: new Date(now).toISOString()
   }
+  noticeCriticalCrossings(snapshot.readings)
   lastSnapshot = snapshot
   return snapshot
 }

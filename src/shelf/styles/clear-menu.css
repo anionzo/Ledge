@@ -1,0 +1,68 @@
+/**
+ * Clear menu popover.
+ *
+ * A small hairline-bordered card that drops from the header button. Achromatic,
+ * except the armed "Clear all" row, where the critical token genuinely is the
+ * information — you are about to lose everything.
+ */
+
+.bz-clear-menu {
+  position: relative;
+  display: inline-flex;
+}
+
+.bz-clear-pop {
+  position: absolute;
+  top: calc(100% + var(--bz-space-1));
+  right: 0;
+  min-width: 180px;
+  z-index: 22;
+  padding: var(--bz-space-1);
+  background: var(--bz-panel);
+  border: 1px solid var(--bz-rule);
+  border-radius: var(--bz-radius-sm);
+  box-shadow: 0 8px 24px var(--bz-rim-hairline);
+  text-align: left;
+}
+
+.bz-panel[data-side='left'] .bz-clear-pop {
+  right: auto;
+  left: 0;
+}
+
+.bz-clear-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--bz-space-2);
+  padding: var(--bz-space-2) var(--bz-space-2);
+  border: none;
+  border-radius: var(--bz-radius-sm);
+  background: transparent;
+  color: var(--bz-ink-2);
+  font: inherit;
+  font-size: var(--bz-text-sm);
+  text-align: left;
+  cursor: default;
+}
+
+.bz-clear-item:hover {
+  background: var(--bz-panel-2);
+  color: var(--bz-ink);
+}
+
+.bz-clear-item[data-danger] {
+  color: var(--bz-crit);
+}
+
+.bz-clear-item[data-armed] {
+  background: var(--bz-crit);
+  color: var(--bz-panel);
+  font-weight: 600;
+}
+
+.bz-clear-sep {
+  height: 1px;
+  margin: var(--bz-space-1) 2px;
+  background: var(--bz-rule-soft);
+}

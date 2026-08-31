@@ -1,0 +1,56 @@
+/**
+ * Filter tabs.
+ *
+ * Achromatic pills. The active pill is the only coloured mark, and it borrows
+ * the rim accent the panel is named for rather than any semantic colour — a
+ * filter is chrome, not a status.
+ */
+
+.bz-filters {
+  gap: var(--bz-space-1);
+  padding: var(--bz-space-2) var(--bz-space-3);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.bz-filters::-webkit-scrollbar {
+  display: none;
+}
+
+.bz-panel[data-side='right'] .bz-filters {
+  flex-direction: row-reverse;
+}
+
+.bz-filter {
+  flex: 0 0 auto;
+  border: 1px solid var(--bz-rule);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--bz-ink-3);
+  font: inherit;
+  font-size: var(--bz-text-xs);
+  letter-spacing: var(--bz-track-label);
+  text-transform: uppercase;
+  padding: 3px var(--bz-space-3);
+  cursor: default;
+  transition:
+    color var(--bz-close-ms) var(--bz-spring),
+    background var(--bz-close-ms) var(--bz-spring),
+    border-color var(--bz-close-ms) var(--bz-spring);
+}
+
+.bz-filter:hover {
+  color: var(--bz-ink-2);
+  background: var(--bz-panel-2);
+}
+
+.bz-filter[data-active] {
+  color: var(--bz-panel);
+  background: var(--bz-rim);
+  border-color: var(--bz-rim);
+}
+
+.bz-filter:focus-visible {
+  outline: 2px solid var(--bz-rim);
+  outline-offset: 2px;
+}

@@ -11,6 +11,19 @@ import { elidePath, hostOf, humaniseBytes, oneLine } from '../lib/format'
 import { t } from '../i18n'
 import type { IconName } from '../ui'
 
+/** The kinds the filter tabs offer, mirroring Edge-Drop's `filters.*`. */
+export type ItemFilter = 'all' | 'text' | 'links' | 'images' | 'files'
+
+/** Image file extensions — used to decide whether a `file` is picture-shaped. */
+const IMAGE_EXTS = new Set([
+  'png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg', 'avif', 'ico', 'tif', 'tiff', 'jfif'
+])
+
+/** True when a file path names an image, so it can carry a thumbnail. */
+export function isImageExt(extension: string): boolean {
+  return IMAGE_EXTS.has(extension.toLowerCase())
+}
+
 export function kindIcon(kind: ItemKind): IconName {
   switch (kind) {
     case 'text':
@@ -106,6 +119,35 @@ export function matches(item: ClipboardItem, query: string): boolean {
   if (!needle) return true
   const hay = searchHaystack(item)
   return needle.split(/\s+/).every((term) => hay.includes(term))
+}
+
+/**
+ * Whether an item belongs in a given filter tab.
+ *
+ * A `file` whose extension is an image counts under both Files and Images, the
+ * way Edge-Drop treats an image on disk. A stack matches a tab when any of its
+ * members would — it is a box of mixed kinds, and hiding it because its first
+ * member is the wrong kind loses the rest.
+ */
+export function matchesFilter(item: ClipboardItem, filter: ItemFilter): boolean {
+  if (filter === 'all') return true
+  return dataMatchesFilter(item.data, filter)
+}
+
+function dataMatchesFilter(data: ItemData, filter: ItemFilter): boolean {
+  switch (data.kind) {
+    case 'text':
+      return filter === 'text'
+    case 'link':
+      return filter === 'links'
+    case 'image':
+      return filter === 'images'
+    case 'file':
+      if (filter === 'files') return true
+      return filter === 'images' && isImageExt(data.extension)
+    case 'stack':
+      return data.members.some((member) => dataMatchesFilter(member, filter))
+  }
 }
 
 /** The accessible name for a card. Kind first, so a list scan makes sense. */

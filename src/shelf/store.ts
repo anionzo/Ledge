@@ -14,10 +14,15 @@
  */
 import { create } from 'zustand'
 import type { ClipboardItem } from '../../shared/types/clipboard'
+import type { ItemFilter } from './describe'
 
 export interface ShelfState {
   items: ClipboardItem[]
   query: string
+  /** Kind filter driven by the filter tabs above the list. */
+  filter: ItemFilter
+  /** Id of the card currently being dragged inside the shelf, for merge. */
+  draggingId: string | null
   /** Multi-select mode. Entered by the toolbar, or by selecting a first item. */
   selecting: boolean
   /** Ids, in the order the user picked them. */
@@ -29,6 +34,8 @@ export interface ShelfState {
 
   setItems: (items: ClipboardItem[]) => void
   setQuery: (query: string) => void
+  setFilter: (filter: ItemFilter) => void
+  setDraggingId: (id: string | null) => void
   toggleSelection: (id: string) => void
   selectAll: (ids: string[]) => void
   clearSelection: () => void
@@ -40,6 +47,8 @@ export interface ShelfState {
 export const useShelfStore = create<ShelfState>()((set) => ({
   items: [],
   query: '',
+  filter: 'all',
+  draggingId: null,
   selecting: false,
   selection: [],
   previewId: null,
@@ -63,6 +72,10 @@ export const useShelfStore = create<ShelfState>()((set) => ({
     }),
 
   setQuery: (query) => set({ query }),
+
+  setFilter: (filter) => set({ filter }),
+
+  setDraggingId: (draggingId) => set({ draggingId }),
 
   toggleSelection: (id) =>
     set((state) => {

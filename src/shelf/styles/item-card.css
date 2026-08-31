@@ -9,8 +9,8 @@
 
 .bz-item {
   position: relative;
-  align-items: flex-start;
-  gap: var(--bz-space-3);
+  display: flex;
+  flex-direction: column;
   padding: var(--bz-space-2) var(--bz-space-3);
   border-bottom: 1px solid var(--bz-rule-soft);
   /* Off-screen cards skip layout and paint entirely. Paired with the
@@ -20,12 +20,49 @@
   contain-intrinsic-size: auto 54px;
 }
 
+/* The mark / body / actions row. A stack unfolds a second block below it, so
+   the card itself is a column and this is the row inside it. */
+.bz-item-lead {
+  align-items: flex-start;
+  gap: var(--bz-space-3);
+}
+
+/* The dashed halo shown on a card another card is being dragged onto, for the
+   merge-into-stack gesture. Rim-coloured because it is an invitation, not a
+   warning. */
+.bz-item[data-drop-target] {
+  background: var(--bz-rim-soft);
+  box-shadow: inset 0 0 0 2px var(--bz-rim);
+}
+
+.bz-item-caret {
+  transition: rotate var(--bz-close-ms) var(--bz-spring);
+}
+
+.bz-item-caret[data-open] {
+  rotate: 180deg;
+}
+
 .bz-item[data-kind='image'] {
   contain-intrinsic-size: auto 76px;
 }
 
+.bz-item {
+  transition: background var(--bz-fast) var(--bz-spring);
+}
+
 .bz-item:hover {
   background: var(--bz-panel-2);
+}
+
+/* A subtle hover lift on the rail only — a transform, so it never reflows the
+   ledger's flush hairlines. */
+.bz-item-mark {
+  transition: transform var(--bz-fast) var(--bz-spring);
+}
+
+.bz-item:hover .bz-item-mark {
+  transform: translateY(-1px);
 }
 
 .bz-item[data-selected] {
@@ -131,13 +168,22 @@
   font-family: var(--bz-font-mono);
 }
 
+/* Capture age, pinned to the inner end of the meta line. Never wraps, never
+   pushes the content off — it is the least important thing on the row. */
+.bz-item-time {
+  flex: 0 0 auto;
+  font-size: var(--bz-text-xs);
+  color: var(--bz-ink-3);
+  white-space: nowrap;
+}
+
 /* ── Actions ─────────────────────────────────────────────────────────────── */
 
 .bz-item-actions {
   flex: 0 0 auto;
   gap: 2px;
   opacity: 0;
-  transition: opacity var(--bz-close-ms) var(--bz-spring);
+  transition: opacity var(--bz-fast) var(--bz-spring);
 }
 
 .bz-item:hover .bz-item-actions,
@@ -181,4 +227,112 @@
 .bz-item:hover .bz-item-actions .bz-item-action,
 .bz-item:focus-within .bz-item-actions .bz-item-action {
   opacity: 1;
+}
+
+/* ── Link favicon badge ──────────────────────────────────────────────────── */
+
+/* No remote favicon: the panel CSP forbids off-origin images, and a lettered
+   badge in the achromatic rail reads the service without one. */
+.bz-item-favicon {
+  font-family: var(--bz-font-display);
+  font-size: var(--bz-text-md);
+  font-weight: 600;
+  color: var(--bz-ink-2);
+  background: var(--bz-panel-2);
+}
+
+/* ── Thumbnails ──────────────────────────────────────────────────────────── */
+
+.bz-thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: var(--bz-radius-sm);
+  display: block;
+}
+
+/* ── Stack fan ───────────────────────────────────────────────────────────── */
+
+/* The collapsed deck. Each card is absolutely stacked and nudged out with a
+   little more rotation and offset than the one under it, so four thumbnails
+   read as a physical pile inside the 28 px rail. */
+.bz-stack-fan {
+  position: relative;
+  overflow: visible;
+  border: none;
+  background: transparent;
+}
+
+.bz-stack-fan-card {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--bz-radius-sm);
+  border: 1px solid var(--bz-rule);
+  background: var(--bz-panel);
+  overflow: hidden;
+  color: var(--bz-ink-3);
+  transform: translate(-50%, -50%)
+    translate(calc(var(--bz-fan-i) * 2.5px), calc(var(--bz-fan-i) * -2.5px))
+    rotate(calc(var(--bz-fan-i) * 6deg))
+    scale(calc(1 - var(--bz-fan-i) * 0.06));
+  transition: transform var(--bz-close-ms) var(--bz-spring);
+}
+
+.bz-item:hover .bz-stack-fan-card {
+  transform: translate(-50%, -50%)
+    translate(calc(var(--bz-fan-i) * 3.5px), calc(var(--bz-fan-i) * -3.5px))
+    rotate(calc(var(--bz-fan-i) * 8deg))
+    scale(calc(1 - var(--bz-fan-i) * 0.05));
+}
+
+/* ── Unfolded stack members ──────────────────────────────────────────────── */
+
+.bz-stack-members {
+  list-style: none;
+  margin: var(--bz-space-2) 0 0;
+  padding: 0 0 0 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.bz-panel[data-side='right'] .bz-stack-members {
+  padding: var(--bz-space-2) 40px 0 0;
+}
+
+.bz-stack-member {
+  gap: var(--bz-space-2);
+  padding: var(--bz-space-1) var(--bz-space-2);
+  border-radius: var(--bz-radius-sm);
+  border: 1px solid var(--bz-rule-soft);
+  background: var(--bz-panel);
+}
+
+.bz-stack-member:hover {
+  border-color: var(--bz-rule);
+}
+
+.bz-stack-member-mark {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--bz-radius-sm);
+  overflow: hidden;
+  color: var(--bz-ink-3);
+}
+
+.bz-stack-member-text {
+  font-size: var(--bz-text-sm);
+  cursor: grab;
+}
+
+.bz-stack-member-text:active {
+  cursor: grabbing;
 }

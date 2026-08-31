@@ -7,6 +7,7 @@
  * switches for them would be the app lying about what it can do.
  */
 import type { SettingsTabProps } from '../context'
+import { DEFAULT_SETTINGS } from '../../../shared/types/settings'
 import { Field, HotkeyField, Section, Switch, useFieldId } from '../components/Controls'
 import { t } from '../../i18n'
 
@@ -17,6 +18,9 @@ export function BehaviourTab({ settings, capabilities, update }: SettingsTabProp
   const gaugeKeyId = useFieldId('hk-gauge')
   const encryptId = useFieldId('encrypt')
   const soundsId = useFieldId('sounds')
+  const incognitoId = useFieldId('incognito')
+  const hoverId = useFieldId('hover')
+  const previewId = useFieldId('preview')
 
   // Both sections can end up empty on a locked-down system; rendering a
   // heading over nothing is worse than rendering nothing.
@@ -72,6 +76,7 @@ export function BehaviourTab({ settings, capabilities, update }: SettingsTabProp
             <HotkeyField
               id={shelfKeyId}
               value={settings.hotkeyToggleShelf}
+              defaultValue={DEFAULT_SETTINGS.hotkeyToggleShelf}
               label={t('settings.behaviour.hotkey_shelf')}
               onCommit={(hotkeyToggleShelf) => void update({ hotkeyToggleShelf })}
             />
@@ -84,8 +89,51 @@ export function BehaviourTab({ settings, capabilities, update }: SettingsTabProp
             <HotkeyField
               id={gaugeKeyId}
               value={settings.hotkeyToggleGauge}
+              defaultValue={DEFAULT_SETTINGS.hotkeyToggleGauge}
               label={t('settings.behaviour.hotkey_gauge')}
               onCommit={(hotkeyToggleGauge) => void update({ hotkeyToggleGauge })}
+            />
+          }
+        />
+      </Section>
+
+      <Section title={t('settings.behaviour.shelf')}>
+        <Field
+          label={t('settings.behaviour.hover_activation')}
+          help={t('settings.behaviour.hover_activation.help')}
+          htmlFor={hoverId}
+          control={
+            <Switch
+              id={hoverId}
+              checked={settings.shelf.hoverActivation}
+              label={t('settings.behaviour.hover_activation')}
+              onChange={(hoverActivation) => void update({ shelf: { hoverActivation } })}
+            />
+          }
+        />
+        <Field
+          label={t('settings.behaviour.preview_enabled')}
+          help={t('settings.behaviour.preview_enabled.help')}
+          htmlFor={previewId}
+          control={
+            <Switch
+              id={previewId}
+              checked={settings.shelf.previewEnabled}
+              label={t('settings.behaviour.preview_enabled')}
+              onChange={(previewEnabled) => void update({ shelf: { previewEnabled } })}
+            />
+          }
+        />
+        <Field
+          label={t('settings.behaviour.incognito')}
+          help={t('settings.behaviour.incognito.help')}
+          htmlFor={incognitoId}
+          control={
+            <Switch
+              id={incognitoId}
+              checked={settings.shelf.incognito}
+              label={t('settings.behaviour.incognito')}
+              onChange={(incognito) => void update({ shelf: { incognito } })}
             />
           }
         />

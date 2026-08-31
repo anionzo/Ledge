@@ -188,6 +188,10 @@ export function readingFingerprint(reading: QuotaReading): string {
     reading.weekly?.resetsAt ?? '',
     reading.modelName ?? '',
     reading.message ?? '',
+    // `pace` is rendered (the "hot" chip), so a flip must count as a visible
+    // change and trigger a push even while the percentages stand still. Note
+    // `cost` stays excluded — see `withCost` in index.ts for why.
+    reading.pace ?? '',
     reading.stale ? 'stale' : 'fresh'
   ].join(':')
 }

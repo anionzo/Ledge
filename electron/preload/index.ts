@@ -45,6 +45,7 @@ const INVOKE_CHANNELS = [
   'gauge:snapshot',
   'gauge:refresh',
   'gauge:probe-command',
+  'gauge:history',
   'panel:set-interactive',
   'panel:open',
   'panel:close',

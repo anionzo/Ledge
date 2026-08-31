@@ -25,12 +25,16 @@ export interface ItemListProps {
   selection: string[]
   selecting: boolean
   virtual: VirtualWindow
+  /** When false the preview affordance is hidden on every card. */
+  previewEnabled: boolean
   onCopy: (item: ClipboardItem) => void
   onPaste: (item: ClipboardItem) => void
   onToggleSelection: (id: string) => void
   onTogglePin: (item: ClipboardItem) => void
   onDelete: (ids: string[]) => void
   onPreview: (id: string) => void
+  onMerge: (sourceId: string, targetId: string) => void
+  onError: (message: string) => void
 }
 
 export function ItemList({
@@ -39,12 +43,15 @@ export function ItemList({
   selection,
   selecting,
   virtual,
+  previewEnabled,
   onCopy,
   onPaste,
   onToggleSelection,
   onTogglePin,
   onDelete,
-  onPreview
+  onPreview,
+  onMerge,
+  onError
 }: ItemListProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [focusIndex, setFocusIndex] = useState(0)
@@ -189,12 +196,16 @@ export function ItemList({
               selected={selected.has(item.id)}
               selecting={selecting}
               focusable={index === clamped}
+              previewEnabled={previewEnabled}
               measureRef={virtual.measureRef(index)}
               onCopy={onCopy}
               onPaste={onPaste}
               onToggleSelection={onToggleSelection}
               onTogglePin={onTogglePin}
+              onDelete={onDelete}
               onPreview={onPreview}
+              onMerge={onMerge}
+              onError={onError}
             />
           )
         })}

@@ -103,6 +103,53 @@ export const en: Dictionary = {
   'shelf.toast.copied': 'Copied',
   'shelf.toast.copy_failed': 'Could not copy',
   'shelf.toast.deleted': 'Deleted {n}',
+  'shelf.toast.added': 'Added {n}',
+  'shelf.toast.merged': 'Merged into a stack',
+  'shelf.toast.stack_full': 'That stack is full',
+
+  // ── Filters ──────────────────────────────────────────────────────────────
+  'shelf.filter.all': 'All',
+  'shelf.filter.text': 'Text',
+  'shelf.filter.links': 'Links',
+  'shelf.filter.images': 'Images',
+  'shelf.filter.files': 'Files',
+  'shelf.filter.label': 'Filter by kind',
+
+  // ── Clear menu ───────────────────────────────────────────────────────────
+  'shelf.clear.menu': 'Clear history',
+  'shelf.clear.unpinned': 'Clear unpinned',
+  'shelf.clear.all': 'Clear all',
+  'shelf.clear.all_confirm': 'Tap again to clear everything',
+
+  // ── Drop target ──────────────────────────────────────────────────────────
+  'shelf.drop.hint': 'Drop to add to the shelf',
+
+  // ── Incognito ────────────────────────────────────────────────────────────
+  'shelf.incognito.badge': 'Paused',
+  'shelf.incognito.title': 'Capture is paused. History is untouched.',
+
+  // ── Stack ────────────────────────────────────────────────────────────────
+  'shelf.stack.expand': 'Open stack',
+  'shelf.stack.collapse': 'Close stack',
+
+  // ── Onboarding ───────────────────────────────────────────────────────────
+  'onboarding.skip': 'Skip',
+  'onboarding.back': 'Back',
+  'onboarding.next': 'Next',
+  'onboarding.done': 'Get started',
+  'onboarding.step': 'Step {n} of {total}',
+  'onboarding.hover.title': 'Hover to open',
+  'onboarding.hover.body': 'Ledge lives on the screen edge. Nudge the pointer into the edge and the shelf slides out; move away and it hides.',
+  'onboarding.drag.title': 'Drag anything out',
+  'onboarding.drag.body': 'Drag any card straight into another app, or drop files onto the shelf to keep them here.',
+  'onboarding.quota.title': 'Watch your quota',
+  'onboarding.quota.body': 'The strip along the top shows how close your agents are to their limits. Tap it to see every provider.',
+
+  // ── Changelog ────────────────────────────────────────────────────────────
+  'settings.about.whats_new': "What's new",
+  'settings.about.whats_new.show': 'View changelog',
+  'settings.about.whats_new.hide': 'Hide changelog',
+  'changelog.current': 'Current',
 
   // ── Gauge ────────────────────────────────────────────────────────────────
   'gauge.title': 'Gauge',
@@ -170,6 +217,15 @@ export const en: Dictionary = {
   'settings.behaviour.hotkey_gauge': 'Toggle Gauge',
   'settings.behaviour.hotkey.help': 'Click a shortcut, then press the combination you want.',
   'settings.behaviour.hotkey.recording': 'Press keys',
+  'settings.behaviour.hotkey.edit': 'Edit',
+  'settings.behaviour.hotkey.reset': 'Reset to default',
+  'settings.behaviour.shelf': 'Clipboard',
+  'settings.behaviour.incognito': 'Pause capture (incognito)',
+  'settings.behaviour.incognito.help': 'Stop catching new clips. What is already on the shelf stays.',
+  'settings.behaviour.hover_activation': 'Open on edge hover',
+  'settings.behaviour.hover_activation.help': 'When off, the shelf only opens with the shortcut.',
+  'settings.behaviour.preview_enabled': 'Show preview',
+  'settings.behaviour.preview_enabled.help': 'Open a detail flyout when you inspect an item.',
   'settings.behaviour.privacy': 'Privacy',
   'settings.behaviour.encrypt_history': 'Encrypt clipboard history',
   'settings.behaviour.encrypt_history.help':
@@ -255,6 +311,16 @@ export const en: Dictionary = {
   'settings.appearance.theme.dark': 'Dark',
   'settings.appearance.language': 'Language',
   'settings.appearance.language.system': 'System',
+  'settings.appearance.text_scale': 'Text size',
+  'settings.appearance.text_scale.help': 'Scale the shelf text up or down.',
+  'settings.appearance.text_scale.sm': 'Small',
+  'settings.appearance.text_scale.md': 'Normal',
+  'settings.appearance.text_scale.lg': 'Large',
+  'settings.appearance.indicator': 'Copy indicator',
+  'settings.appearance.indicator.help': 'The flourish shown at the docked edge when a new clip is captured.',
+  'settings.appearance.indicator.off': 'Off',
+  'settings.appearance.indicator.curve': 'Curve',
+  'settings.appearance.indicator.flare': 'Flare',
   'settings.appearance.motion': 'Motion',
   'settings.appearance.reduce_motion': 'Reduce motion',
   'settings.appearance.reduce_motion.help': 'Remove the panel slide and the ring sweep.',
@@ -345,6 +411,23 @@ const ALIAS: Record<string, string> = {
   'common.reveal': 'flyout.openInExplorer',
 
   'shelf.search.placeholder': 'header.searchPlaceholder',
+  'shelf.filter.all': 'filters.all',
+  'shelf.filter.text': 'filters.text',
+  'shelf.filter.links': 'filters.links',
+  'shelf.filter.images': 'filters.images',
+  'shelf.filter.files': 'filters.files',
+  'shelf.clear.all': 'item.clearAll',
+  'shelf.clear.all_confirm': 'item.clearAllConfirm',
+  'onboarding.skip': 'onboarding.skip',
+  'onboarding.back': 'onboarding.back',
+  'onboarding.next': 'onboarding.next',
+  'onboarding.done': 'onboarding.getStarted',
+  'changelog.current': 'flyout.current',
+  'settings.appearance.text_scale': 'appearance.textSizeTitle',
+  'settings.appearance.text_scale.sm': 'appearance.small',
+  'settings.appearance.text_scale.md': 'appearance.normal',
+  'settings.appearance.text_scale.lg': 'appearance.large',
+  'settings.behaviour.hotkey.edit': 'behaviour.hotkeyEdit',
   'shelf.item.pinned': 'item.pinned',
   'shelf.kind.text': 'item.textItem',
   'shelf.kind.image': 'item.imageItem',

@@ -26,6 +26,7 @@ import type {
 } from '../../../shared/ipc'
 import type { PlatformAdapter } from '../../platform/types'
 import { loadSettings, saveSettings } from '../../store/settings'
+import { getHistory } from '../../store/usageHistory'
 import { getSnapshot, probeCommand, refresh } from '../../features/quota'
 import type { ClipboardEngine } from '../../features/clipboard'
 import type { EdgePanelId, PanelHost } from '../panels/PanelHost'
@@ -96,6 +97,16 @@ export function registerCoreIpc(deps: IpcDeps): void {
   // `force` — this channel exists precisely to bypass the per-provider TTL;
   // the scheduled refresh in main/index.ts is the one that respects it.
   handle('gauge:refresh', () => refresh({ force: true }))
+
+  handle('gauge:history', (_event, providerId) => {
+    // The id comes from the renderer, so it is bounded before it can index
+    // the store — the same posture as `probeCommand` validating a command
+    // name. 80 chars matches the cap Settings puts on a custom provider id,
+    // and the character class covers every builtin and `custom_<slug>` id.
+    const id = String(providerId ?? '').trim()
+    if (!id || id.length > 80 || !/^[A-Za-z0-9_-]+$/.test(id)) return []
+    return getHistory(id)
+  })
 
   handle('gauge:probe-command', async (_event, command) => {
     // Two questions, two answers. The Settings window uses this to tell the

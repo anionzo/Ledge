@@ -34,9 +34,11 @@ body {
      the panel. tokens.css deliberately leaves positioning to the shell. */
   position: relative;
   opacity: 1;
+  /* Opening lands with the overshoot spring — the Edge-Drop feel — while
+     closing eases flat so a dismiss never bounces. */
   transition:
-    opacity var(--bz-open-ms) var(--bz-spring),
-    translate var(--bz-open-ms) var(--bz-spring);
+    opacity var(--bz-open-ms) var(--bz-spring-overshoot),
+    translate var(--bz-open-ms) var(--bz-spring-overshoot);
 }
 
 .bz-panel:not([data-open]) {

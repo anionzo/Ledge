@@ -69,6 +69,15 @@ export interface InvokeMap {
     args: [command: string]
     result: { ok: boolean; message: string }
   }
+  /**
+   * Recent usage samples for one provider, oldest first — the sparkline data.
+   * Fetched on demand (opening the detail sheet) rather than pushed, so the
+   * per-minute snapshot stream never bloats the live IPC traffic.
+   */
+  'gauge:history': {
+    args: [providerId: string]
+    result: import('./types/quota').UsageSample[]
+  }
 
   // ── Windows ──────────────────────────────────────────────────────────────
   /** Take or release mouse input. Ignored where click-through is unsupported. */

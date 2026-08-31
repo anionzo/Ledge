@@ -1,0 +1,182 @@
+/**
+ * Copy indicator flare.
+ *
+ * Anchored to the docked edge, vertically centred, and never interactive. The
+ * only colour is the rim accent — the same light the panel is named for,
+ * briefly reflecting off the edge as a clip lands.
+ */
+
+.bz-flare {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 60px;
+  height: 160px;
+  pointer-events: none;
+  z-index: 40;
+}
+
+.bz-flare[data-side='left'] {
+  left: 0;
+}
+
+.bz-flare[data-side='right'] {
+  right: 0;
+}
+
+.bz-flare[data-side='right'] .bz-flare-inner {
+  transform: scaleX(-1);
+}
+
+.bz-flare-inner {
+  position: absolute;
+  inset: 0;
+}
+
+/* ── Curve ───────────────────────────────────────────────────────────────── */
+
+.bz-flare-curve {
+  position: absolute;
+  inset: 0;
+  animation: bz-flare-fade var(--bz-open-ms) var(--bz-spring) forwards;
+}
+
+.bz-flare-bulge {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 0 10px var(--bz-rim-hairline));
+  transform-origin: left center;
+  animation: bz-flare-bulge-in 900ms var(--bz-spring) forwards;
+}
+
+.bz-flare-tick {
+  position: absolute;
+  top: 50%;
+  left: 10px;
+  transform: translateY(-50%) scale(0.4);
+  opacity: 0;
+  animation: bz-flare-tick-in 700ms var(--bz-spring) 120ms forwards;
+}
+
+@keyframes bz-flare-bulge-in {
+  0% {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+  35% {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+  70% {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scaleX(0.2);
+    opacity: 0;
+  }
+}
+
+@keyframes bz-flare-tick-in {
+  0% {
+    transform: translateY(-50%) scale(0.4);
+    opacity: 0;
+  }
+  40% {
+    transform: translateY(-50%) scale(1);
+    opacity: 1;
+  }
+  75% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-50%) scale(0.9);
+    opacity: 0;
+  }
+}
+
+@keyframes bz-flare-fade {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ── Particles ───────────────────────────────────────────────────────────── */
+
+.bz-flare-particles {
+  position: absolute;
+  top: 50%;
+  left: 8px;
+  width: 0;
+  height: 0;
+}
+
+.bz-flare-core {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--bz-rim);
+  transform: translate(-50%, -50%) scale(0.2);
+  opacity: 0;
+  animation: bz-flare-core-pop 620ms var(--bz-spring) forwards;
+}
+
+.bz-flare-spark {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--bz-rim);
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  animation: bz-flare-spark-out 820ms var(--bz-spring) forwards;
+  animation-delay: calc(var(--bz-spark-i) * 18ms);
+}
+
+@keyframes bz-flare-core-pop {
+  0% {
+    transform: translate(-50%, -50%) scale(0.2);
+    opacity: 0;
+  }
+  40% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(0.4);
+    opacity: 0;
+  }
+}
+
+@keyframes bz-flare-spark-out {
+  0% {
+    transform: translate(-50%, -50%) rotate(var(--bz-spark-angle)) translateX(0) scale(0.6);
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) rotate(var(--bz-spark-angle)) translateX(46px) scale(0.9);
+    opacity: 0;
+  }
+}
+
+/* Motion is the whole point of the flare. Where it is off, do not draw it — the
+   component already refuses to mount, and this is the CSS backstop. */
+:root[data-reduce-motion='true'] .bz-flare {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bz-flare {
+    display: none;
+  }
+}

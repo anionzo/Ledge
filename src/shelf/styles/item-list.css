@@ -10,6 +10,10 @@
 .bz-item-list {
   position: relative;
   width: 100%;
+  /* Ask the browser to hold the reading position when content grows above the
+     viewport, so a clip landing at the top of the ledger does not shove the
+     row the user is looking at downward. */
+  overflow-anchor: auto;
 }
 
 .bz-item-window {

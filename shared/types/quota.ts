@@ -43,6 +43,20 @@ export type QuotaState =
 /** Severity band driving the ring colour. Separate from the accent hue. */
 export type QuotaSeverity = 'ok' | 'warn' | 'critical'
 
+/**
+ * Burn rate relative to the window clock: `hot` = used% is running ahead of
+ * elapsed% (on pace to exhaust before reset); `ok` = at or behind the clock.
+ */
+export type UsagePace = 'ok' | 'hot'
+
+/** One recorded usage sample, for trend sparklines. */
+export interface UsageSample {
+  /** ISO 8601 instant the sample was taken. */
+  at: string
+  /** ringPercent at that instant, 0–100. */
+  percent: number
+}
+
 /** One rate-limit window (a 5-hour session, a rolling week, a billing month). */
 export interface QuotaWindow {
   label: string
@@ -79,6 +93,12 @@ export interface QuotaReading {
    * also the seam the Cost Meter backlog item builds on.
    */
   balance?: QuotaBalance | null
+  /**
+   * Burn rate: how usage is tracking against the window's clock. `hot` means
+   * used% is meaningfully ahead of elapsed% — on pace to exhaust before the
+   * reset. Null when it cannot be computed (no reset instant, no percentage).
+   */
+  pace?: UsagePace | null
   /**
    * Cost of the current window, once the Cost Meter backlog item lands.
    * Present in the type from the start so adding it later is additive only.

@@ -1,0 +1,81 @@
+/**
+ * Changelog list.
+ *
+ * Prose surface — this is the settings window, where paragraphs are allowed —
+ * so it uses the ground/panel tokens rather than the panels' glass.
+ */
+
+.bz-changelog {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bz-space-5);
+}
+
+.bz-changelog-release {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bz-space-3);
+}
+
+.bz-changelog-head {
+  display: flex;
+  align-items: center;
+  gap: var(--bz-space-2);
+}
+
+.bz-changelog-version {
+  font-family: var(--bz-font-mono);
+  font-size: var(--bz-text-md);
+  font-weight: 600;
+  color: var(--bz-ink);
+}
+
+.bz-changelog-badge {
+  font-size: var(--bz-text-xs);
+  letter-spacing: var(--bz-track-label);
+  text-transform: uppercase;
+  color: var(--bz-rim);
+  background: var(--bz-rim-soft);
+  border: 1px solid var(--bz-rim-hairline);
+  border-radius: 999px;
+  padding: 1px var(--bz-space-2);
+}
+
+.bz-changelog-date {
+  font-size: var(--bz-text-sm);
+  color: var(--bz-ink-3);
+}
+
+.bz-changelog-summary {
+  margin: 0;
+  font-size: var(--bz-text-base);
+  line-height: 1.5;
+  color: var(--bz-ink-2);
+}
+
+.bz-changelog-highlights {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bz-space-2);
+}
+
+.bz-changelog-highlight {
+  padding: var(--bz-space-3);
+  background: var(--bz-panel);
+  border: 1px solid var(--bz-rule-soft);
+  border-radius: var(--bz-radius-sm);
+}
+
+.bz-changelog-highlight-title {
+  margin: 0;
+  font-size: var(--bz-text-base);
+  font-weight: 600;
+  color: var(--bz-ink);
+}
+
+.bz-changelog-highlight-desc {
+  margin: var(--bz-space-1) 0 0;
+  font-size: var(--bz-text-sm);
+  line-height: 1.45;
+  color: var(--bz-ink-3);
+}

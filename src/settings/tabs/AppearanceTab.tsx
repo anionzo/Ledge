@@ -6,7 +6,7 @@
  * and the rings are the only thing allowed to be coloured. Three rings in a
  * row make that visible in a way a paragraph does not.
  */
-import type { ThemeMode } from '../../../shared/types/settings'
+import type { IndicatorStyle, TextScale, ThemeMode } from '../../../shared/types/settings'
 import type { SettingsTabProps } from '../context'
 import { Field, Section, Segmented, Select, Switch, useFieldId } from '../components/Controls'
 import { Ring } from '../../ui'
@@ -21,6 +21,18 @@ export function AppearanceTab({ settings, update }: SettingsTabProps) {
     { value: 'system', label: t('settings.appearance.theme.system') },
     { value: 'light', label: t('settings.appearance.theme.light') },
     { value: 'dark', label: t('settings.appearance.theme.dark') }
+  ]
+
+  const textScaleOptions: { value: TextScale; label: string }[] = [
+    { value: 'sm', label: t('settings.appearance.text_scale.sm') },
+    { value: 'md', label: t('settings.appearance.text_scale.md') },
+    { value: 'lg', label: t('settings.appearance.text_scale.lg') }
+  ]
+
+  const indicatorOptions: { value: IndicatorStyle; label: string }[] = [
+    { value: 'off', label: t('settings.appearance.indicator.off') },
+    { value: 'curve', label: t('settings.appearance.indicator.curve') },
+    { value: 'flare', label: t('settings.appearance.indicator.flare') }
   ]
 
   /**
@@ -58,6 +70,33 @@ export function AppearanceTab({ settings, update }: SettingsTabProps) {
               options={languageOptions}
               label={t('settings.appearance.language')}
               onChange={(language) => void update({ language })}
+            />
+          }
+        />
+      </Section>
+
+      <Section title={t('settings.appearance.text_scale')}>
+        <Field
+          label={t('settings.appearance.text_scale')}
+          help={t('settings.appearance.text_scale.help')}
+          control={
+            <Segmented
+              value={settings.shelf.textScale}
+              options={textScaleOptions}
+              label={t('settings.appearance.text_scale')}
+              onChange={(textScale) => void update({ shelf: { textScale } })}
+            />
+          }
+        />
+        <Field
+          label={t('settings.appearance.indicator')}
+          help={t('settings.appearance.indicator.help')}
+          control={
+            <Segmented
+              value={settings.shelf.indicatorStyle}
+              options={indicatorOptions}
+              label={t('settings.appearance.indicator')}
+              onChange={(indicatorStyle) => void update({ shelf: { indicatorStyle } })}
             />
           }
         />

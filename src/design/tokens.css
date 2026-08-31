@@ -142,14 +142,22 @@
 /* ── Motion ──────────────────────────────────────────────────────────────── */
 :root {
   --bz-spring: cubic-bezier(0.32, 0.72, 0, 1);
+  /* The Edge-Drop overshoot, for entrances that should land with a little
+     spring rather than easing flat to rest. */
+  --bz-spring-overshoot: cubic-bezier(0.34, 1.56, 0.64, 1);
   --bz-open-ms: 280ms;
   --bz-close-ms: 180ms;
+  /* Interaction timings: fast for hovers and taps, base for content moves. */
+  --bz-fast: 140ms;
+  --bz-base: 240ms;
 }
 
 @media (prefers-reduced-motion: reduce) {
   :root {
     --bz-open-ms: 0ms;
     --bz-close-ms: 0ms;
+    --bz-fast: 0ms;
+    --bz-base: 0ms;
   }
 }
 
@@ -158,6 +166,8 @@
 :root[data-reduce-motion='true'] {
   --bz-open-ms: 0ms;
   --bz-close-ms: 0ms;
+  --bz-fast: 0ms;
+  --bz-base: 0ms;
 }
 
 /* ── Panel material ──────────────────────────────────────────────────────── */

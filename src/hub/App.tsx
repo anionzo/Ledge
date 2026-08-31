@@ -4,16 +4,17 @@
  * One right-docked frame that carries both features the two source apps used to
  * split across two edges: the quota HUD as a collapsible strip at the top, the
  * clipboard shelf filling everything below it. Composition only — the shelf's
- * list, search, selection and preview and the gauge's provider rows and detail
- * sheet are imported wholesale, so this file wires data and owns exactly one new
- * thing: when the panel opens and closes.
+ * list, search, filters, selection and preview and the gauge's provider rows
+ * and detail sheet are imported wholesale, so this file wires data and owns the
+ * few things that are genuinely hub-level: when the panel opens and closes, and
+ * how the behavioural settings (hover, incognito, preview, text scale, the copy
+ * indicator) are applied across the whole surface.
  *
- * The old per-feature renderers started with `usePanelOpen(true)`, which painted
- * the full glass panel over the desktop from the first frame. The hub starts
- * CLOSED and only opens on a hotkey/tray toggle or an edge-hover dwell, so a
- * collapsed Ledge leaves the desktop entirely alone.
+ * The item list is never predicted. Every mutating call returns the new array
+ * and `shelf:items` pushes it when the OS clipboard changes underneath us, so
+ * there is exactly one source of truth and no reconciliation to get wrong.
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from 'react'
 import type { ClipboardItem, DragRequest } from '../../shared/types/clipboard'
 import {
   invoke,
@@ -25,13 +26,26 @@ import {
 } from '../lib/bridge'
 import { useToastQueue } from '../lib/toasts'
 import { useVirtualWindow } from '../lib/virtual'
+import {
+  playButtonClickSound,
+  playCardExpandSound,
+  playDeleteSound,
+  playDialTickSound,
+  playToggleSound,
+  setSoundEnabled
+} from '../lib/soundEffects'
 import { t } from '../i18n'
-import { Button, EmptyState, Panel, PanelHeader, ToastStack } from '../ui'
+import { Button, Chip, EmptyState, Panel, PanelHeader, ToastStack } from '../ui'
+import { ClearMenu } from '../shelf/components/ClearMenu'
+import { CopyIndicatorCurve } from '../shelf/components/CopyIndicatorCurve'
+import { FilterTabs } from '../shelf/components/FilterTabs'
 import { ItemList } from '../shelf/components/ItemList'
+import { Onboarding } from '../shelf/components/Onboarding'
 import { PreviewSheet } from '../shelf/components/PreviewSheet'
 import { SearchBar } from '../shelf/components/SearchBar'
 import { SelectionBar } from '../shelf/components/SelectionBar'
-import { estimateCardHeight, matches } from '../shelf/describe'
+import { buildDropItems, dropHasContent } from '../shelf/dragIn'
+import { estimateCardHeight, matches, matchesFilter } from '../shelf/describe'
 import { useShelfStore } from '../shelf/store'
 import { ProviderSheet } from '../gauge/components/ProviderSheet'
 import { useGaugeStore } from '../gauge/store'
@@ -52,6 +66,22 @@ export function App() {
 
   const side = settings?.shelf.side ?? 'right'
   const alertThreshold = settings?.gauge.alertThreshold ?? 80
+
+  // Behavioural settings, with defaults for the pre-bootstrap frame.
+  const hoverActivation = settings?.shelf.hoverActivation ?? true
+  const incognito = settings?.shelf.incognito ?? false
+  const previewEnabled = settings?.shelf.previewEnabled ?? true
+  const textScale = settings?.shelf.textScale ?? 'md'
+  const indicatorStyle = settings?.shelf.indicatorStyle ?? 'curve'
+  const reduceMotion = settings?.reduceMotion ?? false
+
+  // The synth mirrors the persisted preference, and reduced motion silences it
+  // along with the animations — a click track under a still UI is its own kind
+  // of motion.
+  useEffect(() => {
+    if (!settings) return
+    setSoundEnabled(settings.shelf.playSounds && !settings.reduceMotion)
+  }, [settings])
 
   // ── Open / close ───────────────────────────────────────────────────────────
   //
@@ -78,6 +108,13 @@ export function App() {
   }, [clearDwell])
 
   usePush('panel:cursor-edge', (event) => {
+    // Hover-to-open is a setting. When it is off the shelf only opens on the
+    // hotkey/tray toggle, both of which come through `panel:toggle` and are
+    // unaffected by this handler.
+    if (!hoverActivation) {
+      clearDwell()
+      return
+    }
     if (!event.inTriggerZone) {
       clearDwell()
       return
@@ -91,33 +128,66 @@ export function App() {
 
   useEffect(() => clearDwell, [clearDwell])
 
+  // Open/close earns a switch-snap. Fires only on a real transition, never on
+  // the initial closed mount.
+  const prevOpen = useRef(open)
+  useEffect(() => {
+    if (prevOpen.current !== open) {
+      playToggleSound(open)
+      prevOpen.current = open
+    }
+  }, [open])
+
   // ── Clipboard (shelf) ──────────────────────────────────────────────────────
   const items = useShelfStore((s) => s.items)
   const query = useShelfStore((s) => s.query)
+  const filter = useShelfStore((s) => s.filter)
   const selection = useShelfStore((s) => s.selection)
   const selecting = useShelfStore((s) => s.selecting)
   const previewId = useShelfStore((s) => s.previewId)
   const setItems = useShelfStore((s) => s.setItems)
   const setQuery = useShelfStore((s) => s.setQuery)
+  const setFilter = useShelfStore((s) => s.setFilter)
   const toggleSelection = useShelfStore((s) => s.toggleSelection)
   const selectAll = useShelfStore((s) => s.selectAll)
   const clearSelection = useShelfStore((s) => s.clearSelection)
   const openPreview = useShelfStore((s) => s.openPreview)
   const closePreview = useShelfStore((s) => s.closePreview)
 
+  // Capture detection for the copy indicator: a growth in the list means a new
+  // clip landed (a re-copy only bumps an existing entry, so the count holds).
+  const prevCount = useRef<number | null>(null)
+  const [flareKey, setFlareKey] = useState(0)
+
   useEffect(() => {
     invoke('shelf:list')
-      .then(setItems)
+      .then((list) => {
+        setItems(list)
+        prevCount.current = list.length
+      })
       .catch(() => toasts.push(t('common.unknown'), 'error'))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  usePush('shelf:items', setItems)
+  usePush('shelf:items', (next) => {
+    const grew = prevCount.current !== null && next.length > prevCount.current
+    prevCount.current = next.length
+    setItems(next)
+    if (grew) {
+      // The flare is bumped unconditionally; the indicator component only
+      // mounts when the style is not 'off', so 'off' shows nothing while the
+      // capture tick still plays.
+      setFlareKey((k) => k + 1)
+      playDialTickSound()
+    }
+  })
 
-  const filtered = useMemo(
-    () => (query.trim() ? items.filter((item) => matches(item, query)) : items),
-    [items, query]
-  )
+  const filtered = useMemo(() => {
+    const q = query.trim()
+    return items.filter(
+      (item) => matchesFilter(item, filter) && (q ? matches(item, q) : true)
+    )
+  }, [items, query, filter])
 
   const estimateHeight = useCallback(
     (index: number) => {
@@ -132,9 +202,10 @@ export function App() {
   const runCopy = useCallback(
     (request: DragRequest) => {
       invoke('shelf:copy', request)
-        .then((ok) =>
+        .then((ok) => {
+          if (ok) playButtonClickSound()
           toasts.push(ok ? t('shelf.toast.copied') : t('shelf.toast.copy_failed'), ok ? 'info' : 'error')
-        )
+        })
         .catch(() => toasts.push(t('shelf.toast.copy_failed'), 'error'))
     },
     [toasts]
@@ -142,6 +213,7 @@ export function App() {
 
   const runPaste = useCallback(
     (request: DragRequest) => {
+      playButtonClickSound()
       invoke('shelf:paste', request).catch(() =>
         toasts.push(t('shelf.toast.copy_failed'), 'error')
       )
@@ -172,8 +244,10 @@ export function App() {
       if (ids.length === 0) return
       invoke('shelf:delete', ids)
         .then((next) => {
+          prevCount.current = next.length
           setItems(next)
           clearSelection()
+          playDeleteSound()
           toasts.push(t('shelf.toast.deleted', { n: ids.length }))
         })
         .catch(() => toasts.push(t('common.unknown'), 'error'))
@@ -186,15 +260,90 @@ export function App() {
     if (last) runCopy({ itemId: last, memberIndex: null })
   }, [runCopy, selection])
 
-  const onClearUnpinned = useCallback(() => {
-    invoke('shelf:clear', true)
-      .then(setItems)
-      .catch(() => toasts.push(t('common.unknown'), 'error'))
-  }, [setItems, toasts])
+  const onClear = useCallback(
+    (keepPinned: boolean) => {
+      invoke('shelf:clear', keepPinned)
+        .then((next) => {
+          prevCount.current = next.length
+          setItems(next)
+          playDeleteSound()
+        })
+        .catch(() => toasts.push(t('common.unknown'), 'error'))
+    },
+    [setItems, toasts]
+  )
+
+  const onMerge = useCallback(
+    (sourceId: string, targetId: string) => {
+      invoke('shelf:merge', sourceId, targetId)
+        .then((result) => {
+          if (result.ok) {
+            playCardExpandSound(true)
+            toasts.push(t('shelf.toast.merged'))
+          } else if (result.reason === 'stack-full') {
+            toasts.push(t('shelf.toast.stack_full'), 'error')
+          }
+          return invoke('shelf:list')
+        })
+        .then((next) => {
+          prevCount.current = next.length
+          setItems(next)
+        })
+        .catch(() => toasts.push(t('common.unknown'), 'error'))
+    },
+    [setItems, toasts]
+  )
+
+  // ── Drag-in from the OS ──────────────────────────────────────────────────
+  const [dropActive, setDropActive] = useState(false)
+
+  const onDragOver = useCallback((event: DragEvent<HTMLDivElement>) => {
+    // A card dragged inside the shelf is a native drag whose id is parked in
+    // the store; that is a merge or a no-op, never an add, so leave it to the
+    // cards and never light the OS drop hint for it.
+    if (useShelfStore.getState().draggingId !== null) return
+    if (!dropHasContent(event.dataTransfer)) return
+    event.preventDefault()
+    event.dataTransfer.dropEffect = 'copy'
+    setDropActive(true)
+  }, [])
+
+  const onDragLeave = useCallback((event: DragEvent<HTMLDivElement>) => {
+    const related = event.relatedTarget as Node | null
+    if (related && event.currentTarget.contains(related)) return
+    setDropActive(false)
+  }, [])
+
+  const onDrop = useCallback(
+    (event: DragEvent<HTMLDivElement>) => {
+      // An internal card drag dropped on empty shelf space must not re-add the
+      // card as if it were an external file.
+      if (useShelfStore.getState().draggingId !== null) return
+      if (!dropHasContent(event.dataTransfer)) return
+      event.preventDefault()
+      setDropActive(false)
+      const payloads = buildDropItems(event.dataTransfer)
+      if (payloads.length === 0) return
+      // Added one after another; each returns the fresh list, so the last wins.
+      let chain: Promise<ClipboardItem[]> | null = null
+      for (const payload of payloads) {
+        chain = chain ? chain.then(() => invoke('shelf:add', payload)) : invoke('shelf:add', payload)
+      }
+      chain
+        ?.then((next) => {
+          prevCount.current = next.length
+          setItems(next)
+          playDialTickSound()
+          toasts.push(t('shelf.toast.added', { n: payloads.length }))
+        })
+        .catch(() => toasts.push(t('common.unknown'), 'error'))
+    },
+    [setItems, toasts]
+  )
 
   const previewItem = useMemo(
-    () => items.find((item) => item.id === previewId) ?? null,
-    [items, previewId]
+    () => (previewEnabled ? (items.find((item) => item.id === previewId) ?? null) : null),
+    [items, previewId, previewEnabled]
   )
 
   const focusList = useCallback(() => {
@@ -202,7 +351,7 @@ export function App() {
     first?.focus()
   }, [])
 
-  const isFiltered = query.trim().length > 0
+  const isFiltered = query.trim().length > 0 || filter !== 'all'
 
   // ── Quota (gauge) ──────────────────────────────────────────────────────────
   const snapshot = useGaugeStore((s) => s.snapshot)
@@ -248,11 +397,32 @@ export function App() {
     [readings, detailId]
   )
 
+  const headerMeta =
+    incognito || items.length > 0 ? (
+      <span className="bz-hub-meta bz-row">
+        {incognito && (
+          <Chip icon="lock" className="bz-hub-incognito">
+            {t('shelf.incognito.badge')}
+          </Chip>
+        )}
+        {items.length > 0 && <span className="bz-num">{items.length}</span>}
+      </span>
+    ) : undefined
+
   return (
-    // The wrapper, not the Panel, catches the close gesture: `Panel` is a shared
-    // primitive with no mouse-leave prop, and moving the cursor off the whole
-    // frame is what should collapse the hub.
-    <div className="bz-hub-root" onMouseLeave={requestClose}>
+    // The wrapper, not the Panel, catches the close gesture and the OS drop:
+    // `Panel` is a shared primitive with no such props, and moving the cursor
+    // off the whole frame is what should collapse the hub. `data-text-scale`
+    // rescopes the type tokens (see hub.css) so the whole surface scales.
+    <div
+      className="bz-hub-root"
+      data-text-scale={textScale}
+      data-drop-active={dropActive || undefined}
+      onMouseLeave={requestClose}
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onDrop={onDrop}
+    >
     <Panel
       side={side}
       open={open}
@@ -262,14 +432,21 @@ export function App() {
       header={
         <PanelHeader
           title={t('app.name')}
-          meta={items.length > 0 ? String(items.length) : undefined}
+          meta={headerMeta}
           action={
-            <Button
-              size="sm"
-              icon="settings"
-              label={t('common.settings')}
-              onClick={() => void invoke('panel:open', 'settings')}
-            />
+            <span className="bz-hub-header-actions bz-row">
+              <ClearMenu
+                disabled={items.length === 0}
+                panelOpen={open}
+                onClear={onClear}
+              />
+              <Button
+                size="sm"
+                icon="settings"
+                label={t('common.settings')}
+                onClick={() => void invoke('panel:open', 'settings')}
+              />
+            </span>
           }
         />
       }
@@ -285,6 +462,7 @@ export function App() {
             retrying={refreshing}
           />
           <SearchBar value={query} onChange={setQuery} onEnterList={focusList} autoFocus={open} />
+          <FilterTabs value={filter} onChange={setFilter} />
         </>
       }
       footer={
@@ -319,6 +497,23 @@ export function App() {
             onRefresh={refreshQuota}
             refreshing={refreshing}
           />
+          {/* Drop hint and the copy flare live inside the panel overlay so they
+              are clipped to the panel, translate off-edge with it when it
+              closes, and never paint or intercept clicks outside its bounds. */}
+          {dropActive && (
+            <div className="bz-hub-drop" aria-hidden="true">
+              <span className="bz-hub-drop-label">{t('shelf.drop.hint')}</span>
+            </div>
+          )}
+          {indicatorStyle !== 'off' && (
+            <CopyIndicatorCurve
+              flareKey={flareKey}
+              side={side}
+              style={indicatorStyle}
+              reduceMotion={reduceMotion}
+            />
+          )}
+          <Onboarding active={open} />
           <ToastStack
             toasts={toasts.toasts}
             onDismiss={toasts.dismiss}
@@ -335,7 +530,13 @@ export function App() {
           body={isFiltered ? t('shelf.empty.filtered.body') : t('shelf.empty.body')}
           action={
             isFiltered ? (
-              <Button size="sm" onClick={() => setQuery('')}>
+              <Button
+                size="sm"
+                onClick={() => {
+                  setQuery('')
+                  setFilter('all')
+                }}
+              >
                 {t('shelf.search.clear')}
               </Button>
             ) : undefined
@@ -348,12 +549,15 @@ export function App() {
           selection={selection}
           selecting={selecting}
           virtual={virtual}
+          previewEnabled={previewEnabled}
           onCopy={onCopyItem}
           onPaste={onPasteItem}
           onToggleSelection={toggleSelection}
           onTogglePin={onTogglePin}
           onDelete={onDelete}
           onPreview={openPreview}
+          onMerge={onMerge}
+          onError={(message) => toasts.push(message, 'error')}
         />
       )}
     </Panel>

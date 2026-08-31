@@ -10,6 +10,24 @@
 }
 
 /*
+ * Z-ORDER LADDER — every overlay lives inside `.bz-panel` (position:relative,
+ * overflow:hidden), so nothing paints or intercepts a click outside the panel,
+ * and a closed panel translates the whole stack off its edge. From bottom up:
+ *
+ *   list            auto   the scrolling item ledger
+ *   quota expand    (flow) the accordion that grows the strip
+ *   sheet            20    preview / provider detail slide-over
+ *   clear-menu pop   22    the header clear dropdown
+ *   onboarding       25    first-run overlay (inert backdrop)
+ *   toasts           30    transient confirmations
+ *   drop hint        36    OS drag-in wash (pointer-events: none)
+ *   copy flare       40    edge capture flourish (pointer-events: none, top)
+ *
+ * The two top layers are non-interactive on purpose; nothing above the toasts
+ * may ever take the pointer.
+ */
+
+/*
  * The collapse fix.
  *
  * panel.css nudges a closed panel 8px and fades it — enough for a slide-in, but
@@ -157,4 +175,88 @@
   display: flex;
   flex-direction: column;
   gap: var(--bz-space-1);
+}
+
+/* ── Text scale ──────────────────────────────────────────────────────────── */
+
+/*
+ * Rescope the type tokens on the hub root. Every component reads its size from
+ * `var(--bz-text-*)`, so redefining the scale here cascades into the whole
+ * surface — cards, chips, the quota strip — without touching a single
+ * component. `md` is the token file's default and needs no override.
+ */
+.bz-hub-root {
+  position: relative;
+}
+
+.bz-hub-root[data-text-scale='sm'] {
+  --bz-text-xs: 9px;
+  --bz-text-sm: 10.5px;
+  --bz-text-base: 12px;
+  --bz-text-md: 13.5px;
+}
+
+.bz-hub-root[data-text-scale='lg'] {
+  --bz-text-xs: 11px;
+  --bz-text-sm: 13px;
+  --bz-text-base: 14.5px;
+  --bz-text-md: 17px;
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+
+.bz-hub-header-actions {
+  gap: var(--bz-space-1);
+}
+
+.bz-hub-meta {
+  gap: var(--bz-space-2);
+  align-items: center;
+}
+
+/* The incognito badge: capture is paused. Amber, because it is a state worth
+   noticing but not an error. */
+.bz-hub-incognito {
+  text-transform: uppercase;
+  letter-spacing: var(--bz-track-label);
+  font-size: var(--bz-text-xs);
+}
+
+/* ── Drop target ─────────────────────────────────────────────────────────── */
+
+/* A rim-lit wash over the whole frame while an OS drag hovers it. Inert — the
+   drop is caught on the root, not here. */
+.bz-hub-drop {
+  position: absolute;
+  inset: 0;
+  z-index: 36;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--bz-rim-soft) 70%, transparent);
+  box-shadow: inset 0 0 0 2px var(--bz-rim);
+  animation: bz-hub-drop-in var(--bz-close-ms) var(--bz-spring);
+}
+
+.bz-hub-drop-label {
+  padding: var(--bz-space-2) var(--bz-space-4);
+  border-radius: var(--bz-radius);
+  background: var(--bz-panel);
+  border: 1px solid var(--bz-rim);
+  color: var(--bz-rim);
+  font-size: var(--bz-text-sm);
+  font-weight: 600;
+}
+
+@keyframes bz-hub-drop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+:root[data-reduce-motion='true'] .bz-hub-drop {
+  animation: none;
 }

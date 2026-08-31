@@ -8,9 +8,11 @@
  * find out *why* the switch they read about is not there. This is that
  * answer, in one place, stated without apology.
  */
+import { useState } from 'react'
 import type { PlatformCapabilities } from '../../../shared/types/platform'
 import type { SettingsTabProps } from '../context'
 import { Section } from '../components/Controls'
+import { ChangelogView } from '../components/ChangelogView'
 import { Button, Icon } from '../../ui'
 import { invoke } from '../../lib/bridge'
 import { t } from '../../i18n'
@@ -27,6 +29,8 @@ const CAPABILITY_KEYS: (keyof PlatformCapabilities)[] = [
 ]
 
 export function AboutTab({ capabilities, version }: SettingsTabProps) {
+  const [showChangelog, setShowChangelog] = useState(false)
+
   return (
     <>
       <Section title={t('settings.tab.about')}>
@@ -53,6 +57,17 @@ export function AboutTab({ capabilities, version }: SettingsTabProps) {
             )
           })}
         </ul>
+      </Section>
+
+      <Section title={t('settings.about.whats_new')}>
+        <Button
+          size="sm"
+          icon={showChangelog ? 'chevron-down' : 'chevron-right'}
+          onClick={() => setShowChangelog((v) => !v)}
+        >
+          {showChangelog ? t('settings.about.whats_new.hide') : t('settings.about.whats_new.show')}
+        </Button>
+        {showChangelog && <ChangelogView />}
       </Section>
 
       {/* Outside a Section: quitting is not a setting, and giving it a heading
