@@ -72,14 +72,13 @@
   transform: translateY(0);
 }
 
-/* A subtle hover lift on the rail only — a transform, so it never reflows the
-   ledger's flush hairlines. */
+/* The mark no longer lifts on its own.
+   The card already rises 1px under the pointer, and lifting a child by the
+   same amount inside it stacked two movements into one gesture — the mark
+   travelled 2px while everything around it travelled 1, which is what read as
+   a wobble. The transition stays for anything else that transforms the mark. */
 .bz-item-mark {
   transition: transform var(--bz-fast) var(--bz-spring);
-}
-
-.bz-item:hover .bz-item-mark {
-  transform: translateY(-1px);
 }
 
 /* Selection has to read as a fact, not an animation — the background swap
@@ -205,20 +204,20 @@
 
 /* ── Actions ─────────────────────────────────────────────────────────────── */
 
+/* Fade only, no scale-in.
+   Three 20px buttons growing from 0.9 to 1 in 140ms, on top of a card that is
+   itself lifting, is a pop — and it is the third thing moving in a gesture
+   that should read as one. Opacity alone still tells you they arrived. */
 .bz-item-actions {
   flex: 0 0 auto;
   gap: 2px;
   opacity: 0;
-  transform: scale(0.9);
-  transition:
-    opacity var(--bz-fast) var(--bz-spring),
-    transform var(--bz-fast) var(--bz-spring);
+  transition: opacity var(--bz-fast) var(--bz-spring);
 }
 
 .bz-item:hover .bz-item-actions,
 .bz-item:focus-within .bz-item-actions {
   opacity: 1;
-  transform: scale(1);
 }
 
 .bz-item-action {

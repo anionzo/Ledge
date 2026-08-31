@@ -346,31 +346,22 @@
 .bz-quota-chip:active {
   transform: translateY(0);
 }
-@keyframes bz-chip-breathe {
-  0%,
-  100% {
-    box-shadow: 0 0 0 1px color-mix(in srgb, var(--bz-warn) 30%, transparent);
-  }
-  50% {
-    box-shadow: 0 0 0 2px color-mix(in srgb, var(--bz-warn) 62%, transparent);
-  }
-}
+/* "Running hot" is a fact, so it is drawn, not performed.
+   This ring used to pulse on `infinite`. The quota strip is on screen the
+   whole time the hub is open, so an animation that never resolves is not an
+   alert — it is a flicker in the corner of the eye that the user cannot
+   dismiss, and it kept a compositor layer awake for as long as the panel was
+   up. A steady ring says the same thing and then stops talking. */
 .bz-quota-chip[data-pace='hot'] {
-  animation: bz-chip-breathe 2.4s ease-in-out infinite;
+  box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--bz-warn) 55%, transparent);
 }
 @media (prefers-reduced-motion: reduce) {
   .bz-quota-chip:hover {
     transform: none;
   }
-  .bz-quota-chip[data-pace='hot'] {
-    animation: none;
-  }
 }
 :root[data-reduce-motion='true'] .bz-quota-chip:hover {
   transform: none;
-}
-:root[data-reduce-motion='true'] .bz-quota-chip[data-pace='hot'] {
-  animation: none;
 }
 
 /* ── Proximity beacon (smooth-03) ────────────────────────────────────────────

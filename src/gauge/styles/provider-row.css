@@ -132,24 +132,13 @@
 .bz-pace-glyph {
   font-size: 0.85em;
   line-height: 1;
-  /* A slow, low-contrast breath — enough to read as "still climbing" without
-     becoming a blinking alarm. Suppressed entirely under reduced motion. */
-  animation: bz-pace-breathe 1800ms var(--bz-spring) infinite;
+  /* Static. This used to breathe its opacity down to 0.45 on a 1.8s loop,
+     which the comment here claimed was "not a blinking alarm" — but a mark
+     that halves in contrast and comes back, forever, on a row that stays open,
+     is exactly a blink. The glyph and its label already say "running hot";
+     motion added nothing to that except something to look away from. */
 }
 
-@keyframes bz-pace-breathe {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.45;
-  }
-}
-
-:root[data-reduce-motion='true'] .bz-pace-glyph {
-  animation: none;
-}
 
 /* Failures that the user can act on state their case at full contrast. */
 .bz-provider[data-state='error'] .bz-provider-status,

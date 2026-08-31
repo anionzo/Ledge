@@ -46,12 +46,17 @@ body {
      --bz-shadow. The blade radius on the inner corners comes from tokens.css,
      so the shadow tracks the same rounded inner edge and square outer edge. */
   box-shadow: var(--bz-shadow);
-  /* Opening lands with the overshoot spring — a confident, restrained
-     Edge-Drop landing, not a bounce — while closing (below) eases flat on
-     --bz-spring so a dismiss never overshoots. */
+  /* Both directions ease flat on --bz-spring.
+     The overshoot curve that used to open the panel peaks at 1.56, so a
+     360 px-wide surface travelled past its resting edge and came back — on a
+     backdrop-filtered window that reads as a jolt rather than a landing,
+     because every frame of the overshoot re-samples the blur underneath.
+     `will-change` promotes the layer before the first frame instead of during
+     it, which is where the initial hitch came from. */
   transition:
-    opacity var(--bz-open-ms) var(--bz-spring-overshoot),
-    transform var(--bz-open-ms) var(--bz-spring-overshoot);
+    opacity var(--bz-open-ms) var(--bz-spring),
+    transform var(--bz-open-ms) var(--bz-spring);
+  will-change: transform, opacity;
 }
 
 .bz-panel:not([data-open]) {
@@ -62,14 +67,17 @@ body {
     transform var(--bz-close-ms) var(--bz-spring);
 }
 
+/* Fully clear of the viewport. A pure translate, deliberately — the `scale(0.98)`
+   that used to ride along made the close read as a retreat, but it also meant
+   the compositor could not treat the move as a cheap integer shift of an
+   already-rendered layer, and re-rasterising a blurred full-height panel every
+   frame is what the stutter was. */
 .bz-panel[data-side='left']:not([data-open]) {
-  /* Fully clear of the viewport, with a hair of shrink so the close reads as
-     a retreat rather than a plain slide. */
-  transform: translateX(-100%) scale(0.98);
+  transform: translateX(-100%);
 }
 
 .bz-panel[data-side='right']:not([data-open]) {
-  transform: translateX(100%) scale(0.98);
+  transform: translateX(100%);
 }
 
 /* ── Header ──────────────────────────────────────────────────────────────── */
