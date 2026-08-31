@@ -37,6 +37,18 @@ const FALLBACK_VERSION = '1.0.13'
 const ID = 'grok'
 const DISPLAY_NAME = 'Grok'
 
+/** The new billing payload wraps numbers as `{ val: number }`; read either. */
+function numVal(raw: unknown): number | null {
+  if (typeof raw === 'number') return Number.isFinite(raw) ? raw : null
+  const rec = asRecord(raw)
+  if (rec && typeof rec.val === 'number' && Number.isFinite(rec.val)) return rec.val
+  return null
+}
+
+function clampPercent(value: number): number {
+  return Math.min(100, Math.max(0, Math.round(value)))
+}
+
 interface WindowValues {
   percent: number | null
   resetsAt: string | null
@@ -152,35 +164,81 @@ async function read(ctx: ReadContext): Promise<QuotaReading> {
       return reading(ctx, 'error', `Billing endpoint unavailable (HTTP ${res.status})`)
     }
 
-    const weeklyPercent = coercePercent(config.creditUsagePercent)
+    const weeklyReset =
+      toIsoInstant(recordAt(config, 'currentPeriod')?.end) ?? toIsoInstant(config.billingPeriodEnd)
 
-    // `productUsage` is a per-product breakdown; the first entry with a usable
-    // percentage stands in for the session window, matching the original.
-    let sessionPercent: number | null = null
+    // ── New billing shape (unified billing) ────────────────────────────────
+    // xAI moved from a `creditUsagePercent` / `productUsage` percentage model to
+    // a prepaid-balance + on-demand model: `prepaidBalance.val`,
+    // `onDemandUsed.val` / `onDemandCap.val`, and `currentPeriod`. The old
+    // fields are gone for these accounts, which is why the previous parser fell
+    // through to "unrecognised shape".
+    const onDemandUsed = numVal(config.onDemandUsed)
+    const onDemandCap = numVal(config.onDemandCap)
+    const prepaid = numVal(config.prepaidBalance)
+    const onDemandPercent =
+      onDemandCap != null && onDemandCap > 0 && onDemandUsed != null
+        ? clampPercent((onDemandUsed / onDemandCap) * 100)
+        : null
+
+    // ── Old billing shape (still honoured if an account returns it) ─────────
+    const legacyWeekly = coercePercent(config.creditUsagePercent)
+    let legacySession: number | null = null
     for (const entry of arrayAt(config, 'productUsage')) {
       const product = asRecord(entry)
       if (!product) continue
       const pct = coercePercent(product.usagePercent ?? product.creditUsagePercent)
       if (pct != null) {
-        sessionPercent = pct
+        legacySession = pct
         break
       }
     }
 
-    const weeklyReset =
-      toIsoInstant(recordAt(config, 'currentPeriod')?.end) ?? toIsoInstant(config.billingPeriodEnd)
+    const sessionPercent = onDemandPercent ?? legacySession
+    const weeklyPercent = legacyWeekly
 
-    if (weeklyPercent == null && sessionPercent == null) {
-      return reading(ctx, 'error', 'Billing data in an unrecognised shape')
+    // A usable percentage in either shape → a normal window reading.
+    if (sessionPercent != null || weeklyPercent != null) {
+      return reading(
+        ctx,
+        'ok',
+        null,
+        { percent: sessionPercent, resetsAt: null },
+        { percent: weeklyPercent, resetsAt: weeklyReset }
+      )
     }
 
+    // No percentage, but real prepaid credits → a balance reading (like DeepSeek).
+    if (prepaid != null && prepaid > 0) {
+      return makeReading({
+        providerId: ID,
+        displayName: DISPLAY_NAME,
+        modelName: DISPLAY_NAME,
+        state: 'ok',
+        message: null,
+        session: null,
+        weekly: null,
+        balance: {
+          currency: 'USD',
+          totalBalance: prepaid.toFixed(2),
+          grantedBalance: null,
+          toppedUpBalance: null,
+          isAvailable: prepaid > 0
+        },
+        now: ctx.now,
+        alertThreshold: ctx.alertThreshold
+      })
+    }
+
+    // Unified-billing subscription with no exposed percentage and no prepaid
+    // balance: this is the common case for a plan user. Report it honestly —
+    // the weekly reset is the one useful fact — rather than an error.
     return reading(
       ctx,
       'ok',
-      null,
-      // The product window has no reset instant of its own in this payload.
-      { percent: sessionPercent, resetsAt: null },
-      { percent: weeklyPercent, resetsAt: weeklyReset }
+      config.isUnifiedBillingUser ? 'Subscription — weekly period' : 'No usage limit reported',
+      undefined,
+      { percent: null, resetsAt: weeklyReset }
     )
   } catch (err) {
     return reading(ctx, 'error', errorMessage(err, 'Grok billing read failed'))

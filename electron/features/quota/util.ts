@@ -7,6 +7,7 @@
  * percentage unless the reading's state is `ok`.
  */
 import type {
+  QuotaBalance,
   QuotaReading,
   QuotaState,
   QuotaWindow,
@@ -79,6 +80,8 @@ export interface ReadingInit {
   message?: string | null
   session?: QuotaWindow | null
   weekly?: QuotaWindow | null
+  /** For balance-shaped providers; when set the UI draws a balance bar. */
+  balance?: QuotaBalance | null
   now: number
   alertThreshold: number
 }
@@ -110,6 +113,7 @@ export function makeReading(init: ReadingInit): QuotaReading {
     message: init.message ?? null,
     session,
     weekly,
+    balance: init.balance ?? null,
     ringPercent: ring,
     severity: severityFor(ring, init.alertThreshold),
     observedAt: new Date(init.now).toISOString(),

@@ -262,6 +262,7 @@ function bootstrap(): void {
     onItems: (items) => broadcast('shelf:items', items)
   })
   clipboard.start()
+  clipboard.pause(settings.shelf.incognito)
 
   registerShelfPlaceholders()
   registerClipboardIpc(clipboard)
@@ -488,6 +489,8 @@ function applySettings(settings: Settings): void {
   syncPanels(settings)
   applyHotkeysFromSettings(settings)
   scheduleQuota(settings)
+  // Incognito pauses new-item capture without touching existing history.
+  clipboard?.pause(settings.shelf.incognito)
   tray?.refresh()
 }
 

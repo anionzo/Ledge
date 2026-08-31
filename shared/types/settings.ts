@@ -38,7 +38,23 @@ export interface ShelfSettings {
   /** Encrypt history at rest via safeStorage. */
   encryptHistory: boolean
   playSounds: boolean
+  /** Pause capturing new clipboard items (incognito). History is untouched. */
+  incognito: boolean
+  /** Open the shelf on edge hover. When off, only the hotkey opens it. */
+  hoverActivation: boolean
+  /** Relative UI text size for the shelf. */
+  textScale: TextScale
+  /** Show the preview flyout when an item is focused/opened. */
+  previewEnabled: boolean
+  /** The "copied" feedback style shown at the edge when the OS clipboard changes. */
+  indicatorStyle: IndicatorStyle
 }
+
+/** Relative UI text size. */
+export type TextScale = 'sm' | 'md' | 'lg'
+
+/** Copy-feedback flourish shown at the docked edge when a new item is captured. */
+export type IndicatorStyle = 'off' | 'curve' | 'flare'
 
 export interface GaugeSettings {
   enabled: boolean
@@ -123,7 +139,12 @@ export const DEFAULT_SETTINGS: Settings = {
     triggerAlign: 'center',
     maxItems: 200,
     encryptHistory: true,
-    playSounds: true
+    playSounds: true,
+    incognito: false,
+    hoverActivation: true,
+    textScale: 'md',
+    previewEnabled: true,
+    indicatorStyle: 'curve'
   },
   gauge: {
     enabled: true,
