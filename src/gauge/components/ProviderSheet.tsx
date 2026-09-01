@@ -134,6 +134,15 @@ function SheetBody({
         </div>
       )}
 
+      {/* An `ok` reading can still carry a message even though `status` above
+          is null for it — Grok's unified-billing subscription has no
+          percentage to show but does have a sentence explaining why
+          ("Subscription — weekly period"), and a stale `ok` reading carries
+          the failing refresh's own cause (see `keepLastKnown` in `cache.ts`).
+          Same quotation treatment as a failure's message: it is equally the
+          provider's own words, not ours. */}
+      {!status && reading.message && <p className="bz-detail-message">{reading.message}</p>}
+
       {reading.stale && (
         <p className="bz-detail-note">
           {t('gauge.stale.explain', { time: formatClock(reading.observedAt) })}

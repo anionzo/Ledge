@@ -52,7 +52,7 @@ export function BalanceMeter({ balance, label, size = 'row' }: BalanceMeterProps
           // Credits are a count, not money: read "1000 credits", unit after.
           <>
             {balance.totalBalance}
-            <span className="bz-balance-currency"> credits</span>
+            <span className="bz-balance-currency"> {t('gauge.balance.credits')}</span>
           </>
         ) : (
           <>

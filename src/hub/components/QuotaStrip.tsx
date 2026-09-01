@@ -54,9 +54,17 @@ function chipInfo(reading: QuotaReading): {
     }
   }
   if (isBalance(reading) && reading.balance) {
+    const { currency, totalBalance, isAvailable } = reading.balance
     return {
-      value: reading.balance.totalBalance,
-      valSeverity: reading.balance.isAvailable ? undefined : 'critical',
+      // Same convention as `BalanceMeter`: a currency reads as a prefixed
+      // symbol ("$110.00"), but "credits" is a unit word, not a symbol, so it
+      // follows the amount instead ("1000 credits"). Bare `110.00` in a row of
+      // `42%` chips gave no sense of what the number even was.
+      value:
+        currency === 'credits'
+          ? `${totalBalance} ${t('gauge.balance.credits')}`
+          : `${currency}${totalBalance}`,
+      valSeverity: isAvailable ? undefined : 'critical',
       chipSeverity: dotSeverity(reading),
       muted: false
     }

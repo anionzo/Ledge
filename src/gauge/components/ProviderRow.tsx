@@ -132,10 +132,32 @@ function StatusLine({ reading }: { reading: QuotaReading }) {
         className="bz-provider-status bz-row"
         data-balance={available ? undefined : 'critical'}
       >
+        {/* A balance can be retained too — the last known amount survives a
+            failed refresh exactly like a window reading does — so it needs
+            the same "this is not live" marker the window branch below shows. */}
+        {reading.stale && (
+          <Chip icon="info" tone="warn">
+            {t('gauge.stale')}
+          </Chip>
+        )}
         <Icon name={available ? 'check' : 'alert'} size={11} />
         <span className="bz-truncate">
           {available ? t('gauge.balance.available') : t('gauge.balance.unavailable')}
         </span>
+        {/* The provider's own words, when it gave us any — a stale balance
+            carries the failing refresh's cause (see `keepLastKnown` in
+            `cache.ts`), so "offline" and "rate limited" stay distinguishable
+            instead of collapsing into one generic marker. */}
+        {reading.message && (
+          <span className="bz-provider-message bz-truncate" title={reading.message}>
+            {reading.message}
+          </span>
+        )}
+        {reading.stale && (
+          <span className="bz-sr">
+            {t('gauge.stale.explain', { time: formatClock(reading.observedAt) })}
+          </span>
+        )}
       </span>
     )
   }
@@ -169,6 +191,18 @@ function StatusLine({ reading }: { reading: QuotaReading }) {
             ? t('gauge.resets_now')
             : t('gauge.resets_in', { duration: humaniseDuration(remaining) })}
       </span>
+      {/* The provider's own words, kept subordinate to the reset countdown.
+          Two real cases land here: an `ok` reading that has no percentage but
+          does have something to say (Grok's unified-billing subscription —
+          "Subscription — weekly period"), and a stale reading, whose message
+          is the failing refresh's cause rather than a generic one (see
+          `keepLastKnown` in `cache.ts`). Either way, an `ok` reading with a
+          message was previously shown as a bare dash and no explanation. */}
+      {reading.message && (
+        <span className="bz-provider-message bz-truncate" title={reading.message}>
+          {reading.message}
+        </span>
+      )}
       {reading.stale && (
         <span className="bz-sr">
           {t('gauge.stale.explain', { time: formatClock(reading.observedAt) })}

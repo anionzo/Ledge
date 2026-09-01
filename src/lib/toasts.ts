@@ -7,6 +7,8 @@
  * same `ui:toast` push from main.
  */
 import { useCallback, useEffect, useRef, useState } from 'react'
+import type { ToastPush } from '../../shared/ipc'
+import { t } from '../i18n'
 import { usePush } from './bridge'
 
 export interface ToastRecord {
@@ -60,7 +62,17 @@ export function useToastQueue(): ToastQueue {
     [add]
   )
 
-  usePush('ui:toast', (toast) => add(toast))
+  // Main sends the sentence it wants plus an English rendering of it. Prefer
+  // the key: main cannot reach `t()`, so the string it built is always English
+  // no matter what language the rest of the window is in — which is how a
+  // fully-translated app ends up popping an English toast.
+  usePush('ui:toast', (toast: ToastPush) =>
+    add({
+      id: toast.id,
+      tone: toast.tone,
+      message: toast.key ? t(toast.key, toast.params) : toast.message
+    })
+  )
 
   useEffect(() => {
     const pending = timers.current

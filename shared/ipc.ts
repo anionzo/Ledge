@@ -37,6 +37,25 @@ export interface EdgeCursorEvent {
   edgeMiss: boolean
 }
 
+/**
+ * A toast raised by the main process.
+ *
+ * `message` is English, assembled in main where `t()` does not exist. `key`
+ * and `params` are what the renderer actually shows when it can — main knows
+ * *which* sentence it wants long before it knows what language the user reads
+ * it in, so it sends the key and keeps the English as the fallback for a key
+ * the running build has no string for.
+ */
+export interface ToastPush {
+  id: string
+  message: string
+  tone: 'info' | 'error'
+  /** An `en` dictionary key. The renderer prefers this over `message`. */
+  key?: string
+  /** `{placeholder}` values for `key`. */
+  params?: Record<string, string | number>
+}
+
 /** One scoped clear request. Every field narrows; `null` means "do not narrow". */
 export interface ClearQuery {
   /** Pinned items survive. Always true except for the explicit "clear all". */
@@ -161,7 +180,7 @@ export interface PushMap {
   'settings:changed': [settings: Settings]
   'panel:cursor-edge': [event: EdgeCursorEvent]
   'panel:toggle': [open: boolean]
-  'ui:toast': [toast: { id: string; message: string; tone: 'info' | 'error' }]
+  'ui:toast': [toast: ToastPush]
   /**
    * The updater moved. One channel rather than available/downloaded/error
    * three ways: the Settings banner renders the whole status object anyway, and

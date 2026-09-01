@@ -227,6 +227,9 @@ export const en: Dictionary = {
 
   // Burn rate and usage history.
   'gauge.pace.hot': 'Burning fast',
+  // Raised from the main process, which cannot translate — it sends this key
+  // and the renderer resolves it. See `ToastPush` in shared/ipc.ts.
+  'gauge.toast.critical': '{name} hit {percent}% of its {window} limit',
   'gauge.history.title': 'Usage trend',
   'gauge.history.none': 'No history yet',
 
@@ -234,6 +237,8 @@ export const en: Dictionary = {
   // used-percentage.
   'gauge.balance.available': 'Balance available',
   'gauge.balance.unavailable': 'Insufficient balance',
+  // A unit word, not a currency symbol — it follows the amount ("1000 credits").
+  'gauge.balance.credits': 'credits',
   'gauge.balance.granted': 'Granted',
   'gauge.balance.topup': 'Top-up',
   'gauge.balance.aria': '{name}: {currency} {amount} balance, {status}',
