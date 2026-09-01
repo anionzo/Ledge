@@ -296,27 +296,25 @@ async function read(ctx: ReadContext): Promise<QuotaReading> {
     // Real prepaid credits → a balance reading (like DeepSeek). `prepaid` is
     // checked for `!= null` only, deliberately including exactly 0: an account
     // that has spent down to nothing is itself informative ("$0, out of
-    // credits") and must not fall through to the generic "no limit reported"
+    // credit") and must not fall through to the generic "no limit reported"
     // message below, which would show a bare dash for a number the API did
     // give us.
     //
-    // UNIT IS UNVERIFIED. `prepaidBalance` itself is confirmed real — this
-    // repo diagnosed the endpoint against a live account and recorded the
-    // `{currentPeriod, onDemandCap, onDemandUsed, prepaidBalance,
-    // isUnifiedBillingUser, billingPeriodStart/End}` shape in
-    // `.knowns/decisions/20260831-1417-…`. What is NOT confirmed is the unit
-    // of the number: no public source documents this field, this path has no
-    // test coverage, and the only other known implementation (CodexBar) only
-    // ever uses the sibling `onDemandUsed`/`onDemandCap` fields as a bare
-    // ratio and states outright that xAI credits "are never converted into
-    // dollars". The `?format=credits` in the request URL itself hints these
-    // are credit units, not cents or dollars. Labelling this `USD` would
-    // assert a unit we cannot prove, so it is shown as `credits` (a unit-less
-    // count) instead — exactly what `QuotaBalance.currency`'s `'credits'`
-    // variant exists for. Confidence: low-to-medium that "credits" is the
-    // *right* name, but high that "USD" would have been wrong. `moneyString`
-    // (not `.toFixed`) carries the value through as text so a decimal amount
-    // is never rounded the way `.toFixed(2)` on a float would.
+    // UNIT IS THE OPERATOR'S CALL, and the call was USD. `prepaidBalance`
+    // itself is confirmed real — this repo diagnosed the endpoint against a
+    // live account and recorded the `{currentPeriod, onDemandCap,
+    // onDemandUsed, prepaidBalance, isUnifiedBillingUser,
+    // billingPeriodStart/End}` shape in `.knowns/decisions/20260831-1417-…`.
+    // What no public source documents is the *unit*: the request URL says
+    // `?format=credits`, and the only other known implementation (CodexBar)
+    // uses the sibling ratio fields only, stating that xAI credits "are never
+    // converted into dollars". So this is a dollars-per-credit assumption, not
+    // a proven one — kept because the operator has an account and says the
+    // figure reads as dollars, which is better evidence than a third-party
+    // client's README. Revisit if a funded account ever shows a figure that
+    // does not match the billing page. `moneyString` (not `.toFixed`) carries
+    // the value through as text, so a decimal amount is never rounded the way
+    // `.toFixed(2)` on a float would.
     if (prepaid != null) {
       return makeReading({
         providerId: ID,
@@ -327,7 +325,7 @@ async function read(ctx: ReadContext): Promise<QuotaReading> {
         session: null,
         weekly: null,
         balance: {
-          currency: 'credits',
+          currency: 'USD',
           totalBalance: moneyString(prepaid) ?? String(prepaid),
           grantedBalance: null,
           toppedUpBalance: null,

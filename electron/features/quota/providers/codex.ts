@@ -132,8 +132,16 @@ async function read(ctx: ReadContext): Promise<QuotaReading> {
 
     const res = await httpsRequest({ url: USAGE_URL, headers, timeoutMs: 10_000 })
 
-    if (res.status === 401 || res.status === 403) {
+    // Split, for the same reason as the other readers: re-authenticating
+    // cannot clear a 403. This endpoint is also known to gate on an
+    // `originator` header allowlist, which Ledge does not send — so a 403 here
+    // may well mean "this client is not on the list" rather than anything
+    // about the user's account, and "sign in again" would be doubly wrong.
+    if (res.status === 401) {
       return reading(ctx, 'logged-out', 'OAuth token rejected — sign in with: codex login')
+    }
+    if (res.status === 403) {
+      return reading(ctx, 'error', 'Usage access denied (HTTP 403) — not a sign-in problem')
     }
     if (res.status !== 200 || !res.json) {
       return reading(ctx, 'error', `Usage endpoint unavailable (HTTP ${res.status})`)

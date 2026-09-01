@@ -274,8 +274,16 @@ async function read(ctx: ReadContext): Promise<QuotaReading> {
       timeoutMs: 10_000
     })
 
-    if (res.status === 401 || res.status === 403) {
+    // 401 and 403 are different problems and only one of them is fixed by
+    // signing in again. A 401 means the credential was rejected. A 403 means
+    // it was accepted and the request was refused anyway — an allowlist, a
+    // plan restriction, an account-level block — and telling that user to
+    // re-authenticate sends them round a loop that cannot help.
+    if (res.status === 401) {
       return reading(ctx, 'logged-out', 'OAuth token rejected — run `claude`, then /login')
+    }
+    if (res.status === 403) {
+      return reading(ctx, 'error', 'Usage access denied (HTTP 403) — not a sign-in problem')
     }
     if (res.status !== 200 || !res.json) {
       return reading(ctx, 'error', `Usage endpoint unavailable (HTTP ${res.status})`)

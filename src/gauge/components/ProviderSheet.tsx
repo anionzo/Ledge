@@ -351,8 +351,24 @@ function Sparkline({
   const innerH = SPARK_H - SPARK_PAD * 2
   const baseline = SPARK_H - SPARK_PAD
 
+  // Spaced by WHEN each sample was taken, not by its position in the array.
+  //
+  // Samples are recorded on change plus a slow heartbeat, so the gaps between
+  // them are wildly irregular — evenly spacing them put a twelve-day-old
+  // reading the same distance from its neighbour as a sixty-second-old one,
+  // which makes a quiet fortnight and a busy minute look identical. The line's
+  // shape was not the trend's shape. Falls back to even spacing only when the
+  // timestamps cannot order the points (all identical, or unparseable), where
+  // index order is the only information there is.
+  const firstAt = Date.parse(samples[0]!.at)
+  const lastAt = Date.parse(samples[n - 1]!.at)
+  const spanMs = Number.isFinite(firstAt) && Number.isFinite(lastAt) ? lastAt - firstAt : 0
+
   const points = samples.map((sample, i) => {
-    const x = SPARK_PAD + (i / (n - 1)) * innerW
+    const at = Date.parse(sample.at)
+    const fraction =
+      spanMs > 0 && Number.isFinite(at) ? (at - firstAt) / spanMs : i / Math.max(1, n - 1)
+    const x = SPARK_PAD + Math.min(1, Math.max(0, fraction)) * innerW
     const clamped = Math.min(100, Math.max(0, sample.percent))
     const y = SPARK_PAD + (1 - clamped / 100) * innerH
     return { x: round(x), y: round(y) }
