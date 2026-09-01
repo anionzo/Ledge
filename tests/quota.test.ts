@@ -19,6 +19,7 @@ import { createCustomProvider } from '../electron/features/quota/providers/custo
 import { claudeProvider, parseClaudeWindows } from '../electron/features/quota/providers/claude'
 import { resetGeminiTokenCache } from '../electron/features/quota/providers/gemini'
 import { readVscdbItems } from '../electron/features/quota/providers/cursor'
+import { parseDeepseekBalance } from '../electron/features/quota/providers/deepseek'
 import { httpsRequest } from '../electron/features/quota/http'
 import {
   coercePercent,
@@ -378,6 +379,83 @@ describe('claude provider', () => {
     const empty = parseClaudeWindows({})
     expect(empty.session.percent).toBeNull()
     expect(empty.weekly.percent).toBeNull()
+  })
+
+  it('reports the highest of the weekly caps and names which one binds', () => {
+    // Real payload shape: the blended weekly figure looks comfortable, but
+    // the per-model Opus cap is nearly exhausted — that is what should show.
+    const windows = parseClaudeWindows({
+      five_hour: { utilization: 33 },
+      seven_day: { utilization: 13 },
+      seven_day_opus: { utilization: 95 }
+    })
+    expect(windows.session.percent).toBe(33)
+    expect(windows.weekly.percent).toBe(95)
+    expect(windows.weeklyLabel).toBe('Weekly (Opus)')
+  })
+
+  it('falls back to the blended weekly cap when no per-model cap exceeds it', () => {
+    const windows = parseClaudeWindows({
+      seven_day: { utilization: 50 },
+      seven_day_sonnet: { utilization: 20 }
+    })
+    expect(windows.weekly.percent).toBe(50)
+    expect(windows.weeklyLabel).toBe('Weekly')
+  })
+
+  it('never defaults a missing per-model cap to 0', () => {
+    // Only seven_day_opus is present: seven_day and seven_day_sonnet must stay
+    // absent from consideration, not silently treated as 0.
+    const windows = parseClaudeWindows({ seven_day_opus: { utilization: 40 } })
+    expect(windows.weekly.percent).toBe(40)
+    expect(windows.weeklyLabel).toBe('Weekly (Opus)')
+  })
+})
+
+describe('parseDeepseekBalance', () => {
+  it('prefers the funded entry when a zero USD entry sorts first', () => {
+    const balance = parseDeepseekBalance({
+      is_available: true,
+      balance_infos: [
+        { currency: 'USD', total_balance: '0.00', granted_balance: '0.00', topped_up_balance: '0.00' },
+        { currency: 'CNY', total_balance: '110.00', granted_balance: '10.00', topped_up_balance: '100.00' }
+      ]
+    })
+    expect(balance).not.toBeNull()
+    expect(balance!.currency).toBe('CNY')
+    expect(balance!.totalBalance).toBe('110.00')
+  })
+
+  it('prefers the funded entry regardless of which order it comes in', () => {
+    const balance = parseDeepseekBalance({
+      is_available: true,
+      balance_infos: [
+        { currency: 'CNY', total_balance: '110.00' },
+        { currency: 'USD', total_balance: '0.00' }
+      ]
+    })
+    expect(balance).not.toBeNull()
+    expect(balance!.currency).toBe('CNY')
+    expect(balance!.totalBalance).toBe('110.00')
+  })
+
+  it('falls back to the first parseable entry when every entry is zero', () => {
+    const balance = parseDeepseekBalance({
+      balance_infos: [
+        { currency: 'USD', total_balance: '0.00' },
+        { currency: 'CNY', total_balance: '0.00' }
+      ]
+    })
+    expect(balance).not.toBeNull()
+    expect(balance!.currency).toBe('USD')
+    expect(balance!.totalBalance).toBe('0.00')
+  })
+
+  it('never invents a currency, and returns null when nothing parses', () => {
+    expect(parseDeepseekBalance({ balance_infos: [] })).toBeNull()
+    expect(
+      parseDeepseekBalance({ balance_infos: [{ currency: 'EUR', total_balance: '5.00' }] })
+    ).toBeNull()
   })
 })
 
@@ -791,12 +869,28 @@ describe('coercePercent', () => {
     expect(coercePercent(100)).toBe(100)
   })
 
+  it('clamps a provable over-limit value in (100, 200] to 100', () => {
+    // Over the cap is a fact worth showing, not a reason to blank the ring: a
+    // Cursor usage-based account at 112%, or Claude's own imprecise 100.4,
+    // are genuinely "at the limit", and clamping to 100 also keeps the
+    // critical-severity alert firing.
+    expect(coercePercent(101)).toBe(100)
+    expect(coercePercent(100.4)).toBe(100)
+    expect(coercePercent(112)).toBe(100)
+    expect(coercePercent('150')).toBe(100)
+    expect(coercePercent(200)).toBe(100)
+  })
+
+  it('refuses a value so far over 100 it looks like a reader bug, not a user', () => {
+    expect(coercePercent(200.1)).toBeNull()
+    expect(coercePercent(500)).toBeNull()
+  })
+
   it('refuses anything it cannot prove', () => {
     expect(coercePercent(null)).toBeNull()
     expect(coercePercent(undefined)).toBeNull()
     expect(coercePercent(true)).toBeNull()
     expect(coercePercent(-1)).toBeNull()
-    expect(coercePercent(101)).toBeNull()
     expect(coercePercent(Number.NaN)).toBeNull()
     expect(coercePercent('abc')).toBeNull()
     // The original returned 0 here because Number('') is 0.

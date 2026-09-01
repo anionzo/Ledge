@@ -14,6 +14,7 @@ import {
   appendPoint,
   computeSpendFromPoints,
   parseAmount,
+  toStore,
   type BalancePoint
 } from '../electron/store/balanceHistory'
 
@@ -115,9 +116,18 @@ describe('computeSpendFromPoints', () => {
     ]
     const cost = computeSpendFromPoints(points, now)
     expect(cost).not.toBeNull()
-    // Today: 60 (first in-day) − 50 (latest) = 10.
-    expect(cost!.todayAmount).toBeCloseTo(10, 10)
-    // Month: 100 (first in-month) − 50 (latest) = 50.
+    // Today: 100 − 50 = 50, NOT 60 − 50 = 10.
+    //
+    // `appendPoint` records only when the amount changes, so the balance is
+    // flat between two points by construction: the 100 recorded on the 1st was
+    // still 100 at midnight today, and the drop to 60 was observed at 08:00
+    // — this morning. Anchoring on the first in-day sample instead treats that
+    // drop as if it had already happened before the day began, which is the
+    // under-reporting this function was fixed to stop (at one in-day sample it
+    // degenerates to a fabricated "0.00 spent today").
+    expect(cost!.todayAmount).toBeCloseTo(50, 10)
+    // Month: no point exists before the 1st at 09:00, so the month falls back
+    // to the earliest-in-period diff: 100 − 50 = 50.
     expect(cost!.monthAmount).toBeCloseTo(50, 10)
     // No session concept for a standing balance.
     expect(cost!.sessionAmount).toBeNull()
@@ -131,7 +141,8 @@ describe('computeSpendFromPoints', () => {
       point(2026, 5, 1, 9, 100)
     ]
     const cost = computeSpendFromPoints(points, now)
-    expect(cost!.todayAmount).toBeCloseTo(10, 10)
+    // Same figures as above, reached from shuffled input.
+    expect(cost!.todayAmount).toBeCloseTo(50, 10)
     expect(cost!.monthAmount).toBeCloseTo(50, 10)
   })
 
@@ -159,6 +170,25 @@ describe('computeSpendFromPoints', () => {
     const cost = computeSpendFromPoints(points, now)
     expect(cost!.todayAmount).toBeNull()
     expect(cost!.monthAmount).toBeCloseTo(30, 10)
+  })
+
+  it('anchors on the balance AT the period start, not the first in-period sample', () => {
+    // $100 at 23:00 yesterday, $80 at 09:00 today — the only in-period point —
+    // now noon. The naive "earliest in-period" anchor picks the 09:00 point
+    // itself, making earliest === latest and fabricating "0.00 spent today"
+    // even though $20 was spent overnight, before the in-period sample
+    // happened to land. The fix anchors on the last point at-or-before
+    // midnight instead.
+    const points = [
+      point(2026, 5, 14, 23, 100), // yesterday, before today's window opens
+      point(2026, 5, 15, 9, 80) // today, the ONLY in-period sample
+    ]
+    const cost = computeSpendFromPoints(points, now)
+    expect(cost!.todayAmount).toBe(20)
+    // For the month window both points fall in-period (no pre-period anchor
+    // exists), so this exercises the other branch — earliest vs latest
+    // in-period sample — and happens to agree: 100 − 80 = 20.
+    expect(cost!.monthAmount).toBe(20)
   })
 
   it('preserves the balance currency', () => {
@@ -201,5 +231,35 @@ describe('appendPoint', () => {
     expect(next).not.toBe(start)
     expect(next).toHaveLength(2)
     expect(next[1]!.amount).toBe(40)
+  })
+})
+
+describe('toStore (balance-history load/decode)', () => {
+  it('keeps a credits point through a save/load round trip', () => {
+    // Antigravity reports its balance in `credits`, not USD/CNY. Before this
+    // fix, the decoder only accepted `'USD' | 'CNY'`, so a credits point
+    // written to disk one run was silently dropped on the NEXT load — the
+    // cost line reset every restart. Round-trip it through JSON, exactly as
+    // the real file write/read does, to prove it survives.
+    const onDisk = {
+      antigravity: [
+        { at: '2026-06-01T00:00:00.000Z', amount: 500, currency: 'credits' },
+        { at: '2026-06-15T00:00:00.000Z', amount: 420, currency: 'credits' }
+      ]
+    }
+    const decoded = toStore(JSON.parse(JSON.stringify(onDisk)))
+    expect(decoded.antigravity).toHaveLength(2)
+    expect(decoded.antigravity![1]).toEqual({
+      at: '2026-06-15T00:00:00.000Z',
+      amount: 420,
+      currency: 'credits'
+    })
+  })
+
+  it('still drops an entry with an unrecognised currency', () => {
+    const decoded = toStore({
+      x: [{ at: '2026-06-01T00:00:00.000Z', amount: 1, currency: 'EUR' }]
+    })
+    expect(decoded.x).toBeUndefined()
   })
 })

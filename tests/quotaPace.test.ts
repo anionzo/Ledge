@@ -16,6 +16,7 @@ import type {
 } from '../shared/types/quota'
 import { makeReading, makeWindow } from '../electron/features/quota/util'
 import { computePace, windowLengthMs } from '../electron/features/quota/pace'
+import { windowLabel } from '../electron/features/quota/providers/codex'
 import {
   appendSample,
   MAX_SAMPLES,
@@ -50,6 +51,37 @@ function reading(init: {
     alertThreshold: 80
   })
 }
+
+/**
+ * A length the provider stated beats one guessed from the label.
+ *
+ * This is the seam that lets a "Billing period" window have a pace at all
+ * after `windowLengthMs` stopped guessing: the label cannot say how long a
+ * billing period runs, but a provider handing over both ends of it can.
+ */
+describe('computePace with a provider-stated window length', () => {
+  it('uses lengthMs for a label that windowLengthMs refuses to resolve', () => {
+    // 30-day period, 6 days to reset, 70% used: 80% elapsed, threshold 97 —
+    // on pace. The very case that read as "hot" while the length was guessed.
+    const win = makeWindow('Billing period', 70, iso(NOW + 6 * DAY), 30 * DAY)
+    expect(computePace(reading({ session: win }), NOW)).toBe('ok')
+  })
+
+  it('still flags genuinely hot usage once the length is known', () => {
+    // Same 30-day period 6 days from reset, but 99% used against 80% elapsed.
+    const win = makeWindow('Billing period', 99, iso(NOW + 6 * DAY), 30 * DAY)
+    expect(computePace(reading({ session: win }), NOW)).toBe('hot')
+  })
+
+  it('declines when the stated length is not a usable number', () => {
+    // A zero or negative length would divide the window into nothing; the
+    // field is dropped at construction, so this falls back to the label — and
+    // "Billing period" has no length, so there is no answer to give.
+    expect(makeWindow('Billing period', 70, iso(NOW + 6 * DAY), 0).lengthMs).toBeUndefined()
+    const win = makeWindow('Billing period', 70, iso(NOW + 6 * DAY), 0)
+    expect(computePace(reading({ session: win }), NOW)).toBeNull()
+  })
+})
 
 // ── computePace ─────────────────────────────────────────────────────────────
 
@@ -108,14 +140,28 @@ describe('computePace', () => {
     expect(computePace(monthly, NOW)).toBe('ok')
   })
 
-  it('disambiguates a Billing period by how far off the reset is', () => {
-    // Reset 2d away → a weekly period, 5/7 elapsed → threshold ≈ 87.1 → ok.
-    const shortPlan = reading({ weekly: makeWindow('Billing period', 80, iso(NOW + 2 * DAY)) })
-    expect(computePace(shortPlan, NOW)).toBe('ok')
-    // Same 80%, but the reset 15d away → a monthly period, half elapsed
-    // → threshold 62.5 → hot.
-    const longPlan = reading({ weekly: makeWindow('Billing period', 80, iso(NOW + 15 * DAY)) })
-    expect(computePace(longPlan, NOW)).toBe('hot')
+  it('never guesses a length for "Billing period" — null regardless of reset distance', () => {
+    // The old behaviour disambiguated by how far off the reset was (≤7d →
+    // weekly, else monthly). That guess was wrong in exactly the case that
+    // matters — see the false-alarm regression below — so both distances now
+    // come back with no pace at all rather than a plausible-looking one.
+    const nearReset = reading({ weekly: makeWindow('Billing period', 80, iso(NOW + 2 * DAY)) })
+    expect(computePace(nearReset, NOW)).toBeNull()
+    const farReset = reading({ weekly: makeWindow('Billing period', 80, iso(NOW + 15 * DAY)) })
+    expect(computePace(farReset, NOW)).toBeNull()
+  })
+
+  it('does not false-alarm "Burning fast" in the last week of a monthly Billing period', () => {
+    // Regression for the bug this fix closes. A 30-day cycle, 6 days from
+    // reset, 70% used is dead on pace for the real window (elapsedFraction
+    // 0.8 → threshold ≈ 97 → ok) — but the old code saw "≤7 days to reset"
+    // and assumed a 7-day window, giving elapsedFraction ≈ 0.143 and a
+    // threshold of ≈ 21.4, so anyone above ~21% used got a false "hot" for
+    // the entire closing week of every monthly cycle. Cursor and Grok both
+    // use this label for a monthly plan. The only honest answer is no pace
+    // chip at all, not a wrong one.
+    const r = reading({ weekly: makeWindow('Billing period', 70, iso(NOW + 6 * DAY)) })
+    expect(computePace(r, NOW)).toBeNull()
   })
 
   it('paces the window that drives the ring, not the other one', () => {
@@ -141,6 +187,55 @@ describe('windowLengthMs', () => {
     expect(windowLengthMs('Product usage', NOW + HOUR, NOW)).toBeNull()
     expect(windowLengthMs('Session', NOW + HOUR, NOW)).toBeNull()
     expect(windowLengthMs('', NOW + HOUR, NOW)).toBeNull()
+  })
+
+  it('no longer disambiguates "Billing period" by reset distance — always null', () => {
+    expect(windowLengthMs('Billing period', NOW + 2 * DAY, NOW)).toBeNull()
+    expect(windowLengthMs('Billing period', NOW + 15 * DAY, NOW)).toBeNull()
+  })
+})
+
+// ── Codex window classification (limit_window_seconds) ──────────────────────
+
+describe('codex windowLabel', () => {
+  const FIVE_HOURS_SECONDS = 5 * 60 * 60
+  const SEVEN_DAYS_SECONDS = 7 * 24 * 60 * 60
+
+  it('labels a window from its own limit_window_seconds', () => {
+    expect(windowLabel(FIVE_HOURS_SECONDS)).toBe('5h session')
+    expect(windowLabel(SEVEN_DAYS_SECONDS)).toBe('Weekly')
+  })
+
+  it('labels correctly even when the API swaps which slot holds which length', () => {
+    // Regression for the codex.ts bug: primary_window/secondary_window are
+    // anonymous slots, and which one carries the 5h session versus the 7-day
+    // window has been observed to flip. windowLabel is fed a slot's own
+    // limit_window_seconds, never told which slot it came from, so a "primary"
+    // slot holding the 7-day length must still come back 'Weekly', and a
+    // "secondary" slot holding the 5-hour length must still come back
+    // '5h session'.
+    const swappedPrimaryLimitWindowSeconds = SEVEN_DAYS_SECONDS
+    const swappedSecondaryLimitWindowSeconds = FIVE_HOURS_SECONDS
+    expect(windowLabel(swappedPrimaryLimitWindowSeconds)).toBe('Weekly')
+    expect(windowLabel(swappedSecondaryLimitWindowSeconds)).toBe('5h session')
+  })
+
+  it('falls back to a generic, honest label when limit_window_seconds is unusable', () => {
+    expect(windowLabel(undefined)).toBe('Usage window')
+    expect(windowLabel(null)).toBe('Usage window')
+    expect(windowLabel(0)).toBe('Usage window')
+    expect(windowLabel(-604800)).toBe('Usage window')
+    expect(windowLabel('not a number')).toBe('Usage window')
+    // A real but unrecognised length — Codex hasn't shipped this window
+    // shape, so it gets the honest fallback rather than an invented name.
+    expect(windowLabel(3600)).toBe('Usage window')
+  })
+
+  it('the fallback label never accidentally resolves to a length in pace.ts', () => {
+    // Ties codex.ts to pace.ts: the fallback must not collide with one of
+    // windowLengthMs's recognised shapes, or an "unusable" window would
+    // silently get a guessed pace after all.
+    expect(windowLengthMs(windowLabel(undefined), NOW + HOUR, NOW)).toBeNull()
   })
 })
 
