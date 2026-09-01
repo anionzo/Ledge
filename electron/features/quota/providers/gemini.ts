@@ -6,8 +6,8 @@
  *   - `https://cloudcode-pa.googleapis.com/v1internal:loadCodeAssist` and
  *     `:retrieveUserQuotaSummary`. The `v1internal` in the path is Google
  *     saying out loud that this is not for us. It is the private Code Assist
- *     surface the Antigravity client calls, and the `Antigravity/4.3.0` User-
- *     Agent is load-bearing. Both the route and the response shape can change
+ *     surface the Antigravity client calls, and the `Antigravity/…` User-
+ *     Agent is load-bearing (see ANTIGRAVITY_UA). Both the route and the response shape can change
  *     without notice.
  *   - the credential itself lives in the OS credential store under the target
  *     `gemini:antigravity`, which is an implementation detail of that client.
@@ -43,7 +43,22 @@ import {
 
 const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token'
 const CLOUD_CODE_URL = 'https://cloudcode-pa.googleapis.com/v1internal'
-const ANTIGRAVITY_UA = 'Antigravity/4.3.0'
+/**
+ * A real Antigravity version, not an invented one.
+ *
+ * This used to claim `4.3.0`, which has never existed: Antigravity's official
+ * changelog tops out at 2.11.0 (26 Aug 2026), and the installed client on the
+ * machine this was checked against reports ProductVersion 2.1.4. The endpoint
+ * accepts the request either way — it evidently does not validate the number —
+ * but a User-Agent the vendor has never shipped is the sort of thing that
+ * works right up until someone adds a check.
+ *
+ * Hardcoded rather than read from the installed client: the real version lives
+ * in a Windows PE resource or inside `app.asar`, and neither is cheap to read
+ * portably for the sake of one header. So this WILL drift as Antigravity
+ * releases; it is a plausible stand-in, not a live reading.
+ */
+const ANTIGRAVITY_UA = 'Antigravity/2.11.0'
 const CREDENTIAL_SERVICE = 'gemini:antigravity'
 
 const ID = 'gemini'

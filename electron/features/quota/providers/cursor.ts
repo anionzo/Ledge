@@ -230,6 +230,15 @@ async function read(ctx: ReadContext): Promise<QuotaReading> {
 
     // Cursor bills per period rather than per session, so both windows share
     // the one billing-cycle reset instant.
+    //
+    // Unit: epoch milliseconds. Cursor's own Admin API documents its date
+    // fields that way, and this endpoint follows the same house convention —
+    // though `billingCycleEnd` itself is not publicly documented, since
+    // `api2.cursor.sh` is the client's private surface. `toIsoInstant` reads
+    // ISO strings, epoch seconds and epoch milliseconds alike (it switches on
+    // a >1e12 magnitude test), so all three land correctly regardless; this
+    // note records which one is actually expected, so a future reader does not
+    // have to rediscover that the heuristic is load-bearing here.
     const cycle = toIsoInstant(asRecord(res.json)?.billingCycleEnd)
     return reading(
       ctx,
