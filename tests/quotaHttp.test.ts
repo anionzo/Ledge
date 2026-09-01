@@ -22,6 +22,7 @@ import {
   DEFAULT_TIMEOUT_MS,
   HttpError,
   httpsRequest,
+  isBlockedAddress,
   MAX_BODY_BYTES
 } from '../electron/features/quota/http'
 import { errorMessage, redact } from '../electron/features/quota/util'
@@ -310,6 +311,39 @@ describe('httpsRequest > status handling', () => {
       expect(result.json).toEqual(body)
     })
   }
+})
+
+describe('link-local address guard', () => {
+  it('refuses the cloud metadata endpoint, which hands out instance credentials', () => {
+    // The whole reason this guard exists: a custom provider pointed here would
+    // send the user's own token and get the machine's credentials back.
+    expect(isBlockedAddress('169.254.169.254')).toBe(true)
+    expect(isBlockedAddress('169.254.0.1')).toBe(true)
+    expect(isBlockedAddress('fe80::1')).toBe(true)
+    expect(isBlockedAddress('::ffff:169.254.169.254')).toBe(true)
+  })
+
+  it('deliberately ALLOWS loopback and LAN, which are legitimate relay hosts', () => {
+    // Custom providers exist to read self-hosted new-api / one-api / one-hub
+    // relays, which people run on localhost or a box on their LAN. A blanket
+    // private-range denylist would break a documented feature to guard against
+    // a URL the user has to type themselves.
+    for (const addr of ['127.0.0.1', '10.1.2.3', '192.168.1.1', '172.16.0.1', '::1']) {
+      expect(isBlockedAddress(addr), addr).toBe(false)
+    }
+  })
+
+  it('allows public addresses, including the neighbours of the blocked range', () => {
+    for (const addr of ['8.8.8.8', '169.253.0.1', '169.255.0.1', '2606:4700::1']) {
+      expect(isBlockedAddress(addr), addr).toBe(false)
+    }
+  })
+
+  it('rejects a request to a literal link-local host before opening a socket', async () => {
+    await expect(
+      httpsRequest({ url: 'https://169.254.169.254/latest/meta-data/' })
+    ).rejects.toThrow(/link-local/i)
+  })
 })
 
 describe('redact / errorMessage — no credential shape reaches a message', () => {

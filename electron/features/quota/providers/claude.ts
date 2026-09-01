@@ -304,6 +304,12 @@ async function read(ctx: ReadContext): Promise<QuotaReading> {
 export const claudeProvider: QuotaProvider = {
   id: ID,
   displayName: DISPLAY_NAME,
-  ttlMs: 60_000,
+  // 180s, not the 60s every other reader uses. Anthropic's usage endpoint has
+  // a reported history of answering 429 under frequent polling, and quota
+  // figures do not move fast enough for a minute to buy anything. The cache's
+  // backoff only engages once failures start; this is about not provoking them.
+  // The scheduler still ticks every 60s — it just gets a cached answer, and the
+  // row shows when the reading was actually taken.
+  ttlMs: 180_000,
   read
 }

@@ -50,6 +50,44 @@ export class HttpError extends Error {
   }
 }
 
+/**
+ * Is this address one no quota endpoint could legitimately live at?
+ *
+ * Deliberately narrow: **link-local only** (169.254.0.0/16 and fe80::/10).
+ * That range contains 169.254.169.254, the cloud metadata service, which hands
+ * out instance credentials to anything on the box that asks — a custom
+ * provider pointed there would send the user's token and get the machine's
+ * back.
+ *
+ * It does NOT block loopback or LAN addresses, and that is the whole design.
+ * This app's custom-provider mode exists to read the new-api / one-api /
+ * one-hub family of relays (see the header of `providers/custom.ts`), and
+ * people self-host those on `localhost` or a box down the hall. A blanket
+ * private-range denylist would have been the textbook answer and would have
+ * broken a documented, legitimate feature to guard against a URL the user has
+ * to type themselves.
+ */
+export function isBlockedAddress(address: string): boolean {
+  const addr = address.trim().toLowerCase()
+  if (addr.includes(':')) {
+    // fe80::/10 — link-local. The mapped ::ffff:169.254.x.x form too.
+    if (/^fe[89ab]/.test(addr)) return true
+    const mapped = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/.exec(addr)
+    return mapped?.[1] ? isBlockedAddress(mapped[1]) : false
+  }
+
+  const parts = addr.split('.')
+  if (parts.length !== 4) return false
+  const a = Number(parts[0])
+  const b = Number(parts[1])
+  return a === 169 && b === 254
+}
+
+/** Hostnames refused without a DNS round trip. */
+function isBlockedHostname(hostname: string): boolean {
+  return isBlockedAddress(hostname.trim().toLowerCase().replace(/^\[|\]$/g, ''))
+}
+
 export async function httpsRequest(options: HttpsRequestOptions): Promise<HttpsResponse> {
   const {
     url,
@@ -64,6 +102,14 @@ export async function httpsRequest(options: HttpsRequestOptions): Promise<HttpsR
   if (parsed.protocol !== 'https:') {
     // Never send a bearer token in the clear.
     throw new HttpError(`refusing non-https request to ${parsed.protocol}//${parsed.host}`)
+  }
+  // LIMIT, stated rather than implied: a hostname that RESOLVES to a
+  // link-local address still gets through. Closing that means issuing the
+  // request against the resolved IP with SNI and Host pinned back to the
+  // original name, and getting that subtly wrong breaks TLS for every real
+  // provider — a bad trade against a URL the user has to type themselves.
+  if (isBlockedHostname(parsed.hostname)) {
+    throw new HttpError(`refusing request to a link-local address: ${parsed.host}`)
   }
 
   return new Promise<HttpsResponse>((resolve, reject) => {
