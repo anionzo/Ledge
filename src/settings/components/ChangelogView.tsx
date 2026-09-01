@@ -27,9 +27,43 @@ interface Release {
 
 const RELEASES: Release[] = [
   {
-    version: 'v0.1.5',
+    version: 'v0.1.6',
     date: 'Sep 2026',
     latest: true,
+    summary:
+      'A click copies, the filters are marks instead of words, and the quota gauge stopped reporting numbers it could not prove.',
+    highlights: [
+      {
+        title: 'Click to copy',
+        description:
+          'Clicking a card copies it. Clicking an image enlarges it, since a thumbnail cannot show you an image. Double-click does whichever of the two the click did not.'
+      },
+      {
+        title: 'Filters as marks',
+        description:
+          'Five icons instead of five words — one row in every language, and a bigger target for the pointer.'
+      },
+      {
+        title: 'Calmer motion',
+        description:
+          'The panel no longer overshoots its edge, cards lift once instead of three times, and the quota strip stopped pulsing at you forever.'
+      },
+      {
+        title: 'Honest quota',
+        description:
+          'The cost meter no longer reports a spend of zero for a day that cost money, Antigravity credits say when they were last seen, DeepSeek shows the currency you actually hold, and Claude reports the weekly cap that binds first rather than the blended one.'
+      },
+      {
+        title: 'The reason, not just the dash',
+        description:
+          'A provider with no number now says why — including when it is showing a retained reading because the last refresh failed.'
+      }
+    ]
+  },
+  {
+    version: 'v0.1.5',
+    date: 'Sep 2026',
+    latest: false,
     summary: 'The update control moved to where a tray app is actually used.',
     highlights: [
       {
