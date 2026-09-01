@@ -211,8 +211,14 @@ async function read(ctx: ReadContext): Promise<QuotaReading> {
       timeoutMs: 15_000
     })
 
-    if (res.status === 401 || res.status === 403) {
+    if (res.status === 401) {
       return reading(ctx, 'logged-out', 'Cursor session expired — sign in to Cursor', modelName)
+    }
+    if (res.status === 403) {
+      // 403 here is Cursor blocking the account (e.g. a plan/entitlement
+      // gate), not a bad session token — re-authenticating cannot fix a
+      // permission gate, so this must not tell the user to sign in again.
+      return reading(ctx, 'error', 'Usage blocked for this account (HTTP 403) — not a sign-in problem', modelName)
     }
 
     const plan = asRecord(asRecord(res.json)?.planUsage)

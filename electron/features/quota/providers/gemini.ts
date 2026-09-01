@@ -207,13 +207,60 @@ function hottestBucket(buckets: unknown[]): WindowValues | null {
   for (const entry of buckets) {
     const bucket = asRecord(entry)
     if (!bucket) continue
-    const used = remainingToUsed(bucket.remainingFraction)
+    // The reverse-engineered CodexBar fixtures nest this one level deeper
+    // (`bucket.remaining.remainingFraction`) than the shape this parser was
+    // originally written against (`bucket.remainingFraction` directly).
+    // Neither is a published Google spec, so both are accepted rather than
+    // picking one and reporting "unrecognised shape" for every bucket when
+    // the API happens to use the other.
+    const nested = recordAt(bucket, 'remaining')
+    const fraction = bucket.remainingFraction ?? nested?.remainingFraction
+    const used = remainingToUsed(fraction)
     if (used == null) continue
     if (!best || best.percent == null || used > best.percent) {
       best = { percent: used, resetsAt: toIsoInstant(bucket.resetTime) }
     }
   }
   return best
+}
+
+/**
+ * How old `state.vscdb`'s mtime may be before its credit count is presented
+ * as current. Antigravity only rewrites `modelCredits` when its own client
+ * runs, so a gap of a few hours — nights, a quiet evening — is unremarkable;
+ * past 24 hours the machine has plausibly gone through sleep/wake or a
+ * reboot without Antigravity running at all, so the number could easily be
+ * several sessions stale and is flagged rather than shown as live.
+ */
+const CREDITS_STALE_AFTER_MS = 24 * 60 * 60 * 1000
+
+interface CreditsFreshness {
+  observedAt: string
+  stale: boolean
+  message: string | null
+}
+
+/**
+ * Turn a raw file mtime into the freshness verdict a reading needs. An
+ * unreadable mtime cannot be proven fresh, so it is treated the same as an
+ * old one — stamped with the read time (the only instant available) but
+ * still marked stale, with a message that says why rather than staying
+ * silent about the uncertainty.
+ */
+function creditsFreshness(observedAtMs: number | null, now: number): CreditsFreshness {
+  if (observedAtMs == null) {
+    return {
+      observedAt: new Date(now).toISOString(),
+      stale: true,
+      message: "Antigravity's local data file has an unreadable timestamp — freshness unknown"
+    }
+  }
+  const stale = now - observedAtMs > CREDITS_STALE_AFTER_MS
+  return {
+    observedAt: new Date(observedAtMs).toISOString(),
+    stale,
+    message: stale ? 'Antigravity has not run recently — credits may be out of date' : null
+  }
 }
 
 /** Is the Antigravity/Gemini client present at all? */
@@ -237,12 +284,13 @@ async function read(ctx: ReadContext): Promise<QuotaReading> {
   try {
     const credits = await readAntigravityCredits(ctx.platform)
     if (credits) {
-      return makeReading({
+      const freshness = creditsFreshness(credits.observedAtMs, ctx.now)
+      const built = makeReading({
         providerId: ID,
         displayName: DISPLAY_NAME,
         modelName: DISPLAY_NAME,
         state: 'ok',
-        message: null,
+        message: freshness.message,
         session: null,
         weekly: null,
         balance: {
@@ -255,6 +303,13 @@ async function read(ctx: ReadContext): Promise<QuotaReading> {
         now: ctx.now,
         alertThreshold: ctx.alertThreshold
       })
+      // `makeReading` always stamps `observedAt` from `now` and `stale: false`.
+      // Both are overridden here: the true observation time is the state.vscdb
+      // file's mtime, not the moment Ledge happened to poll it, and a number
+      // that old presented as live would be exactly the lie `cache.ts` warns
+      // against for a failed-refresh retention — this is the same lie, just
+      // arising from a source file nobody has written to recently instead.
+      return { ...built, observedAt: freshness.observedAt, stale: freshness.stale }
     }
   } catch {
     // Fall through to the API path; a bad DB read must never fail the provider.

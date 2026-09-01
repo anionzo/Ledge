@@ -149,7 +149,17 @@ export function keepLastKnown(
   const byId = new Map(previous.map((reading) => [reading.providerId, reading]))
 
   return next.map((reading) => {
-    if (reading.state === 'ok') return { ...reading, stale: false }
+    // A fresh `ok` reading clears the retention flag — that is what this line
+    // is for. But `stale` has two authors: this function raises it when a
+    // refresh failed and we are showing yesterday's number, and a *provider*
+    // raises it when the number it just read was itself already old. The
+    // second kind is not ours to clear. Antigravity is the case: it reads a
+    // credit balance out of a local database that only Antigravity itself
+    // rewrites, so the read succeeds (`ok`) while the value can be days old,
+    // and the provider says so. Overwriting that with `false` here republished
+    // a stale number as current — precisely the lie this file's own comment
+    // about five-minute-old readings warns against.
+    if (reading.state === 'ok') return reading.stale ? clone(reading) : { ...reading, stale: false }
 
     const old = byId.get(reading.providerId)
     if (!old) return clone(reading)

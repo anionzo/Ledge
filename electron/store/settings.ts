@@ -248,7 +248,12 @@ function normalize(settings: Settings): Settings {
     },
     gauge: {
       ...settings.gauge,
-      alertThreshold: Math.round(clamp(settings.gauge.alertThreshold, 1, 100)),
+      // 50 is the floor the engine enforces (`clampThreshold` in
+      // features/quota/index.ts) and the minimum the slider offers. Clamping to
+      // 1 here let a hand-edited settings.json persist a value the engine would
+      // silently ignore, so the file and the ring disagreed about when
+      // "critical" starts.
+      alertThreshold: Math.round(clamp(settings.gauge.alertThreshold, 50, 100)),
       // Below ~5 s the providers spend more time shelling out than idle.
       refreshIntervalMs: Math.round(clamp(settings.gauge.refreshIntervalMs, 5_000, 3_600_000)),
       // Upgrade every custom entry to the full shape, defaulting the newer

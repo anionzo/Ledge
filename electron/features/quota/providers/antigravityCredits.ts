@@ -16,6 +16,7 @@
  * This is a private, undocumented on-disk format that Antigravity can change at
  * any time, so every step below fails soft to `null` rather than guessing.
  */
+import fs from 'node:fs'
 import type { PlatformAdapter } from '../../../platform/types'
 import { readVscdbItems } from './cursor'
 
@@ -25,6 +26,14 @@ const AVAILABLE_SENTINEL = 'availableCreditsSentinelKey'
 export interface AntigravityCredits {
   /** Credits currently available to spend. */
   available: number
+  /**
+   * Epoch ms `state.vscdb` was last written — i.e. the last time Antigravity
+   * itself ran and touched this value — or null when the mtime could not be
+   * read. This is the only honest evidence of when `available` was actually
+   * true; the caller (`gemini.ts`) must not assume it is current just because
+   * Ledge happened to read it just now.
+   */
+  observedAtMs: number | null
 }
 
 /** Absolute path to Antigravity's `state.vscdb`, per OS, or null. */
@@ -76,7 +85,20 @@ export async function readAntigravityCredits(
   if (!value) return null
 
   const available = parseAvailableCredits(value)
-  return available == null ? null : { available }
+  if (available == null) return null
+
+  // The file's own mtime is the only evidence of when this number was last
+  // true — nothing else writes it. Read separately from the SQL query above
+  // so a stat failure alone never discards a credit read that did succeed;
+  // it just leaves the caller unable to prove freshness.
+  let observedAtMs: number | null = null
+  try {
+    observedAtMs = (await fs.promises.stat(dbPath)).mtimeMs
+  } catch {
+    observedAtMs = null
+  }
+
+  return { available, observedAtMs }
 }
 
 // ── tiny protobuf reader (exported for tests) ──────────────────────────────

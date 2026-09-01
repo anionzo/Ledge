@@ -67,14 +67,28 @@ function toSample(raw: unknown): UsageSample | null {
   return { at, percent }
 }
 
-/** Coerce an untrusted parsed file to a `UsageStore`, dropping bad entries. */
-function toStore(raw: unknown): UsageStore {
+/**
+ * Coerce an untrusted parsed file to a `UsageStore`, dropping bad entries.
+ *
+ * Pruning on the way IN, not only on the way out, is what stops the file
+ * growing without bound in its *key* count. Each provider's list is capped and
+ * aged, but that only ever runs for a provider still being written to — delete
+ * a custom provider and its 600 samples sat in `usage-history.json` forever,
+ * because nothing was left to trigger a prune for that id. Reading is the one
+ * moment every key is in hand at once, so it is where a dead one can be
+ * noticed: after `MAX_AGE_MS` with nothing new, its samples all expire and the
+ * key goes with them.
+ */
+function toStore(raw: unknown, now: number): UsageStore {
   if (!isPlainObject(raw)) return {}
   const out: UsageStore = {}
   for (const key of Object.keys(raw)) {
     const list = raw[key]
     if (!Array.isArray(list)) continue
-    const samples = list.map(toSample).filter((s): s is UsageSample => s !== null)
+    const samples = pruneSamples(
+      list.map(toSample).filter((s): s is UsageSample => s !== null),
+      now
+    )
     if (samples.length > 0) out[key] = samples
   }
   return out
@@ -85,9 +99,9 @@ function toStore(raw: unknown): UsageStore {
  * exported so the corrupt-file behaviour is unit-tested without a filesystem:
  * garbage in, empty store out — never a throw.
  */
-export function parseStoreText(text: string): UsageStore {
+export function parseStoreText(text: string, now: number = Date.now()): UsageStore {
   try {
-    return toStore(JSON.parse(text) as unknown)
+    return toStore(JSON.parse(text) as unknown, now)
   } catch {
     return {}
   }

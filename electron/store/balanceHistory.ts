@@ -83,14 +83,28 @@ function toPoint(raw: unknown): BalancePoint | null {
   if (!isPlainObject(raw)) return null
   const at = typeof raw.at === 'string' ? raw.at : null
   const amount = typeof raw.amount === 'number' && Number.isFinite(raw.amount) ? raw.amount : null
-  const currency = raw.currency === 'USD' || raw.currency === 'CNY' ? raw.currency : null
+  // Accept every currency `recordBalance` can actually write. `QuotaBalance`
+  // (shared/types/quota.ts) allows `'credits'` too — Antigravity reports its
+  // balance in credits, not money — so restricting this to `'USD' | 'CNY'`
+  // silently dropped every Antigravity point on the very next load: it wrote
+  // fine, then `toStore` filtered it back out, resetting the cost line every
+  // restart.
+  const currency =
+    raw.currency === 'USD' || raw.currency === 'CNY' || raw.currency === 'credits'
+      ? raw.currency
+      : null
   if (at === null || amount === null || currency === null) return null
   if (Number.isNaN(Date.parse(at))) return null
   return { at, amount, currency }
 }
 
-/** Coerce an untrusted parsed file to a `HistoryStore`, dropping bad entries. */
-function toStore(raw: unknown): HistoryStore {
+/**
+ * Coerce an untrusted parsed file to a `HistoryStore`, dropping bad entries.
+ * Exported so the save/load round trip (in particular, that a `credits`
+ * point survives it) is unit-tested against a plain decoded object, without
+ * touching the filesystem or Electron's `app`.
+ */
+export function toStore(raw: unknown): HistoryStore {
   if (!isPlainObject(raw)) return {}
   const out: HistoryStore = {}
   for (const key of Object.keys(raw)) {
@@ -158,19 +172,49 @@ export function appendPoint(
 /**
  * Spend within one period, per the Cost Meter contract:
  *
- *   spend = (earliest amount at/after periodStart) − (latest amount), max(0)
+ *   spend = (balance AS THE PERIOD BEGAN) − (latest amount), max(0)
+ *
+ * The anchor is the last point at-or-before `periodStart`, NOT the earliest
+ * point inside the period. `appendPoint` only records on a change, so the
+ * first in-period sample can arrive hours late: if $100 was the balance at
+ * 23:00 yesterday and it dropped to $80 at 09:00 today, the only in-period
+ * point at noon is that $80 — anchoring on it makes `earliest === latest` and
+ * reports "0.00 spent today" when $20 was actually spent overnight.
  *
  * Floored at 0 because a rising balance is a top-up, not negative spend. Points
- * must be sorted ascending. Returns null when there is NO history in the period
- * (nothing to anchor the start of the window on).
+ * must be sorted ascending. Returns null when there is NO history in the
+ * period at all (nothing to anchor the start of the window on).
  */
 function spendInPeriod(points: readonly BalancePoint[], periodStart: number): number | null {
   const inPeriod = points.filter((p) => Date.parse(p.at) >= periodStart)
   if (inPeriod.length === 0) return null
-  const earliest = inPeriod[0]!.amount
   // The latest overall point is always in-period (its timestamp is the max), so
   // the last of `inPeriod` is the current balance.
   const latest = inPeriod[inPeriod.length - 1]!.amount
+
+  // Preferred anchor: the last point at or before the period boundary — the
+  // balance as the day/month actually opened.
+  const before = points.filter((p) => Date.parse(p.at) <= periodStart)
+  if (before.length > 0) {
+    const anchor = before[before.length - 1]!.amount
+    const spend = anchor - latest
+    return spend > 0 ? spend : 0
+  }
+
+  // No point was ever recorded before this period started — e.g. Ledge (or
+  // this provider) was only configured partway through today. Judgement call:
+  // with exactly one in-period sample there is nothing to diff against —
+  // "earliest" and "latest" would be the very same reading, and reporting `0`
+  // would reproduce the exact fabrication this function exists to fix (a
+  // same-value comparison read as "nothing spent" instead of "nothing known
+  // yet"). Prefer null — unknown is honest, a diff-of-one-point is not.
+  if (inPeriod.length < 2) return null
+
+  // Two or more in-period points with no pre-period anchor: the diff between
+  // the earliest and latest in-period samples is still a REAL observed drop
+  // between two distinct readings (just possibly missing whatever was spent
+  // before the first one), so this keeps the original behaviour.
+  const earliest = inPeriod[0]!.amount
   const spend = earliest - latest
   return spend > 0 ? spend : 0
 }

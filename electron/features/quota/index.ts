@@ -181,6 +181,15 @@ async function toastCritical(reading: QuotaReading): Promise<void> {
     const { broadcast } = await import('../../main/ipc')
     broadcast('ui:toast', {
       id: `quota-critical-${reading.providerId}`,
+      // The key is what the user reads; the English is the fallback for a
+      // build whose dictionary predates it. Main has no `t()`, so without the
+      // key this alert stays English in an otherwise Vietnamese window.
+      key: 'gauge.toast.critical',
+      params: {
+        name: reading.displayName,
+        percent: reading.ringPercent ?? 0,
+        window: label
+      },
       message: `${reading.displayName} hit ${reading.ringPercent}% of its ${label} limit`,
       tone: 'error'
     })

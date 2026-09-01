@@ -31,14 +31,22 @@ export function ringWindow(reading: QuotaReading): QuotaWindow | null {
  *
  * Recognised shapes, and nothing else:
  *  - a leading `<n>h` ("5h session") → n hours;
- *  - "Weekly" → 7 days, "Monthly" → 30 days;
- *  - "Billing period" → ambiguous between a weekly and a monthly plan, so the
- *    reset disambiguates: a reset ≤7 days away can only be a weekly period,
- *    anything further out is treated as monthly.
+ *  - "Weekly" → 7 days, "Monthly" → 30 days.
  *
- * Every other label ("Rolling window", "Product usage", …) returns null.
- * Deriving a length from the reset instant alone would be guessing — a reset
- * says when a window ends, not how long it has been running.
+ * Every other label — including "Billing period", "Rolling window", "Product
+ * usage", … — returns null. "Billing period" used to be disambiguated by how
+ * far off the reset was (≤7 days → weekly, else monthly), but that reset
+ * instant is the one thing this function is not allowed to lean on: a reset
+ * says when a window ends, not how long it has been running, and in the last
+ * week of a monthly cycle "≤7 days to reset" is exactly as true of a monthly
+ * plan as of a weekly one. Guessing weekly there was wrong in precisely the
+ * case that matters — the closing week of the month, at real usage — where it
+ * assumed a window seven times shorter than the truth and lit up "hot" for
+ * anyone merely on pace. Cursor and Grok both use this label for a monthly
+ * cycle, and neither response says the cycle's actual length anywhere else,
+ * so there is nothing honest to derive it from. Losing the pace chip for
+ * "Billing period" is the correct price: no chip is honest, a wrong chip
+ * trains the user to ignore the one case that matters.
  */
 export function windowLengthMs(label: string, resetMs: number, now: number): number | null {
   const trimmed = label.trim()
@@ -50,7 +58,6 @@ export function windowLengthMs(label: string, resetMs: number, now: number): num
   const lower = trimmed.toLowerCase()
   if (lower === 'weekly') return 7 * DAY_MS
   if (lower === 'monthly') return 30 * DAY_MS
-  if (lower === 'billing period') return resetMs - now <= 7 * DAY_MS ? 7 * DAY_MS : 30 * DAY_MS
   return null
 }
 
@@ -84,8 +91,13 @@ export function computePace(reading: QuotaReading, now: number): UsagePace | nul
   const resetMs = Date.parse(win.resetsAt)
   if (!Number.isFinite(resetMs)) return null
 
-  const lengthMs = windowLengthMs(win.label, resetMs, now)
-  if (lengthMs === null) return null
+  // A length the provider actually stated beats one recovered from the label.
+  // `windowLengthMs` can only read a length out of a *name*, which works for
+  // "5h" and "Weekly" and cannot work for "Billing period" — so a provider
+  // that hands over both ends of its period gets a real answer here where the
+  // label alone would have to decline.
+  const lengthMs = win.lengthMs ?? windowLengthMs(win.label, resetMs, now)
+  if (lengthMs === null || !Number.isFinite(lengthMs) || lengthMs <= 0) return null
 
   const start = resetMs - lengthMs
   const elapsedFraction = Math.min(1, Math.max(0, (now - start) / lengthMs))

@@ -64,6 +64,20 @@ export interface QuotaWindow {
   usedPercent: number | null
   /** ISO 8601 instant the window resets, or null when unknown. */
   resetsAt: string | null
+  /**
+   * How long this window runs, in ms — set ONLY when the provider told us,
+   * never inferred.
+   *
+   * A reset instant says when a window ends, not how long it has been running,
+   * and pace needs the length to know how far through it we are. `pace.ts`
+   * used to recover the length from the label, which works for "5h" and
+   * "Weekly" and is a coin-flip for "Billing period" — it guessed weekly
+   * whenever the reset was near, so every monthly plan read as "burning fast"
+   * for its final week. Where a provider hands over both ends of the period,
+   * the length is a fact and belongs here; where it does not, this stays
+   * undefined and pace declines to answer.
+   */
+  lengthMs?: number
 }
 
 export interface QuotaReading {

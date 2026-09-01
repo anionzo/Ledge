@@ -55,6 +55,30 @@ function reading(
 }
 
 /**
+ * Pull a usable bearer credential out of one `auth.json` entry.
+ *
+ * Upstream stores two different shapes under the same `opencode-go` /
+ * `opencode` keys: `{type:'api', key}` for a plain API key, and
+ * `{type:'oauth', access, refresh, expires}` for a signed-in OAuth session —
+ * which has no `key` field at all. Reading only `.key` therefore reported
+ * every OAuth user as logged out. An OAuth `access` token is a bearer
+ * credential exactly like the API key is, so it is used the same way here.
+ * `refresh` is deliberately not used: this provider has no token-refresh
+ * flow, so an expired `access` token simply surfaces as the ordinary 401
+ * handled below rather than a silently wrong reading.
+ */
+function credentialFrom(entry: Record<string, unknown> | null): string | null {
+  if (!entry) return null
+  const key = entry.key
+  if (typeof key === 'string' && key.trim()) return key.trim()
+  if (entry.type === 'oauth') {
+    const access = entry.access
+    if (typeof access === 'string' && access.trim()) return access.trim()
+  }
+  return null
+}
+
+/**
  * Take the first window that yields a usable percentage. Keys are tried in
  * order because the API has used more than one name for the same window.
  */
@@ -86,15 +110,14 @@ async function read(ctx: ReadContext): Promise<QuotaReading> {
     const doc = parseJsonSafe(fs.readFileSync(authPath, 'utf8'))
     const go = recordAt(doc, 'opencode-go')
     const legacy = recordAt(doc, 'opencode')
-    const candidate = (go?.key ?? legacy?.key) as unknown
-    key = typeof candidate === 'string' && candidate.trim() ? candidate.trim() : null
+    key = credentialFrom(go) ?? credentialFrom(legacy)
   } catch {
-    // Never echo the file; it is the API key.
+    // Never echo the file; it may hold an API key or an OAuth access token.
     return reading(ctx, 'logged-out', 'auth.json unreadable — connect OpenCode Go')
   }
 
   if (!key) {
-    return reading(ctx, 'logged-out', 'No OpenCode Go API key — connect OpenCode Go')
+    return reading(ctx, 'logged-out', 'No OpenCode Go credential — connect OpenCode Go')
   }
 
   try {

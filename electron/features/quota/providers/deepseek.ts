@@ -65,28 +65,59 @@ function reading(
  * is not the documented shape. Pure and exported so the parse can be unit
  * tested without a network call.
  *
- * The FIRST entry of `balance_infos` stands in for the account balance, per the
- * task contract. Amounts pass through `moneyString` and stay strings; the
- * top-level `is_available` flag becomes `isAvailable`.
+ * `balance_infos` can carry both a CNY and a USD entry with no documented
+ * ordering — a real account topped up in CNY commonly still has a stray
+ * `{USD, "0.00"}` entry, and `balance_infos[0]` is not guaranteed to be the
+ * funded one. So this prefers the first entry with a non-zero, parseable
+ * total; only when every entry is zero (or none parse) does it fall back to
+ * the first parseable entry, so a genuinely empty account still shows "0.00"
+ * rather than nothing. It never invents a currency: an entry whose currency
+ * is neither `USD` nor `CNY` is skipped entirely. Amounts pass through
+ * `moneyString` and stay strings; the top-level `is_available` flag becomes
+ * `isAvailable`.
  */
 export function parseDeepseekBalance(payload: unknown): QuotaBalance | null {
   const infos = arrayAt(payload, 'balance_infos')
-  const first = asRecord(infos[0])
-  if (!first) return null
 
-  const totalBalance = moneyString(first.total_balance)
-  // Without a total there is nothing to show; degrade rather than invent 0.
-  if (totalBalance == null) return null
+  let picked: Record<string, unknown> | null = null
+  let pickedTotal: string | null = null
+  let firstParseable: Record<string, unknown> | null = null
+  let firstParseableTotal: string | null = null
 
-  const currency = first.currency
+  for (const raw of infos) {
+    const entry = asRecord(raw)
+    if (!entry || (entry.currency !== 'USD' && entry.currency !== 'CNY')) continue
+    const totalBalance = moneyString(entry.total_balance)
+    if (totalBalance == null) continue
+
+    if (!firstParseable) {
+      firstParseable = entry
+      firstParseableTotal = totalBalance
+    }
+    if (Number(totalBalance) !== 0) {
+      picked = entry
+      pickedTotal = totalBalance
+      break
+    }
+  }
+
+  // Nothing had a non-zero total: fall back to the first parseable entry
+  // (still a real, if zero, balance) rather than reporting nothing at all.
+  if (!picked) {
+    picked = firstParseable
+    pickedTotal = firstParseableTotal
+  }
+  if (!picked || pickedTotal == null) return null
+
+  const currency = picked.currency
   if (currency !== 'USD' && currency !== 'CNY') return null
 
   const root = asRecord(payload)
   return {
     currency,
-    totalBalance,
-    grantedBalance: moneyString(first.granted_balance),
-    toppedUpBalance: moneyString(first.topped_up_balance),
+    totalBalance: pickedTotal,
+    grantedBalance: moneyString(picked.granted_balance),
+    toppedUpBalance: moneyString(picked.topped_up_balance),
     isAvailable: root?.is_available === true
   }
 }

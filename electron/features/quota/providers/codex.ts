@@ -32,8 +32,42 @@ const ID = 'codex'
 const DISPLAY_NAME = 'Codex'
 
 interface WindowValues {
+  label: string
   percent: number | null
   resetsAt: string | null
+}
+
+/** Seconds, not milliseconds — this is the unit `limit_window_seconds` uses. */
+const FIVE_HOURS_SECONDS = 5 * 60 * 60
+const SEVEN_DAYS_SECONDS = 7 * 24 * 60 * 60
+
+/**
+ * Label a rate-limit window from the length the API itself reports, never
+ * from which slot ("primary_window"/"secondary_window") it arrived in.
+ *
+ * The API hands back two anonymous slots, and which one carries the 5-hour
+ * session versus the 7-day window has been observed to swap. Hard-coding
+ * "primary = 5h session, secondary = Weekly" mislabels whichever window
+ * lands in the other slot — `pace.ts`'s `windowLengthMs` reads this label
+ * back out to pick a length, so the mislabel does not stop at the detail
+ * sheet: a 7-day window measured as 5 hours clamps `elapsedFraction` to 0
+ * for days at a time, and any usage above the 5-point floor reads
+ * permanently "hot".
+ *
+ * Only the two lengths Codex is known to ship get a name; a window whose
+ * `limit_window_seconds` is missing, non-numeric, zero, or some other value
+ * gets a generic label instead of an invented one. That label still shows
+ * the real percentage — it just does not match any shape `windowLengthMs`
+ * recognises, so the pace chip honestly comes back null rather than a
+ * guessed threshold.
+ */
+export function windowLabel(limitWindowSeconds: unknown): string {
+  const seconds =
+    typeof limitWindowSeconds === 'number' ? limitWindowSeconds : Number(limitWindowSeconds)
+  if (!Number.isFinite(seconds) || seconds <= 0) return 'Usage window'
+  if (seconds === FIVE_HOURS_SECONDS) return '5h session'
+  if (seconds === SEVEN_DAYS_SECONDS) return 'Weekly'
+  return 'Usage window'
 }
 
 function reading(
@@ -50,8 +84,8 @@ function reading(
     modelName,
     state,
     message,
-    session: session ? makeWindow('5h session', session.percent, session.resetsAt) : null,
-    weekly: weekly ? makeWindow('Weekly', weekly.percent, weekly.resetsAt) : null,
+    session: session ? makeWindow(session.label, session.percent, session.resetsAt) : null,
+    weekly: weekly ? makeWindow(weekly.label, weekly.percent, weekly.resetsAt) : null,
     now: ctx.now,
     alertThreshold: ctx.alertThreshold
   })
@@ -127,8 +161,16 @@ async function read(ctx: ReadContext): Promise<QuotaReading> {
       'ok',
       null,
       modelName,
-      { percent: sessionPercent, resetsAt: toIsoInstant(primary.reset_at) },
-      { percent: weeklyPercent, resetsAt: toIsoInstant(secondary.reset_at) }
+      {
+        label: windowLabel(primary.limit_window_seconds),
+        percent: sessionPercent,
+        resetsAt: toIsoInstant(primary.reset_at)
+      },
+      {
+        label: windowLabel(secondary.limit_window_seconds),
+        percent: weeklyPercent,
+        resetsAt: toIsoInstant(secondary.reset_at)
+      }
     )
   } catch (err) {
     return reading(ctx, 'error', errorMessage(err, 'Codex usage read failed'))

@@ -21,12 +21,29 @@ import { severityFor } from '../../../shared/types/quota'
  * Deliberate fix over the original `coercePercent`: an empty or whitespace
  * string used to slip through as 0 because `Number('')` is 0, which reported
  * "0% used" for a provider that had told us nothing. Empty input is now null.
+ *
+ * A value ABOVE 100 is not automatically unknown, and the cutoff is not a
+ * single hard wall at 100:
+ *
+ *   - `(100, 200]` is CLAMPED to 100. A usage-based account (a Cursor plan
+ *     billing overage) or an imprecise provider figure (Claude's own reported
+ *     `100.4`) can genuinely be over its stated cap — that is a fact worth
+ *     showing, and 100% is still true of someone at 112%. Blanking it to a
+ *     dash would also silently suppress the critical-severity alert, which is
+ *     exactly the moment it matters most.
+ *   - Above 200 stays null. A number that far past 100% is far more likely to
+ *     be a unit bug in the reader (a fraction misread as a percent, a wrong
+ *     scale) than a real account spending 3x its quota, and clamping it to
+ *     100 would disguise that bug as an ordinary maxed-out quota instead of
+ *     surfacing it as "unknown".
  */
 export function coercePercent(value: unknown): number | null {
   if (value == null || typeof value === 'boolean') return null
   if (typeof value === 'string' && value.trim() === '') return null
   const n = typeof value === 'number' ? value : Number(String(value).trim())
-  if (!Number.isFinite(n) || n < 0 || n > 100) return null
+  if (!Number.isFinite(n) || n < 0) return null
+  if (n > 200) return null
+  if (n > 100) return 100
   return Math.round(n)
 }
 
@@ -67,9 +84,15 @@ export function toIsoInstant(value: unknown): string | null {
 export function makeWindow(
   label: string,
   usedPercent: number | null,
-  resetsAt: string | null
+  resetsAt: string | null,
+  lengthMs?: number
 ): QuotaWindow {
-  return { label, usedPercent, resetsAt }
+  // `lengthMs` is omitted rather than set to a falsy number when the provider
+  // did not prove one: `pace.ts` treats the field's absence as "decline to
+  // answer", and a 0 or a NaN sitting there would read as a stated length and
+  // be divided by.
+  const usable = typeof lengthMs === 'number' && Number.isFinite(lengthMs) && lengthMs > 0
+  return usable ? { label, usedPercent, resetsAt, lengthMs } : { label, usedPercent, resetsAt }
 }
 
 export interface ReadingInit {
@@ -136,8 +159,16 @@ export function redact(input: unknown): string {
     .replace(/\b(bearer|basic)\s+[\w.\-+/=]+/gi, '$1 [redacted]')
     // JWTs.
     .replace(/\beyJ[\w-]*\.[\w-]*\.?[\w-]*/g, '[redacted]')
-    // Common API-key prefixes (OpenAI, Anthropic, xAI, GitHub, Google).
-    .replace(/\b(sk|pk|xai|sk-ant|gh[pousr]|AIza)[-_][A-Za-z0-9\-_]{8,}/g, '[redacted]')
+    // Google API keys: `AIza` then 35 characters, with NO separator after the
+    // prefix and 39 characters in total. They used to fall straight through —
+    // the vendor rule below demands a `-` or `_` right after the prefix, and
+    // the catch-all after it needs 40 characters, one more than a real key has.
+    // Matched loosely on length rather than pinned at 35: over-redacting a
+    // harmless string costs nothing, letting a live key reach a log costs
+    // everything.
+    .replace(/\bAIza[A-Za-z0-9\-_]{10,}/g, '[redacted]')
+    // Common API-key prefixes (OpenAI, Anthropic, xAI, GitHub).
+    .replace(/\b(sk|pk|xai|sk-ant|gh[pousr])[-_][A-Za-z0-9\-_]{8,}/g, '[redacted]')
     // Any other long opaque run that looks like a token.
     .replace(/\b[A-Za-z0-9\-_]{40,}\b/g, '[redacted]')
   return text.length > 200 ? `${text.slice(0, 200)}…` : text
