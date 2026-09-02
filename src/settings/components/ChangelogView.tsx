@@ -27,9 +27,27 @@ interface Release {
 
 const RELEASES: Release[] = [
   {
-    version: 'v0.1.9',
+    version: 'v0.1.10',
     date: 'Sep 2026',
     latest: true,
+    summary: 'Fixes v0.1.9: the hub could not be closed after opening an image beside it.',
+    highlights: [
+      {
+        title: 'The hub closes again',
+        description:
+          'Opening an image left an invisible but still-interactive column beside the shelf, so the pointer never left the hub and it would not dismiss. Update if you are on v0.1.9.'
+      },
+      {
+        title: 'The shelf keeps the edge',
+        description:
+          'The image now appears inboard of the shelf, as intended, instead of taking the screen edge and pushing the shelf inward.'
+      }
+    ]
+  },
+  {
+    version: 'v0.1.9',
+    date: 'Sep 2026',
+    latest: false,
     summary: 'An image opens beside the shelf instead of covering it, and the blade is moulded into the screen edge.',
     highlights: [
       {
