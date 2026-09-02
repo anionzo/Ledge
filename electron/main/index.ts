@@ -586,7 +586,12 @@ async function captureHub(dir: string): Promise<void> {
         .catch(() => undefined)
       await wait(400)
       await win.webContents
-        .executeJavaScript("document.querySelector('.bz-quota-strip')?.click(); true")
+        // The expand control is the chevron BUTTON, not the strip container —
+        // clicking the div did nothing, which is why every capture until now
+        // showed the collapsed chips and never the provider rings behind them.
+        .executeJavaScript(
+          "(document.querySelector('.bz-quota-strip [aria-expanded]') ?? document.querySelector('[aria-expanded]'))?.click(); true"
+        )
         .catch(() => undefined)
       await wait(600)
       const image = await win.webContents.capturePage()
