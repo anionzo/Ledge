@@ -5,8 +5,34 @@
  * straight from the tokens.
  */
 
+/*
+ * FLARES — the blade is moulded into the screen edge, not stuck onto it.
+ *
+ * Where the blade's top and bottom edges meet the docked edge, a concave
+ * fillet carries the material outward and upward so the silhouette curves
+ * into the side of the display. Ported from Edge-Drop's `.flare-top` /
+ * `.flare-bottom`, which draw it as an inline SVG with a hardcoded black
+ * fill — here it is a mask instead, so the fillet inherits the panel's own
+ * glass, its theme and the live opacity slider rather than being a second
+ * colour that drifts from the first.
+ *
+ * They live on the root, not on `.bz-panel`: the panel is `overflow: hidden`
+ * (it clips its own overlays), so a pseudo-element hanging outside it would be
+ * cut off. The root reserves the room with `padding-block`, and main sizes the
+ * WINDOW to match — see `PanelHost.FLARE_PX`, which is the same number as
+ * `--bz-flare`.
+ *
+ * Where the display cannot give that headroom — a full-height blade pressed
+ * against the work area — main clamps the window and the blade loses up to
+ * 22px at each end. The hover strip is computed from the blade's own geometry
+ * and does not move, so the only consequence is that the very top and bottom
+ * of the trigger reach a hair beyond the visible blade. It fails toward
+ * opening more readily, which is the harmless direction.
+ */
 .bz-hub-root {
   height: 100%;
+  position: relative;
+  padding-block: var(--bz-flare);
   /* A row, so an image preview can occupy the width the window grows by and
      the blade keeps its own 360px against the screen edge. `row-reverse` on a
      right-docked hub puts the blade on the right and the preview inboard,
@@ -17,6 +43,59 @@
 
 .bz-hub-root[data-side='right'] {
   flex-direction: row-reverse;
+}
+
+.bz-hub-root::before,
+.bz-hub-root::after {
+  content: '';
+  position: absolute;
+  width: var(--bz-flare);
+  height: var(--bz-flare);
+  background: var(--bz-glass);
+  -webkit-backdrop-filter: var(--bz-glass-blur);
+  backdrop-filter: var(--bz-glass-blur);
+  pointer-events: none;
+  /* Behind the blade, so the seam between them is never a visible line. */
+  z-index: -1;
+}
+
+/* The mask is the whole trick: remove a disc centred on the corner AWAY from
+   the screen edge, and what is left is the concave sweep — full width where it
+   meets the blade, tapering to nothing as it runs out toward the edge. */
+.bz-hub-root[data-side='right']::before {
+  top: 0;
+  right: 0;
+  mask: radial-gradient(circle var(--bz-flare) at left top, transparent 99%, #000 100%);
+  -webkit-mask: radial-gradient(circle var(--bz-flare) at left top, transparent 99%, #000 100%);
+}
+
+.bz-hub-root[data-side='right']::after {
+  bottom: 0;
+  right: 0;
+  mask: radial-gradient(circle var(--bz-flare) at left bottom, transparent 99%, #000 100%);
+  -webkit-mask: radial-gradient(circle var(--bz-flare) at left bottom, transparent 99%, #000 100%);
+}
+
+.bz-hub-root[data-side='left']::before {
+  top: 0;
+  left: 0;
+  mask: radial-gradient(circle var(--bz-flare) at right top, transparent 99%, #000 100%);
+  -webkit-mask: radial-gradient(circle var(--bz-flare) at right top, transparent 99%, #000 100%);
+}
+
+.bz-hub-root[data-side='left']::after {
+  bottom: 0;
+  left: 0;
+  mask: radial-gradient(circle var(--bz-flare) at right bottom, transparent 99%, #000 100%);
+  -webkit-mask: radial-gradient(circle var(--bz-flare) at right bottom, transparent 99%, #000 100%);
+}
+
+/* A closed blade takes its fillets with it. They are part of its silhouette,
+   and leaving two curls of glass at the screen edge after it slid away would
+   be worse than having none at all. */
+.bz-hub-root:has(.bz-hub:not([data-open]))::before,
+.bz-hub-root:has(.bz-hub:not([data-open]))::after {
+  opacity: 0;
 }
 
 /* The blade never gives up width to the preview — it keeps the size the panel

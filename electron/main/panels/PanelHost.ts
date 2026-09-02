@@ -171,7 +171,7 @@ export class PanelHost {
 
     // Born collapsed. Under `resize` that means grip width from the first
     // frame, so a full-width window never covers the desktop even briefly.
-    const bounds = this.#boundsFor(false)
+    const bounds = this.#windowBoundsFor(false)
 
     const win = new BrowserWindow({
       ...bounds,
@@ -309,7 +309,7 @@ export class PanelHost {
   applyGeometry(): void {
     const win = this.window
     if (!win) return
-    win.setBounds(this.#boundsFor(this.#open))
+    win.setBounds(this.#windowBoundsFor(this.#open))
   }
 
   /**
@@ -384,7 +384,7 @@ export class PanelHost {
     } else {
       // Linux path. There is no way to make a window ignore the mouse, so the
       // window has to physically stop covering the desktop.
-      win.setBounds(this.#boundsFor(open))
+      win.setBounds(this.#windowBoundsFor(open))
     }
 
     // Both strategies still tell the renderer, which owns the animation.
@@ -413,6 +413,31 @@ export class PanelHost {
 
   get extraWidth(): number {
     return this.#extraWidth
+  }
+
+  /**
+   * Headroom above and below the blade for the flare fillets.
+   *
+   * The blade's silhouette is not a rectangle: where its top and bottom edges
+   * meet the screen edge they curve outward, so the panel reads as moulded
+   * into the side of the display rather than stuck onto it. Those curves are
+   * drawn OUTSIDE the blade, so the window has to be taller than the blade or
+   * they are simply clipped away.
+   *
+   * Kept out of `computePanelBounds` deliberately: that function also defines
+   * `triggerRect`, the strip the cursor poll opens on, and growing the hover
+   * target by 44px because of a decoration would be a real behavioural change
+   * paid for a cosmetic one.
+   */
+  static readonly FLARE_PX = 22
+
+  /** Window bounds: the blade's, plus flare headroom, clamped to the display. */
+  #windowBoundsFor(open: boolean): Rectangle {
+    const blade = this.#boundsFor(open)
+    const area = this.#workArea()
+    const top = Math.max(area.y, blade.y - PanelHost.FLARE_PX)
+    const bottom = Math.min(area.y + area.height, blade.y + blade.height + PanelHost.FLARE_PX)
+    return { x: blade.x, y: top, width: blade.width, height: Math.max(1, bottom - top) }
   }
 
   #boundsFor(open: boolean): Rectangle {

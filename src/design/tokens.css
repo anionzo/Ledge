@@ -173,6 +173,10 @@
   /* How far the scrolling list dissolves at its top and bottom edges. Small on
      purpose: enough to soften the cut, not so much that a card's first line is
      unreadable while you are reading it. */
+  /* Headroom above and below the blade for the flare fillets, and their
+     radius — the two are the same number by construction. MUST match
+     `PanelHost.FLARE_PX`, which sizes the window to make room for them. */
+  --bz-flare: 22px;
   --bz-fade: 8px;
   --bz-radius: 22px;
   --bz-radius-sm: 14px;
