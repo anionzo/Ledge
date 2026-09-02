@@ -103,11 +103,25 @@ function run() {
 
 const result = await run()
 const failures = []
+const present = existsSync(result.dir) ? readdirSync(result.dir) : []
+
+// Exit 0 with nothing drawn is the single-instance lock, not a render failure.
+// `app.requestSingleInstanceLock()` makes a second copy quit immediately and
+// cleanly, so every other signal here looks healthy — which makes this the one
+// failure worth naming outright rather than leaving someone to wonder why a
+// green-looking run produced no windows. It cannot happen on CI, where nothing
+// else is running; it happens locally every time Ledge is open in the tray.
+if (!result.timedOut && result.code === 0 && present.length === 0) {
+  console.error('[smoke] SKIPPED — another Ledge instance is already running.')
+  console.error('  It holds the single-instance lock, so this build exited without starting.')
+  console.error('  Quit Ledge from the tray (not by killing it — a kill skips the history flush)')
+  console.error('  and run this again.')
+  rmSync(result.dir, { recursive: true, force: true })
+  process.exit(2)
+}
 
 if (result.timedOut) failures.push(`the app never exited within ${TIMEOUT_MS / 1000}s`)
 if (!result.timedOut && result.code !== 0) failures.push(`exited with code ${String(result.code)}`)
-
-const present = existsSync(result.dir) ? readdirSync(result.dir) : []
 for (const name of EXPECTED) {
   if (!present.includes(name)) failures.push(`never rendered: ${name}`)
 }

@@ -27,9 +27,37 @@ interface Release {
 
 const RELEASES: Release[] = [
   {
-    version: 'v0.1.6',
+    version: 'v0.1.7',
     date: 'Sep 2026',
     latest: true,
+    summary: 'A polish pass read against the two projects Ledge grew out of.',
+    highlights: [
+      {
+        title: 'The quota ring is lit',
+        description:
+          'The arc now glows in its own severity colour, the way agent-notch’s does. An unknown or stale ring stays dark — a glow is what says "this is live".'
+      },
+      {
+        title: 'Springier to touch',
+        description:
+          'Cards and quota chips rise past their resting height and settle; filter pills dip under a press and spring back. Switch it all off under Appearance › Reduce motion.'
+      },
+      {
+        title: 'A cleaner scroll',
+        description:
+          'The list dissolves into the panel at its top and bottom instead of being sliced off, and the scrollbar only appears when you are pointing at it.'
+      },
+      {
+        title: 'Antigravity',
+        description:
+          'Stops identifying itself as a version of Antigravity that was never released.'
+      }
+    ]
+  },
+  {
+    version: 'v0.1.6',
+    date: 'Sep 2026',
+    latest: false,
     summary:
       'A click copies, the filters are marks instead of words, and the quota gauge stopped reporting numbers it could not prove.',
     highlights: [
