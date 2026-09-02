@@ -1,7 +1,14 @@
 name: CI
 
-# Typecheck + unit tests on every push and PR. This does NOT build installers
-# (that is release.yml) — it is the fast gate that keeps main green.
+# Typecheck + unit tests, then an actual launch of the built app.
+#
+# The launch job exists because the other two are demonstrably not enough: a
+# CommonJS import of `electron-updater` once passed typecheck, passed the
+# build, passed 298 unit tests, and killed the app before `whenReady`. Every
+# gate was green and the app did not start. Building is not starting, and only
+# starting catches that class of failure.
+#
+# This still does NOT build installers — that is release.yml.
 on:
   push:
     branches: [main]
@@ -31,3 +38,39 @@ jobs:
 
       - name: Test
         run: npm test
+
+  # Runs after `check` rather than beside it: if the code does not typecheck
+  # there is nothing worth launching, and this job costs a build plus a real
+  # Electron start.
+  smoke:
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # Electron needs an X server and the GTK/NSS stack that a headless runner
+      # image does not carry. `xvfb` provides the display; the rest are the
+      # shared libraries Chromium links against and refuses to start without.
+      - name: Install system libraries for a headless Electron
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends xvfb libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libgtk-3-0 libgbm1 libasound2t64 libxss1 libxtst6
+
+      - name: Install
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      # `scripts/smoke.mjs` launches the built app under the LEDGE_CAPTURE
+      # harness, which opens the hub, walks every Settings tab, screenshots
+      # each and quits. It fails on a non-zero exit, a missing capture, a hang,
+      # or a startup throw on stderr — and ignores Chromium's ordinary noise,
+      # because a gate that cries wolf gets deleted.
+      - name: Launch the app
+        run: xvfb-run --auto-servernum node scripts/smoke.mjs
