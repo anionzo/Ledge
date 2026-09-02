@@ -27,9 +27,32 @@ interface Release {
 
 const RELEASES: Release[] = [
   {
-    version: 'v0.1.7',
+    version: 'v0.1.8',
     date: 'Sep 2026',
     latest: true,
+    summary: 'Gather a selection into one stack, and actually inspect what you copied.',
+    highlights: [
+      {
+        title: 'Merge a selection',
+        description:
+          'Select several images or files and gather them into a single stack in one move, instead of dragging them onto each other one pair at a time.'
+      },
+      {
+        title: 'Zoom and pan',
+        description:
+          'The image lightbox zooms about the pointer and pans by dragging, so a screenshot can be read at full resolution rather than scaled to fit.'
+      },
+      {
+        title: 'Code is coloured',
+        description:
+          'A copied snippet is detected and syntax-highlighted in the preview, with the language named. Prose and links are left alone.'
+      }
+    ]
+  },
+  {
+    version: 'v0.1.7',
+    date: 'Sep 2026',
+    latest: false,
     summary: 'A polish pass read against the two projects Ledge grew out of.',
     highlights: [
       {
