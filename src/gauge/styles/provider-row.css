@@ -31,29 +31,41 @@
 /* Same lift recipe as the shelf cards/chips — the row rises to meet the
    pointer and settles, the press lands flat. Matching them matters more than
    either value: two lift gestures on one screen that bounce differently read
-   as a bug. */
+   as a bug.
+
+   The transform lives on `.bz-provider`, not on the button: `content-visibility:
+   auto` above turns on paint containment, which clips children to the row's
+   padding box. Lifting the button inside would cut off its top 2px; lifting
+   the contained element itself moves the whole row, as the shelf card does. */
 .bz-provider-main {
-  transition:
-    background var(--bz-fast) var(--bz-spring),
-    transform var(--bz-base) var(--bz-spring-overshoot);
+  transition: background var(--bz-fast) var(--bz-spring);
 }
 
 .bz-provider-main:hover {
   background: var(--bz-panel-2);
+}
+
+.bz-provider {
+  transition: transform var(--bz-base) var(--bz-spring-overshoot);
+}
+
+.bz-provider:has(> .bz-provider-main:hover) {
   transform: translateY(-2px);
 }
 
-.bz-provider-main:active {
+.bz-provider:has(> .bz-provider-main:active) {
   transform: translateY(0);
   transition: transform var(--bz-fast) var(--bz-spring);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .bz-provider-main:hover {
+  .bz-provider:has(> .bz-provider-main:hover),
+  .bz-provider:has(> .bz-provider-main:active) {
     transform: none;
   }
 }
-:root[data-reduce-motion='true'] .bz-provider-main:hover {
+:root[data-reduce-motion='true'] .bz-provider:has(> .bz-provider-main:hover),
+:root[data-reduce-motion='true'] .bz-provider:has(> .bz-provider-main:active) {
   transform: none;
 }
 

@@ -192,7 +192,7 @@ function CostLine({ reading }: { reading: QuotaReading }) {
   }
 
   return (
-    <div className="bz-detail-cost">
+    <div className="bz-detail-cost" data-kind="metered">
       <span className="bz-detail-cost-label">{t('gauge.cost.label')}</span>
       <span className="bz-detail-cost-figures bz-num">
         {t('gauge.cost.today', { currency: cost.currency, amount: formatAmount(cost.todayAmount) })}

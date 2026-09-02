@@ -51,7 +51,6 @@
   position: absolute;
   width: var(--bz-flare);
   height: var(--bz-flare);
-  background: var(--bz-glass);
   -webkit-backdrop-filter: var(--bz-glass-blur);
   backdrop-filter: var(--bz-glass-blur);
   pointer-events: none;
@@ -59,45 +58,53 @@
   z-index: -1;
 }
 
-/* Only while the blade is open does the fillet carry its own rim light — a
-   closed blade has already zeroed these pseudo-elements' opacity below, so
-   scoping to `:has(.bz-hub[data-open])` keeps a stray hairline from surviving
-   the collapse animation's tail. No blur: an inset box-shadow is GPU-cheap
-   and reads as the same edge-light the blade's own rim already carries. */
-.bz-hub-root:has(.bz-hub[data-open])::before,
-.bz-hub-root:has(.bz-hub[data-open])::after {
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--bz-rim) 22%, transparent);
-}
-
 /* The mask is the whole trick: remove a disc centred on the corner AWAY from
    the screen edge, and what is left is the concave sweep — full width where it
-   meets the blade, tapering to nothing as it runs out toward the edge. */
+   meets the blade, tapering to nothing as it runs out toward the edge.
+
+   The rim light is a second radial gradient on the same centre, one hair
+   outside the mask's edge, so the hairline follows the concave arc. (An inset
+   box-shadow would follow the square box instead, and after the mask the only
+   edges left are the screen edge and the seam with the blade — exactly the
+   line the z-index above exists to hide.) A closed blade zeroes the fillet's
+   opacity below, so the light needs no open-state gate of its own. */
+.bz-hub-root::before,
+.bz-hub-root::after {
+  --bz-fillet-rim: color-mix(in srgb, var(--bz-rim) 22%, transparent);
+  mask: radial-gradient(circle var(--bz-flare) at var(--bz-fillet-origin), transparent 99%, #000 100%);
+  -webkit-mask: radial-gradient(circle var(--bz-flare) at var(--bz-fillet-origin), transparent 99%, #000 100%);
+  background:
+    radial-gradient(
+      circle var(--bz-flare) at var(--bz-fillet-origin),
+      transparent 100%,
+      var(--bz-fillet-rim) calc(100% + 0.5px),
+      transparent calc(100% + 1.5px)
+    ),
+    var(--bz-glass);
+}
+
 .bz-hub-root[data-side='right']::before {
   top: 0;
   right: 0;
-  mask: radial-gradient(circle var(--bz-flare) at left top, transparent 99%, #000 100%);
-  -webkit-mask: radial-gradient(circle var(--bz-flare) at left top, transparent 99%, #000 100%);
+  --bz-fillet-origin: left top;
 }
 
 .bz-hub-root[data-side='right']::after {
   bottom: 0;
   right: 0;
-  mask: radial-gradient(circle var(--bz-flare) at left bottom, transparent 99%, #000 100%);
-  -webkit-mask: radial-gradient(circle var(--bz-flare) at left bottom, transparent 99%, #000 100%);
+  --bz-fillet-origin: left bottom;
 }
 
 .bz-hub-root[data-side='left']::before {
   top: 0;
   left: 0;
-  mask: radial-gradient(circle var(--bz-flare) at right top, transparent 99%, #000 100%);
-  -webkit-mask: radial-gradient(circle var(--bz-flare) at right top, transparent 99%, #000 100%);
+  --bz-fillet-origin: right top;
 }
 
 .bz-hub-root[data-side='left']::after {
   bottom: 0;
   left: 0;
-  mask: radial-gradient(circle var(--bz-flare) at right bottom, transparent 99%, #000 100%);
-  -webkit-mask: radial-gradient(circle var(--bz-flare) at right bottom, transparent 99%, #000 100%);
+  --bz-fillet-origin: right bottom;
 }
 
 /* A closed blade takes its fillets with it. They are part of its silhouette,
@@ -277,39 +284,65 @@
   cursor: pointer;
   transition:
     background var(--bz-fast) var(--bz-spring),
+    transform var(--bz-base) var(--bz-spring-overshoot),
     box-shadow var(--bz-fast) var(--bz-spring);
-  /* Same severity variable the rings and dots resolve, so the chip's own
-     hairline always agrees with the number it is drawn around. */
   --bz-sev: var(--bz-ink-3);
 }
 
+/* Same lift recipe as the cards: the rise overshoots and settles, the press
+   lands flat. Matching them matters more than either value — two lift
+   gestures on one screen that bounce differently read as a bug. */
 .bz-quota-chip:hover {
   background: var(--bz-panel-2);
+  transform: translateY(-2px);
+}
+.bz-quota-chip:active {
+  transform: translateY(0);
+  transition: transform var(--bz-fast) var(--bz-spring);
+}
+@media (prefers-reduced-motion: reduce) {
+  .bz-quota-chip:hover {
+    transform: none;
+  }
+}
+:root[data-reduce-motion='true'] .bz-quota-chip:hover {
+  transform: none;
 }
 
 .bz-quota-chip[data-muted] {
   opacity: 0.55;
 }
 
-.bz-quota-chip[data-pace='hot'] {
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--bz-warn) 45%, transparent);
-}
-
 /* A resting hairline keyed to severity, so "who's in trouble" reads at a
    glance without expanding the strip. `none` (an unknown reading) and a muted
    chip stay hollow — colour here would claim a severity the reader does not
-   have. */
+   have. The alpha steps up with severity so the ring gets louder as the
+   number does. */
 .bz-quota-chip[data-severity='ok'] {
   --bz-sev: var(--bz-ok);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--bz-sev) 40%, transparent);
+  --bz-sev-ring: 40%;
 }
 .bz-quota-chip[data-severity='warn'] {
   --bz-sev: var(--bz-warn);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--bz-sev) 50%, transparent);
+  --bz-sev-ring: 50%;
 }
 .bz-quota-chip[data-severity='critical'] {
   --bz-sev: var(--bz-crit);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--bz-sev) 55%, transparent);
+  --bz-sev-ring: 55%;
+}
+.bz-quota-chip:is([data-severity='ok'], [data-severity='warn'], [data-severity='critical']) {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--bz-sev) var(--bz-sev-ring), transparent);
+}
+
+/* "Running hot" is a fact, so it is drawn, not performed. It outranks the
+   severity hairline on purpose — burn rate is the more urgent of the two.
+   This ring used to pulse on `infinite`. The quota strip is on screen the
+   whole time the hub is open, so an animation that never resolves is not an
+   alert — it is a flicker in the corner of the eye that the user cannot
+   dismiss, and it kept a compositor layer awake for as long as the panel was
+   up. A steady ring says the same thing and then stops talking. */
+.bz-quota-chip[data-pace='hot'] {
+  box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--bz-warn) 55%, transparent);
 }
 
 .bz-quota-chip-glyph {
@@ -543,44 +576,6 @@
 
 :root[data-reduce-motion='true'] .bz-hub-drop {
   animation: none;
-}
-
-/* ── Motion polish (impeccable): quota chips ─────────────────────────────────
-   Chips lift a hair on hover so the row feels alive under the pointer, and a
-   burn-rate chip breathes its warn ring so "running hot" reads without colour
-   shouting. Transform/box-shadow only; silenced under reduced motion. */
-.bz-quota-chip {
-  transition:
-    background var(--bz-fast) var(--bz-spring),
-    transform var(--bz-base) var(--bz-spring-overshoot),
-    box-shadow var(--bz-fast) var(--bz-spring);
-}
-/* Same rule as the cards: the rise overshoots and settles, the press lands
-   flat. Matching them matters more than either value — two lift gestures on
-   one screen that bounce differently read as a bug. */
-.bz-quota-chip:hover {
-  transform: translateY(-2px);
-}
-.bz-quota-chip:active {
-  transform: translateY(0);
-  transition: transform var(--bz-fast) var(--bz-spring);
-}
-/* "Running hot" is a fact, so it is drawn, not performed.
-   This ring used to pulse on `infinite`. The quota strip is on screen the
-   whole time the hub is open, so an animation that never resolves is not an
-   alert — it is a flicker in the corner of the eye that the user cannot
-   dismiss, and it kept a compositor layer awake for as long as the panel was
-   up. A steady ring says the same thing and then stops talking. */
-.bz-quota-chip[data-pace='hot'] {
-  box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--bz-warn) 55%, transparent);
-}
-@media (prefers-reduced-motion: reduce) {
-  .bz-quota-chip:hover {
-    transform: none;
-  }
-}
-:root[data-reduce-motion='true'] .bz-quota-chip:hover {
-  transform: none;
 }
 
 /* ── Proximity beacon (smooth-03) ────────────────────────────────────────────

@@ -144,10 +144,7 @@
 }
 
 .bz-window-track {
-  /* Bumped from the base 4px so the lit fill below has room to read as a lit
-     bar rather than a glow escaping a hairline. The unknown/dashed track
-     (below) stays at the thinner base height. */
-  height: 5px;
+  height: 4px;
   border-radius: 2px;
   background: var(--bz-rule);
   overflow: hidden;
@@ -156,7 +153,6 @@
 /* An unknown window keeps its empty track. Drawing nothing at all would leave
    a gap that reads as a layout fault rather than as missing data. */
 .bz-window-track[data-unknown] {
-  height: 4px;
   background: repeating-linear-gradient(
     90deg,
     var(--bz-rule) 0 3px,
@@ -167,10 +163,10 @@
 .bz-window-fill {
   height: 100%;
   background: var(--bz-sev);
-  /* A faint lit edge, coloured by the same severity the fill already carries
-     — the bar reads as lit rather than merely filled, without adding a new
-     colour to the achromatic chrome. */
-  box-shadow: 0 0 6px color-mix(in srgb, var(--bz-sev) 35%, transparent);
+  /* A lit top edge, so the bar reads as lit rather than merely filled. Drawn
+     inset: the track clips overflow, so an outer glow would only ever leak
+     sideways past the fill's end. */
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 28%, transparent);
   transition: width var(--bz-open-ms) var(--bz-spring);
 }
 
@@ -202,9 +198,9 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* The metered row (a <div>) adds the label/figures split; the subscription
-   fallback (a <p>) stays plain prose and only inherits the rule above. */
-div.bz-detail-cost {
+/* The metered row adds the label/figures split; the subscription fallback
+   stays plain prose and only inherits the rule above. */
+.bz-detail-cost[data-kind='metered'] {
   display: flex;
   align-items: baseline;
   gap: var(--bz-space-2);
