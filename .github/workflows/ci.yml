@@ -64,6 +64,17 @@ jobs:
       - name: Install
         run: npm ci
 
+      # Electron ships a SUID sandbox helper that the kernel will only honour
+      # when it is owned by root with mode 4755, which npm cannot set on
+      # extract. The alternative is `--no-sandbox`, which is worse than it
+      # looks here: it would mean CI launches a differently-configured runtime
+      # from the one users run, so the gate would stop testing the real thing
+      # at exactly the layer most likely to break at startup.
+      - name: Give Electron's sandbox helper the permissions the kernel wants
+        run: |
+          sudo chown root:root node_modules/electron/dist/chrome-sandbox
+          sudo chmod 4755 node_modules/electron/dist/chrome-sandbox
+
       - name: Build
         run: npm run build
 
