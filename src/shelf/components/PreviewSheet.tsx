@@ -18,7 +18,9 @@ import { elidePath, EM_DASH, humaniseBytes } from '../../lib/format'
 import { t } from '../../i18n'
 import { Button, Chip, Icon, Lightbox, Sheet } from '../../ui'
 import { kindIcon, kindLabel, primaryLine } from '../describe'
+import { highlight, type Highlighted } from '../../lib/highlight'
 import '../styles/preview-sheet.css'
+import '../styles/code.css'
 
 export interface PreviewSheetProps {
   item: ClipboardItem | null
@@ -204,9 +206,43 @@ function TextPreview({
     }
   }, [item.id, truncated, onError])
 
+  const shown = full ?? preview
+
+  // Highlighting runs on whatever text is currently on screen, so a truncated
+  // clip is coloured twice: once for the preview, again when the full text
+  // lands. Both are cheap next to the import, which happens once.
+  const [code, setCode] = useState<Highlighted | null>(null)
+  useEffect(() => {
+    let live = true
+    setCode(null)
+    void highlight(shown).then((result) => {
+      if (live) setCode(result)
+    })
+    return () => {
+      live = false
+    }
+  }, [shown])
+
   return (
     <div className="bz-preview">
-      <pre className="bz-preview-text">{full ?? preview}</pre>
+      {code ? (
+        <>
+          <span className="bz-code-lang">{code.language}</span>
+          {/*
+            `dangerouslySetInnerHTML` on clipboard content, which deserves the
+            justification the name demands: highlight.js escapes the source as
+            it tokenises, so this string is the user's own text with entities
+            already encoded, wrapped in the library's own `hljs-*` spans. No
+            markup from the clip survives as markup. See `lib/highlight.ts`.
+          */}
+          <pre
+            className="bz-preview-text hljs"
+            dangerouslySetInnerHTML={{ __html: code.html }}
+          />
+        </>
+      ) : (
+        <pre className="bz-preview-text">{shown}</pre>
+      )}
       {truncated && full === null && (
         <p className="bz-preview-note">{t('shelf.preview.loading')}</p>
       )}

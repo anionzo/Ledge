@@ -33,6 +33,7 @@ const TIMEOUT_MS = 120_000
 /** Every window the harness is expected to have rendered. */
 const EXPECTED = [
   'hub.png',
+  'preview.png',
   'settings-behaviour.png',
   'settings-panels.png',
   'settings-agents.png',
@@ -67,7 +68,14 @@ function electronBinary() {
 
 function run() {
   const dir = mkdtempSync(join(tmpdir(), 'ledge-smoke-'))
-  const child = spawn(electronBinary(), ['.'], {
+  // A throwaway profile, which buys two things at once. Electron's
+  // single-instance lock is scoped to the user-data directory, so this runs
+  // even while a real Ledge sits in the tray — otherwise the second copy quits
+  // instantly and the gate reports a mysteriously empty success. And it stops
+  // the harness seeding its demo clips into the user's actual history, which
+  // it had been doing every time anyone ran it.
+  const profile = mkdtempSync(join(tmpdir(), 'ledge-smoke-profile-'))
+  const child = spawn(electronBinary(), ['.', `--user-data-dir=${profile}`], {
     env: { ...process.env, LEDGE_CAPTURE: dir },
     stdio: ['ignore', 'pipe', 'pipe']
   })
@@ -86,7 +94,7 @@ function run() {
       // A hang is a failure with its own signature: the harness always quits,
       // so still being alive means something is blocking the main process.
       child.kill('SIGKILL')
-      resolve({ dir, code: null, stdout, stderr, timedOut: true })
+      resolve({ dir, profile, code: null, stdout, stderr, timedOut: true })
     }, TIMEOUT_MS)
 
     child.on('error', (err) => {
@@ -96,29 +104,20 @@ function run() {
 
     child.on('close', (code) => {
       clearTimeout(timer)
-      resolve({ dir, code, stdout, stderr, timedOut: false })
+      resolve({ dir, profile, code, stdout, stderr, timedOut: false })
     })
   })
+}
+
+/** Both temp trees, always — a failed run leaves as much behind as a good one. */
+function cleanup({ dir, profile }) {
+  rmSync(dir, { recursive: true, force: true })
+  rmSync(profile, { recursive: true, force: true })
 }
 
 const result = await run()
 const failures = []
 const present = existsSync(result.dir) ? readdirSync(result.dir) : []
-
-// Exit 0 with nothing drawn is the single-instance lock, not a render failure.
-// `app.requestSingleInstanceLock()` makes a second copy quit immediately and
-// cleanly, so every other signal here looks healthy — which makes this the one
-// failure worth naming outright rather than leaving someone to wonder why a
-// green-looking run produced no windows. It cannot happen on CI, where nothing
-// else is running; it happens locally every time Ledge is open in the tray.
-if (!result.timedOut && result.code === 0 && present.length === 0) {
-  console.error('[smoke] SKIPPED — another Ledge instance is already running.')
-  console.error('  It holds the single-instance lock, so this build exited without starting.')
-  console.error('  Quit Ledge from the tray (not by killing it — a kill skips the history flush)')
-  console.error('  and run this again.')
-  rmSync(result.dir, { recursive: true, force: true })
-  process.exit(2)
-}
 
 if (result.timedOut) failures.push(`the app never exited within ${TIMEOUT_MS / 1000}s`)
 if (!result.timedOut && result.code !== 0) failures.push(`exited with code ${String(result.code)}`)
@@ -133,7 +132,7 @@ for (const pattern of FATAL) {
 
 if (failures.length === 0) {
   console.log(`[smoke] ok — ${present.length} window captures, exit 0`)
-  rmSync(result.dir, { recursive: true, force: true })
+  cleanup(result)
   process.exit(0)
 }
 

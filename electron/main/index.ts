@@ -528,7 +528,15 @@ async function captureHub(dir: string): Promise<void> {
     for (const text of [
       'https://github.com/Deepender25/Edge-Drop',
       'git commit -m "fix: keychain retry on macOS"',
-      'Cost Meter — tính tiền theo token đã dùng'
+      'Cost Meter — tính tiền theo token đã dùng',
+      // A real snippet, so the capture exercises the syntax highlighter rather
+      // than only the plain-text path. Long and structural enough to clear
+      // both the pre-filter and highlight.js's own relevance threshold.
+      `export function severityFor(usedPercent: number | null, threshold: number) {
+  if (usedPercent === null) return 'ok'
+  if (usedPercent >= threshold) return 'critical'
+  return usedPercent >= 50 ? 'warn' : 'ok'
+}`
     ]) {
       await copy(text)
       await wait(850)
@@ -597,6 +605,19 @@ async function captureHub(dir: string): Promise<void> {
       const image = await win.webContents.capturePage()
       writeFileSync(join(dir, 'hub.png'), image.toPNG())
       console.log('[capture] wrote hub.png')
+
+      // Open the newest card's detail sheet. Double-click, not click: a click
+      // copies now, and the sheet is what carries the highlighted code and the
+      // full text — the half of the shelf a hub screenshot cannot show.
+      await win.webContents
+        .executeJavaScript(
+          "const c = document.querySelector('.bz-item'); if (c) c.dispatchEvent(new MouseEvent('dblclick', { bubbles: true })); true"
+        )
+        .catch(() => undefined)
+      await wait(900)
+      const sheet = await win.webContents.capturePage()
+      writeFileSync(join(dir, 'preview.png'), sheet.toPNG())
+      console.log('[capture] wrote preview.png')
     }
 
     // Settings is where most of the configuration surface lives, and it is the

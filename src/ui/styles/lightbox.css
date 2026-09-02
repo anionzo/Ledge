@@ -27,6 +27,49 @@
   border-radius: var(--bz-radius-sm);
   box-shadow: var(--bz-shadow);
   cursor: default;
+  /* No transition on `transform`. The wheel fires ten times a second and each
+     event would restart the tween, so the image would lag the pointer and land
+     somewhere the user did not aim. Direct manipulation tracks the input. */
+  transform-origin: center;
+  /* Crisp pixels when magnified past 1:1 — a screenshot inspected at 400% is
+     being read, and smoothing turns small text into grey mush. */
+  image-rendering: auto;
+}
+
+/* Zoomed past fit, the image is a thing you can move: say so with the cursor,
+   and stop the drag from selecting or ghost-dragging the picture instead. */
+.bz-lightbox[data-zoomed] .bz-lightbox-img {
+  cursor: grab;
+  image-rendering: pixelated;
+}
+
+.bz-lightbox[data-zoomed]:active .bz-lightbox-img {
+  cursor: grabbing;
+}
+
+.bz-lightbox[data-zoomed] {
+  /* A panned image must be clipped by the overlay rather than spilling over
+     the close button and the readout. */
+  overflow: hidden;
+  user-select: none;
+  touch-action: none;
+}
+
+/* The live magnification, so "how far in am I" is answerable without guessing.
+   Hidden at fit, where the answer is always 100%. */
+.bz-lightbox-scale {
+  position: absolute;
+  bottom: var(--bz-space-3);
+  left: 50%;
+  translate: -50% 0;
+  z-index: 1;
+  padding: 2px var(--bz-space-2);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bz-panel) 82%, transparent);
+  border: 1px solid var(--bz-rule);
+  color: var(--bz-ink-2);
+  font-size: var(--bz-text-xs);
+  pointer-events: none;
 }
 .bz-lightbox-close {
   position: absolute;
@@ -39,13 +82,17 @@
    thumbnail blooming into place rather than a flat cut. Driven by --bz-base so
    it collapses to an instant under reduced motion; the explicit guards belt-and-
    brace it for the in-app motion toggle. */
+/* The bloom animates the INDEPENDENT `scale` property, not `transform`.
+   `transform` belongs to zoom and pan now, and a keyframe touching it would
+   beat the inline value for the whole 240ms — the first moments of a zoom
+   would simply be ignored. The two compose instead. */
 @keyframes bz-lightbox-img-in {
   from {
-    transform: scale(0.965);
+    scale: 0.965;
     opacity: 0;
   }
   to {
-    transform: scale(1);
+    scale: 1;
     opacity: 1;
   }
 }

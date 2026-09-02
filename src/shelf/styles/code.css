@@ -1,0 +1,124 @@
+/**
+ * Syntax colours.
+ *
+ * A deliberate, documented exception to the rule the rest of the app follows.
+ * `tokens.css` says colour appears "only where colour is information" and that
+ * everything else stays achromatic — and in source code, colour IS the
+ * information. A string that does not read as a string is the whole reason to
+ * highlight at all.
+ *
+ * So the exception is bounded rather than open: five hues, no more, each
+ * pulled toward the panel's own near-black ground so the block reads as part
+ * of the blade rather than a web page pasted into it. Saturation stays low
+ * enough that the violet accent is still the loudest colour in the window —
+ * the quota ring must not lose an argument with a keyword.
+ */
+
+:root {
+  /* Light. Darker, denser hues so they hold against a white ground. */
+  --bz-code-keyword: #7c4dff;
+  --bz-code-string: #0f7a5a;
+  --bz-code-number: #9a5b00;
+  --bz-code-comment: #7b7b88;
+  --bz-code-name: #2563a8;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bz-code-keyword: #b18cff;
+    --bz-code-string: #6fcf9a;
+    --bz-code-number: #e0a83a;
+    --bz-code-comment: rgba(255, 255, 255, 0.42);
+    --bz-code-name: #7fb6f0;
+  }
+}
+
+:root[data-theme='dark'] {
+  --bz-code-keyword: #b18cff;
+  --bz-code-string: #6fcf9a;
+  --bz-code-number: #e0a83a;
+  --bz-code-comment: rgba(255, 255, 255, 0.42);
+  --bz-code-name: #7fb6f0;
+}
+
+/* The detected grammar, stated rather than implied. A block coloured as Python
+   that is actually YAML is a guess presented as a fact; naming the guess lets
+   the user discount it. */
+.bz-code-lang {
+  display: inline-block;
+  margin-bottom: var(--bz-space-1);
+  padding: 1px var(--bz-space-2);
+  border: 1px solid var(--bz-rule);
+  border-radius: 999px;
+  color: var(--bz-ink-3);
+  font-family: var(--bz-font-mono);
+  font-size: var(--bz-text-xs);
+  letter-spacing: var(--bz-track-label);
+  text-transform: uppercase;
+}
+
+/* ── highlight.js token classes ──────────────────────────────────────────────
+   Mapped by meaning, not one rule per class: hljs emits about forty token
+   names and colouring each separately produces a rainbow. Grouping them into
+   five roles is what keeps a block legible at a glance. */
+
+.hljs-keyword,
+.hljs-built_in,
+.hljs-literal,
+.hljs-type,
+.hljs-selector-tag,
+.hljs-meta-keyword,
+.hljs-doctag {
+  color: var(--bz-code-keyword);
+}
+
+.hljs-string,
+.hljs-regexp,
+.hljs-char,
+.hljs-symbol,
+.hljs-addition,
+.hljs-quote {
+  color: var(--bz-code-string);
+}
+
+.hljs-number,
+.hljs-attr,
+.hljs-attribute,
+.hljs-variable,
+.hljs-template-variable,
+.hljs-selector-attr,
+.hljs-selector-pseudo {
+  color: var(--bz-code-number);
+}
+
+.hljs-comment,
+.hljs-meta,
+.hljs-deletion {
+  color: var(--bz-code-comment);
+  font-style: italic;
+}
+
+.hljs-title,
+.hljs-name,
+.hljs-section,
+.hljs-function,
+.hljs-class,
+.hljs-tag,
+.hljs-selector-id,
+.hljs-selector-class {
+  color: var(--bz-code-name);
+}
+
+/* Emphasis the grammar found in the source (Markdown, mostly) is honoured, so
+   a pasted README reads the way it was written. */
+.hljs-strong {
+  font-weight: 600;
+}
+
+.hljs-emphasis {
+  font-style: italic;
+}
+
+/* Everything else — punctuation, operators, bare identifiers — stays the
+   panel's ordinary ink. Unmapped tokens inheriting is the point: it is what
+   stops an unfamiliar grammar from rendering as undifferentiated grey. */
