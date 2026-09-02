@@ -52,6 +52,8 @@ export interface ClipboardEngine {
   paste(req: DragRequest): Promise<boolean>
   addData(data: ItemData): ClipboardItem[]
   merge(sourceId: string, targetId: string): MergeResult
+  /** Gather a multi-selection into one stack, atomically. */
+  mergeMany(ids: string[]): MergeResult
   split(req: DragRequest): boolean
   reveal(path: string): boolean
   startDrag(webContents: WebContents, req: DragRequest): void
@@ -209,6 +211,12 @@ export function createClipboardEngine(deps: ClipboardEngineDeps): ClipboardEngin
     return result
   }
 
+  function mergeMany(ids: string[]): MergeResult {
+    const result = store.mergeMany(ids)
+    if (result.ok) broadcast()
+    return result
+  }
+
   function split(req: DragRequest): boolean {
     const ok = store.split(req)
     if (ok) broadcast()
@@ -318,6 +326,7 @@ export function createClipboardEngine(deps: ClipboardEngineDeps): ClipboardEngin
     paste,
     addData,
     merge,
+    mergeMany,
     split,
     reveal,
     startDrag,

@@ -579,6 +579,132 @@ describe('clearQuery — "clear the last hour" clears the last hour', () => {
   })
 })
 
+/* ==================== ItemStore — mergeMany (gather a selection) ========== */
+
+describe('ItemStore — mergeMany', () => {
+  let store: ItemStore
+
+  // Dimensions and byte size must differ per image: `contentSignature` keys an
+  // image on `WxH|bytes`, so same-sized fixtures dedupe into a single item and
+  // there is nothing left to merge.
+  let seq = 0
+  const img = (id: string): ItemData => {
+    seq += 1
+    return {
+      kind: 'image',
+      imageId: id,
+      width: 10 + seq,
+      height: 10,
+      byteSize: 100 + seq,
+      capturedName: null
+    }
+  }
+  const text = (s: string): ItemData => ({
+    kind: 'text',
+    preview: s,
+    truncated: false,
+    charCount: s.length,
+    html: null
+  })
+
+  beforeEach(() => {
+    seq = 0
+    roots.userData = join(tmpdir(), `bz-clip-mm-${Date.now()}-${Math.random().toString(16).slice(2)}`)
+    mkdirSync(join(roots.userData, 'images'), { recursive: true })
+    mkdirSync(join(roots.userData, 'payloads'), { recursive: true })
+    store = new ItemStore(settings())
+    store.load()
+  })
+
+  afterEach(() => {
+    rmSync(roots.userData, { recursive: true, force: true })
+  })
+
+  it('gathers three images into one stack, newest first, and removes the sources', () => {
+    store.add(img('a'))
+    store.add(img('b'))
+    store.add(img('c'))
+    const ids = store.list().map((i) => i.id) // newest first: c, b, a
+
+    const result = store.mergeMany(ids)
+    expect(result.ok).toBe(true)
+    // The stack lands on the FIRST id in list order — the row the user is
+    // looking at — rather than appearing somewhere else in the list.
+    expect(result.stackId).toBe(ids[0])
+
+    const left = store.list()
+    expect(left).toHaveLength(1)
+    expect(left[0].data.kind).toBe('stack')
+    expect(left[0].data.kind === 'stack' && left[0].data.members).toHaveLength(3)
+  })
+
+  it('keeps list order in the members, whatever order the ids arrive in', () => {
+    store.add(img('a'))
+    store.add(img('b'))
+    store.add(img('c'))
+    const [first, second, third] = store.list().map((i) => i.id)
+
+    // Ids handed over back-to-front; the fan should still read like the shelf.
+    const result = store.mergeMany([third!, second!, first!])
+    expect(result.ok).toBe(true)
+    expect(result.stackId).toBe(first)
+  })
+
+  it('refuses a selection containing text rather than stacking the half that qualifies', () => {
+    // Silently dropping the text would leave the user with a stack they did
+    // not ask for and a leftover they cannot explain.
+    store.add(img('a'))
+    store.add(text('not stackable'))
+    const ids = store.list().map((i) => i.id)
+
+    const result = store.mergeMany(ids)
+    expect(result).toEqual({ ok: false, stackId: null, reason: 'incompatible' })
+    expect(store.list()).toHaveLength(2)
+  })
+
+  it('refuses past the stack limit without building a partial stack', () => {
+    for (let i = 0; i < STACK_LIMIT + 1; i += 1) store.add(img(`i${i}`))
+    const ids = store.list().map((i) => i.id)
+
+    const result = store.mergeMany(ids)
+    expect(result).toEqual({ ok: false, stackId: null, reason: 'stack-full' })
+    expect(store.list()).toHaveLength(STACK_LIMIT + 1)
+  })
+
+  it('needs at least two distinct ids', () => {
+    store.add(img('a'))
+    const id = store.list()[0].id
+    expect(store.mergeMany([id]).reason).toBe('incompatible')
+    expect(store.mergeMany([id, id]).reason).toBe('incompatible')
+  })
+
+  it('reports not-found rather than merging whatever it recognised', () => {
+    store.add(img('a'))
+    store.add(img('b'))
+    const ids = store.list().map((i) => i.id)
+
+    const result = store.mergeMany([...ids, 'does-not-exist'])
+    expect(result.reason).toBe('not-found')
+    expect(store.list()).toHaveLength(2)
+  })
+
+  it('absorbs an existing stack into the gather', () => {
+    store.add(img('a'))
+    store.add(img('b'))
+    const pair = store.list().map((i) => i.id)
+    store.mergeMany(pair)
+
+    store.add(img('c'))
+    const next = store.list().map((i) => i.id)
+    const result = store.mergeMany(next)
+
+    expect(result.ok).toBe(true)
+    const left = store.list()
+    expect(left).toHaveLength(1)
+    expect(left[0].data.kind === 'stack' && left[0].data.members).toHaveLength(3)
+  })
+})
+
 /* =============================== ClipboardWatcher ========================= */
 
 describe('ClipboardWatcher — re-copy detection & pause', () => {

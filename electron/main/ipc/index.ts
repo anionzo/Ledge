@@ -183,6 +183,7 @@ export function registerShelfPlaceholders(): void {
   handle('shelf:paste', () => false)
   handle('shelf:add', () => [])
   handle('shelf:merge', () => ({ ok: false, stackId: null, reason: 'not-found' as const }))
+  handle('shelf:merge-many', () => ({ ok: false, stackId: null, reason: 'not-found' as const }))
   handle('shelf:split', () => false)
   handle('shelf:reveal', () => false)
 
@@ -207,6 +208,7 @@ export function registerClipboardIpc(engine: ClipboardEngine): void {
   handle('shelf:paste', (_e, req) => engine.paste(req))
   handle('shelf:add', (_e, data) => engine.addData(data))
   handle('shelf:merge', (_e, sourceId, targetId) => engine.merge(sourceId, targetId))
+  handle('shelf:merge-many', (_e, ids) => engine.mergeMany(ids))
   handle('shelf:split', (_e, req) => engine.split(req))
   handle('shelf:reveal', (_e, path) => engine.reveal(path))
 

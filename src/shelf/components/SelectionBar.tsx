@@ -20,6 +20,16 @@ export interface SelectionBarProps {
   onClear: () => void
   onCopy: () => void
   onDelete: () => void
+  onMerge: () => void
+  /**
+   * How many of the selected items could actually join a stack.
+   *
+   * Computed by the caller, which knows the kinds. Merge is offered only at two
+   * or more, because text and links cannot stack: showing an always-enabled
+   * button that answers "only images and files can be stacked" every time a
+   * text selection presses it teaches the user to distrust the toolbar.
+   */
+  stackableCount: number
 }
 
 export function SelectionBar({
@@ -28,7 +38,9 @@ export function SelectionBar({
   onSelectAll,
   onClear,
   onCopy,
-  onDelete
+  onDelete,
+  onMerge,
+  stackableCount
 }: SelectionBarProps) {
   const allSelected = count > 0 && count === total
 
@@ -46,6 +58,12 @@ export function SelectionBar({
         {allSelected ? t('shelf.select.none') : t('shelf.select.all')}
       </Button>
       <Button size="sm" icon="copy" label={t('common.copy')} onClick={onCopy} />
+      {/* Gather. Absent rather than disabled below two stackable items — a
+          greyed control in a toolbar that only appears during a selection is
+          one more thing to decode in a bar that is already transient. */}
+      {stackableCount >= 2 && (
+        <Button size="sm" icon="stack" label={t('shelf.select.merge')} onClick={onMerge} />
+      )}
       <Button
         size="sm"
         icon="trash"

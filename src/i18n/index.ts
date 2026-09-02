@@ -100,6 +100,7 @@ export const en: Dictionary = {
   'shelf.select.count': '{n} selected',
   'shelf.select.all': 'Select all',
   'shelf.select.none': 'Clear selection',
+  'shelf.select.merge': 'Merge',
   'shelf.select.exit': 'Done',
   'shelf.action.clear_unpinned': 'Clear unpinned',
   'shelf.preview.title': 'Preview',
@@ -118,6 +119,9 @@ export const en: Dictionary = {
   'shelf.toast.added': 'Added {n}',
   'shelf.toast.merged': 'Merged into a stack',
   'shelf.toast.stack_full': 'That stack is full',
+  // Only images and files stack. Saying which, rather than "cannot merge",
+  // is the difference between a rule the user learns and one they retry against.
+  'shelf.toast.merge_incompatible': 'Only images and files can be stacked',
 
   // ── Link cards (offline URL preview) ─────────────────────────────────────
   // Brand nouns (GitHub, YouTube, r/, @) stay literal; only the plain-language

@@ -65,6 +65,7 @@
   "shelf.select.count": "Đã chọn {n}",
   "shelf.select.all": "Chọn tất cả",
   "shelf.select.none": "Bỏ chọn",
+  "shelf.select.merge": "Gộp",
   "shelf.select.exit": "Xong",
   "shelf.action.clear_unpinned": "Xoá mục chưa ghim",
   "shelf.preview.title": "Xem trước",
@@ -83,6 +84,7 @@
   "shelf.toast.added": "Đã thêm {n}",
   "shelf.toast.merged": "Đã gộp thành chồng",
   "shelf.toast.stack_full": "Chồng đó đã đầy",
+  "shelf.toast.merge_incompatible": "Chỉ ảnh và tệp mới gộp được",
 
   "shelf.link.web": "Liên kết web",
   "shelf.link.issue": "Issue #{n}",

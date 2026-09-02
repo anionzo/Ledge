@@ -298,6 +298,44 @@ export function App() {
     [setItems, toasts]
   )
 
+  /**
+   * Gather the selection into one stack.
+   *
+   * One call, not one per pair: main forms the whole stack or none of it, so a
+   * selection that cannot fit never leaves half a stack behind. The reason a
+   * refusal carries is worth showing — "that stack is full" and "only images
+   * and files can be stacked" send the user to different fixes.
+   */
+  // Only images, files and existing stacks can join a stack — the store
+  // refuses the rest, so the toolbar should not offer it. Counted here because
+  // this is the side that knows each selected item's kind.
+  const stackableSelectionCount = useMemo(() => {
+    const chosen = new Set(selection)
+    return items.filter(
+      (item) =>
+        chosen.has(item.id) &&
+        (item.data.kind === 'image' || item.data.kind === 'file' || item.data.kind === 'stack')
+    ).length
+  }, [items, selection])
+
+  const onMergeSelection = useCallback(() => {
+    invoke('shelf:merge-many', selection)
+      .then((result) => {
+        if (result.ok) {
+          clearSelection()
+          toasts.push(t('shelf.toast.merged'))
+          return
+        }
+        toasts.push(
+          result.reason === 'stack-full'
+            ? t('shelf.toast.stack_full')
+            : t('shelf.toast.merge_incompatible'),
+          'error'
+        )
+      })
+      .catch(() => toasts.push(t('common.unknown'), 'error'))
+  }, [selection, clearSelection, toasts])
+
   const onMerge = useCallback(
     (sourceId: string, targetId: string) => {
       invoke('shelf:merge', sourceId, targetId)
@@ -521,6 +559,8 @@ export function App() {
             onClear={clearSelection}
             onCopy={onCopySelection}
             onDelete={() => onDelete(selection)}
+            onMerge={onMergeSelection}
+            stackableCount={stackableSelectionCount}
           />
         ) : undefined
       }

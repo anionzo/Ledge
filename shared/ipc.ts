@@ -134,6 +134,12 @@ export interface InvokeMap {
   'shelf:paste': { args: [req: DragRequest]; result: boolean }
   'shelf:add': { args: [data: ItemData]; result: ClipboardItem[] }
   'shelf:merge': { args: [sourceId: string, targetId: string]; result: MergeResult }
+  /**
+   * Gather a multi-selection into one stack. Separate from `shelf:merge`
+   * rather than a loop over it: main forms the whole stack or none of it, so a
+   * selection that cannot fit never leaves a half-built one behind.
+   */
+  'shelf:merge-many': { args: [ids: string[]]; result: MergeResult }
   'shelf:split': { args: [req: DragRequest]; result: boolean }
   'shelf:reveal': { args: [path: string]; result: boolean }
 

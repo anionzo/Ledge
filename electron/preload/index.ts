@@ -41,6 +41,7 @@ const INVOKE_CHANNELS = [
   'shelf:paste',
   'shelf:add',
   'shelf:merge',
+  'shelf:merge-many',
   'shelf:split',
   'shelf:reveal',
   'gauge:snapshot',

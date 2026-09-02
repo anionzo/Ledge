@@ -26,6 +26,7 @@ import {
   type ImagePayload,
   type ItemData,
   type MergeResult,
+  type StackPayload,
   type TextPayload
 } from '../../../shared/types/clipboard'
 import type { Settings } from '../../../shared/types/settings'
@@ -466,6 +467,72 @@ export class ItemStore {
 
     this.persist()
     return { ok: true, stackId: tgt.id, reason: 'ok' }
+  }
+
+  /**
+   * Merge many selected items into one stack, in one pass.
+   *
+   * Not a loop over `merge`: that would broadcast and persist once per pair,
+   * and a failure halfway through would leave the user with a half-built stack
+   * they never asked for. This either forms the whole stack or changes nothing.
+   *
+   * The target is the FIRST of the given ids in list order — the topmost, and
+   * so the newest — because that is the row the user is looking at, and a
+   * stack that materialises where the selection began reads as a gather rather
+   * than a jump. Members follow in list order too, so the visible top-to-bottom
+   * arrangement survives into the fan.
+   *
+   * Unstackable selections (text, links) are not silently dropped: mixing them
+   * in is a mistake worth reporting, so the whole call returns `incompatible`
+   * rather than quietly stacking the half that happened to qualify.
+   */
+  mergeMany(ids: readonly string[]): MergeResult {
+    const unique = [...new Set(ids)]
+    if (unique.length < 2) return { ok: false, stackId: null, reason: 'incompatible' }
+
+    // List order, not selection order — the fan should read the way the shelf
+    // does, whatever sequence the user happened to click in.
+    const chosen = this.items.filter((item) => unique.includes(item.id))
+    if (chosen.length !== unique.length) return { ok: false, stackId: null, reason: 'not-found' }
+    if (chosen.some((item) => !isStackable(item.data))) {
+      return { ok: false, stackId: null, reason: 'incompatible' }
+    }
+
+    const target = chosen[0]!
+    const seen = new Set<string>()
+    // A stack member is never itself a stack, so this is the member union
+    // rather than ItemData — the same shape `membersOf` already flattens to.
+    const combined: StackPayload['members'] = []
+    for (const item of chosen) {
+      for (const member of membersOf(item.data)) {
+        const sig = memberSig(member)
+        if (seen.has(sig)) continue
+        seen.add(sig)
+        combined.push(member)
+      }
+    }
+    if (combined.length > STACK_LIMIT) return { ok: false, stackId: null, reason: 'stack-full' }
+    // Every member deduplicated down to one: there is no stack to make, and
+    // saying so beats collapsing the selection into a single item the user did
+    // not ask to delete.
+    if (combined.length < 2) return { ok: false, stackId: null, reason: 'incompatible' }
+
+    this.sigToId.delete(target.signature)
+    target.data = { kind: 'stack', members: combined }
+    target.signature = contentSignature(target.data)
+    this.sigToId.set(target.signature, target.id)
+    target.updatedAt = Date.now()
+
+    // The sources are removed WITHOUT disowning their files — the stack owns
+    // them now. Calling `disownFiles` here would reap the very images the new
+    // stack is about to render, exactly as `merge` documents.
+    const absorbed = new Set(chosen.slice(1).map((item) => item.id))
+    for (const item of chosen.slice(1)) this.sigToId.delete(item.signature)
+    this.items = this.items.filter((item) => !absorbed.has(item.id))
+
+    this.rebuildIndex()
+    this.persist()
+    return { ok: true, stackId: target.id, reason: 'ok' }
   }
 
   /**
