@@ -8,6 +8,24 @@
         "value": "var(--bz-spring)",
         "createdAt": "2026-08-31T16:52:45.470Z",
         "reason": "main-agent: --bz-spring is cubic-bezier(0.22,1,0.36,1), a smooth ease-out with no overshoot (control-point y peaks at 1 at the end, never exceeds it) — the standard Ledge chrome easing used project-wide, not bounce/elastic; the detector cannot resolve the CSS var to its curve"
+      },
+      {
+        "rule": "bounce-easing",
+        "value": "cubic-bezier(0.34, 1.56, 0.64, 1)",
+        "createdAt": "2026-09-02T09:13:01.357Z",
+        "reason": "design system: --bz-spring-overshoot is the intentional Edge-Drop overshoot token (tokens.css:197-199 comment; Knowns task gf62ik Obsidian Blade 'spring overshoot'), shipped for entrance landings"
+      },
+      {
+        "rule": "bounce-easing",
+        "value": "var(--bz-spring-overshoot)",
+        "createdAt": "2026-09-02T09:23:59.428Z",
+        "reason": "design system: --bz-spring-overshoot is the intentional Edge-Drop overshoot token (tokens.css:197-199 comment; Knowns gf62ik Obsidian Blade 'spring overshoot'); referencing it by var is sanctioned reuse. Placement (arriving vs leaving) verified separately in Lead diff review."
+      },
+      {
+        "rule": "layout-transition",
+        "value": "width var(--bz-open-ms) var(--bz-spring)",
+        "createdAt": "2026-09-02T09:32:04.067Z",
+        "reason": "domain-appropriate: .bz-window-fill is a quota meter/progress bar; animating its width is the idiomatic fill motion and is pre-existing (not introduced by the polish work). Single small element, no layout tree to thrash."
       }
     ]
   }
