@@ -450,6 +450,9 @@ export function App() {
             onTogglePin={onTogglePin}
             onDelete={onDelete}
             onPreview={openPreview}
+            // The standalone shelf renderer has no side column to grow into —
+            // that lives in the hub, which owns its window's width.
+            onPreviewImage={() => undefined}
             onMerge={onMerge}
             onError={(message) => toasts.push(message, 'error')}
           />

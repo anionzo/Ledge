@@ -143,6 +143,15 @@ export function registerCoreIpc(deps: IpcDeps): void {
     deps.getPanel(id)?.setInteractive(interactive)
   })
 
+  handle('panel:set-extra-width', (event, px) => {
+    const id = deps.panelIdFor(event.sender.id)
+    if (id === 'settings') return
+    // Bounded here, not trusted from the renderer: an unbounded value would
+    // let a compromised renderer stretch an always-on-top window across every
+    // monitor the user has.
+    deps.getPanel(id)?.setExtraWidth(Math.min(1200, Math.max(0, Number(px) || 0)))
+  })
+
   handle('panel:open', (_event, panel) => {
     if (panel === 'settings') {
       deps.openSettings()

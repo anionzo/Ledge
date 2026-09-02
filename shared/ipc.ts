@@ -165,6 +165,11 @@ export interface InvokeMap {
   // ── Windows ──────────────────────────────────────────────────────────────
   /** Take or release mouse input. Ignored where click-through is unsupported. */
   'panel:set-interactive': { args: [interactive: boolean]; result: void }
+  /**
+   * Grow the panel's window inward by `px`, so a preview can sit BESIDE the
+   * blade instead of covering it. `0` restores the plain width.
+   */
+  'panel:set-extra-width': { args: [px: number]; result: void }
   'panel:open': { args: [panel: PanelId]; result: void }
   'panel:close': { args: [panel: PanelId]; result: void }
   /** Every display the hub could dock to. Read by the Settings picker. */

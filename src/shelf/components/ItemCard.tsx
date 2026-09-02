@@ -261,8 +261,12 @@ function ItemCardImpl({
     // Copy stays reachable for images through the hover Copy button and the
     // double-click, and the detail sheet stays reachable for everything else
     // the same way.
-    if (previewEnabled && data.kind === 'image') onPreview(item.id)
-    else onCopy(item)
+    if (previewEnabled && data.kind === 'image') {
+      // Beside the blade, not over it. The in-panel sheet covered the very list
+      // the image came from, so looking at a picture meant losing your place;
+      // the hub grows its window instead and shows it alongside.
+      onPreviewImage(`ledge://${data.imageId}`)
+    } else onCopy(item)
   }
 
   /**

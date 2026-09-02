@@ -108,6 +108,8 @@ export class PanelHost {
   #win: BrowserWindow | null = null
   #open = false
   #destroyed = false
+  /** Extra width for a side-by-side preview. See `setExtraWidth`. */
+  #extraWidth = 0
   #settleTimer: ReturnType<typeof setTimeout> | null = null
   #onDisplayChange: () => void
 
@@ -366,6 +368,9 @@ export class PanelHost {
   #setOpen(open: boolean): void {
     if (this.#open === open) return
     this.#open = open
+    // A preview does not survive the panel closing. Without this the next
+    // open would start already widened, with nothing in the extra space.
+    if (!open) this.#extraWidth = 0
 
     const win = this.window
     if (!win) return
@@ -386,13 +391,37 @@ export class PanelHost {
     this.push('panel:toggle', open)
   }
 
+  /**
+   * Grow the window inward by `px`, for a preview that has to sit BESIDE the
+   * blade rather than on top of it.
+   *
+   * The panel is anchored to its docked edge, so widening extends it into the
+   * screen and leaves the blade exactly where it was — which is the whole
+   * trick. The alternative was a second BrowserWindow floating next to this
+   * one, and that means duplicating focus, z-order, display-follow and
+   * lifecycle for a surface that is only ever a companion to this one.
+   *
+   * Ignored while collapsed: a closed panel that silently grew would be an
+   * invisible 400px window sitting over the desktop.
+   */
+  setExtraWidth(px: number): void {
+    const next = Math.max(0, Math.round(px))
+    if (this.#extraWidth === next) return
+    this.#extraWidth = next
+    if (this.#open) this.applyGeometry()
+  }
+
+  get extraWidth(): number {
+    return this.#extraWidth
+  }
+
   #boundsFor(open: boolean): Rectangle {
     // Under `clickthrough` the window is always at full width — collapsing is
     // purely an input-routing change, and resizing it would clip the
     // renderer's slide-out animation against the window edge.
     const width =
       open || this.#spec.collapseStrategy === 'clickthrough'
-        ? this.#spec.width
+        ? this.#spec.width + (open ? this.#extraWidth : 0)
         : this.#spec.gripPx
 
     return computePanelBounds({

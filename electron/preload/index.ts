@@ -49,6 +49,7 @@ const INVOKE_CHANNELS = [
   'gauge:probe-command',
   'gauge:history',
   'panel:set-interactive',
+  'panel:set-extra-width',
   'panel:open',
   'panel:close',
   'displays:list',

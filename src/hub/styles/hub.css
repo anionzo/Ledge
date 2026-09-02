@@ -7,6 +7,96 @@
 
 .bz-hub-root {
   height: 100%;
+  /* A row, so an image preview can occupy the width the window grows by and
+     the blade keeps its own 360px against the screen edge. `row-reverse` on a
+     right-docked hub puts the blade on the right and the preview inboard,
+     which is the direction the window expands. */
+  display: flex;
+  align-items: stretch;
+}
+
+.bz-hub-root[data-side='right'] {
+  flex-direction: row-reverse;
+}
+
+/* The blade never gives up width to the preview — it keeps the size the panel
+   was configured with and the window grew to make room for the rest. */
+.bz-hub-root > .bz-panel {
+  flex: 0 0 var(--bz-blade-width, 360px);
+}
+
+/*
+ * The side preview.
+ *
+ * Beside the blade, not over it. Clicking an image used to open the in-panel
+ * sheet, which covered the list it came from — so the picture appeared and the
+ * shelf disappeared, and closing it put everything back. That reads as
+ * navigation when the user only wanted to look at something.
+ */
+.bz-side-preview {
+  flex: 1 1 auto;
+  min-width: 0;
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: var(--bz-space-4);
+  margin: var(--bz-space-3);
+  border-radius: var(--bz-radius);
+  background: var(--bz-glass);
+  -webkit-backdrop-filter: var(--bz-glass-blur);
+  backdrop-filter: var(--bz-glass-blur);
+  box-shadow: var(--bz-shadow);
+  animation: bz-side-preview-in var(--bz-base) var(--bz-spring-overshoot);
+}
+
+@keyframes bz-side-preview-in {
+  from {
+    opacity: 0;
+    /* Comes out of the blade's edge rather than fading in place — it should
+       read as the card opening outward, not as a new thing arriving. */
+    translate: 8% 0;
+    scale: 0.97;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+    scale: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bz-side-preview {
+    animation: none;
+  }
+}
+
+:root[data-reduce-motion='true'] .bz-side-preview {
+  animation: none;
+}
+
+.bz-side-preview-img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: var(--bz-radius-sm);
+  cursor: zoom-in;
+}
+
+.bz-side-preview-close {
+  position: absolute;
+  top: var(--bz-space-2);
+  right: var(--bz-space-2);
+}
+
+.bz-side-preview-meta {
+  position: absolute;
+  bottom: var(--bz-space-2);
+  left: 50%;
+  translate: -50% 0;
+  color: var(--bz-ink-3);
+  font-family: var(--bz-font-mono);
+  font-size: var(--bz-text-xs);
+  pointer-events: none;
 }
 
 /*

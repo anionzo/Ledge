@@ -36,7 +36,7 @@ import {
   setSoundEnabled
 } from '../lib/soundEffects'
 import { t } from '../i18n'
-import { Button, Chip, EmptyState, Panel, PanelHeader, ToastStack } from '../ui'
+import { Button, Chip, EmptyState, Lightbox, Panel, PanelHeader, ToastStack } from '../ui'
 import { ClearMenu } from '../shelf/components/ClearMenu'
 import { CopyIndicatorCurve } from '../shelf/components/CopyIndicatorCurve'
 import { FilterTabs } from '../shelf/components/FilterTabs'
@@ -55,6 +55,9 @@ import './styles/hub.css'
 
 /** How long the cursor must dwell in the edge trigger before the hub opens. */
 const OPEN_DWELL_MS = 120
+
+/** How far the window grows inward to hold the side preview, in px. */
+const SIDE_PREVIEW_W = 420
 
 export function App() {
   const { settings } = useSettings()
@@ -318,6 +321,29 @@ export function App() {
     ).length
   }, [items, selection])
 
+  /**
+   * The image opened BESIDE the blade, or null.
+   *
+   * Main grows the window inward by `SIDE_PREVIEW_W` while this is set, so the
+   * picture sits next to the shelf instead of on top of it — clicking a
+   * thumbnail should let you look at something, not navigate away from the
+   * list you found it in.
+   */
+  const [sideImage, setSideImage] = useState<{ src: string; label: string } | null>(null)
+  /** Escalation from the side preview: the same image, full window, zoomable. */
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null)
+
+  useEffect(() => {
+    void invoke('panel:set-extra-width', sideImage ? SIDE_PREVIEW_W : 0)
+  }, [sideImage])
+
+  // The panel collapsing takes the preview with it: main drops the extra width
+  // on close, so leaving this set would reopen into a blade-width window with
+  // an image squeezed beside it.
+  useEffect(() => {
+    if (!open) setSideImage(null)
+  }, [open])
+
   const onMergeSelection = useCallback(() => {
     invoke('shelf:merge-many', selection)
       .then((result) => {
@@ -489,6 +515,7 @@ export function App() {
     // rescopes the type tokens (see hub.css) so the whole surface scales.
     <div
       className="bz-hub-root"
+      data-side={side}
       data-text-scale={textScale}
       data-drop-active={dropActive || undefined}
       onMouseLeave={requestClose}
@@ -498,6 +525,34 @@ export function App() {
     >
     {/* Outside <Panel> on purpose: the panel translates off-edge when closed,
         and the beacon has to stay at the edge to point back at it. */}
+    {/* The side preview: outside <Panel>, so it occupies the width the window
+        grew by rather than covering the shelf. Clicking the picture again
+        escalates to the zoomable full-window lightbox. */}
+    {sideImage !== null && (
+      <div className="bz-side-preview">
+        <Button
+          className="bz-side-preview-close"
+          icon="close"
+          size="sm"
+          label={t('common.close')}
+          onClick={() => setSideImage(null)}
+        />
+        <img
+          className="bz-side-preview-img"
+          src={sideImage.src}
+          alt={sideImage.label}
+          draggable={false}
+          title={t('shelf.preview.view_full')}
+          onClick={() => setLightboxSrc(sideImage.src)}
+        />
+      </div>
+    )}
+    <Lightbox
+      src={lightboxSrc}
+      alt={t('shelf.kind.image')}
+      onClose={() => setLightboxSrc(null)}
+      closeLabel={t('shelf.preview.close_full')}
+    />
     {beacon !== null && (
       <span
         key={beacon}
@@ -643,6 +698,7 @@ export function App() {
           onTogglePin={onTogglePin}
           onDelete={onDelete}
           onPreview={openPreview}
+          onPreviewImage={(src) => setSideImage({ src, label: t('shelf.kind.image') })}
           onMerge={onMerge}
           onError={(message) => toasts.push(message, 'error')}
         />
