@@ -27,9 +27,27 @@ interface Release {
 
 const RELEASES: Release[] = [
   {
-    version: 'v0.1.8',
+    version: 'v0.1.9',
     date: 'Sep 2026',
     latest: true,
+    summary: 'An image opens beside the shelf instead of covering it, and the blade is moulded into the screen edge.',
+    highlights: [
+      {
+        title: 'Images open alongside',
+        description:
+          'Clicking an image used to cover the list it came from. The hub now widens inward and shows the picture next to the shelf; clicking it again opens the zoomable full-window view.'
+      },
+      {
+        title: 'Flared edges',
+        description:
+          'Where the blade meets the screen edge its corners now curve outward, so it reads as moulded into the side of the display rather than stuck onto it.'
+      }
+    ]
+  },
+  {
+    version: 'v0.1.8',
+    date: 'Sep 2026',
+    latest: false,
     summary: 'Gather a selection into one stack, and actually inspect what you copied.',
     highlights: [
       {
