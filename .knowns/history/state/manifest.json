@@ -1,0 +1,349 @@
+{
+  "schemaVersion": 1,
+  "entries": {
+    "doc:doc-038aae537128a3a0c04a4b5ba40d5261": {
+      "entityType": "doc",
+      "entityId": "doc-038aae537128a3a0c04a4b5ba40d5261",
+      "path": "docs/guides/smoothness/smoothness-verify-matrix.md",
+      "hash": "83c949cb881edc518b0ae640e0c338c82263dd46fc6018a4541b46c4a1e1a7d9",
+      "revision": 2,
+      "headHash": "83c949cb881edc518b0ae640e0c338c82263dd46fc6018a4541b46c4a1e1a7d9"
+    },
+    "doc:doc-0bee1e28e59092135d6dab6e927737e8": {
+      "entityType": "doc",
+      "entityId": "doc-0bee1e28e59092135d6dab6e927737e8",
+      "path": "docs/research/edge-drop-smoothness-gap.md",
+      "hash": "c06724ffccfd61378a943e684a150c4dfd260702cb33b31fcba66227067d7762",
+      "revision": 2,
+      "headHash": "c06724ffccfd61378a943e684a150c4dfd260702cb33b31fcba66227067d7762"
+    },
+    "doc:doc-2af601346dbab6afa274b927d318d02f": {
+      "entityType": "doc",
+      "entityId": "doc-2af601346dbab6afa274b927d318d02f",
+      "path": "docs/guides/smoothness/smooth-00-wave-parent-brief.md",
+      "hash": "52257a0b99a5906f900f0c970dd5f663f8c2aaa60f11ba788f97e04cf8d70585",
+      "revision": 2,
+      "headHash": "52257a0b99a5906f900f0c970dd5f663f8c2aaa60f11ba788f97e04cf8d70585"
+    },
+    "doc:doc-38e771bfaf264e000b2083e6aa7672e5": {
+      "entityType": "doc",
+      "entityId": "doc-38e771bfaf264e000b2083e6aa7672e5",
+      "path": "docs/guides/smoothness/smooth-05-drag-integrity-brief.md",
+      "hash": "e205162c66e3e43fc6d477f9c7f30e94fcf25dc06ad0f8481c102a74ed84753c",
+      "revision": 2,
+      "headHash": "e205162c66e3e43fc6d477f9c7f30e94fcf25dc06ad0f8481c102a74ed84753c"
+    },
+    "doc:doc-3f8be37a65014017cfbb41d05da1dd3f": {
+      "entityType": "doc",
+      "entityId": "doc-3f8be37a65014017cfbb41d05da1dd3f",
+      "path": "docs/guides/edge-drop-port-sources.md",
+      "hash": "0090f455ce7e39e36a167be56f3fb03b77a99d02b1d49800de2d5e2e4e3e125c",
+      "revision": 2,
+      "headHash": "0090f455ce7e39e36a167be56f3fb03b77a99d02b1d49800de2d5e2e4e3e125c"
+    },
+    "doc:doc-4a735ee61c5a5ddfdfdb2b89723251c0": {
+      "entityType": "doc",
+      "entityId": "doc-4a735ee61c5a5ddfdfdb2b89723251c0",
+      "path": "docs/guides/smoothness/smoothness-settings-and-ipc.md",
+      "hash": "6cf46d78c542beb5edf76adc88b36ede3c32e1dad794653bb151c8790553bf22",
+      "revision": 2,
+      "headHash": "6cf46d78c542beb5edf76adc88b36ede3c32e1dad794653bb151c8790553bf22"
+    },
+    "doc:doc-548d2d64667f7f58f3ca116f84f7007a": {
+      "entityType": "doc",
+      "entityId": "doc-548d2d64667f7f58f3ca116f84f7007a",
+      "path": "docs/guides/smoothness/smoothness-wave-index.md",
+      "hash": "3a883ae120d94afba410b731bf35fc32755002282e2213b7ade532d4705673e9",
+      "revision": 2,
+      "headHash": "3a883ae120d94afba410b731bf35fc32755002282e2213b7ade532d4705673e9"
+    },
+    "doc:doc-54aa715c3b23e74fbd1c783d5fd1e826": {
+      "entityType": "doc",
+      "entityId": "doc-54aa715c3b23e74fbd1c783d5fd1e826",
+      "path": "docs/guides/smoothness/smooth-07-capture-preview-brief.md",
+      "hash": "2eeeaa1dafe42122478a3e8a7a1fedc68f90dbff576cae218de4777d3ccb76a0",
+      "revision": 2,
+      "headHash": "2eeeaa1dafe42122478a3e8a7a1fedc68f90dbff576cae218de4777d3ccb76a0"
+    },
+    "doc:doc-54f8ad51c464358fbc4fa7f1d15efa4a": {
+      "entityType": "doc",
+      "entityId": "doc-54f8ad51c464358fbc4fa7f1d15efa4a",
+      "path": "docs/guides/smoothness/smooth-02-multi-monitor-brief.md",
+      "hash": "88e691536fd63c56ed6d79e10c88f2d4622ca836bc682fe907d57dd3f1ea1a87",
+      "revision": 2,
+      "headHash": "88e691536fd63c56ed6d79e10c88f2d4622ca836bc682fe907d57dd3f1ea1a87"
+    },
+    "doc:doc-596af718698fda44e56bbb77e1923a91": {
+      "entityType": "doc",
+      "entityId": "doc-596af718698fda44e56bbb77e1923a91",
+      "path": "docs/guides/smoothness/smooth-08-auto-update-brief.md",
+      "hash": "17dab9723c064a5f407f25c346707de62ad3991ab1765c55e11a9d245cf4219e",
+      "revision": 2,
+      "headHash": "17dab9723c064a5f407f25c346707de62ad3991ab1765c55e11a9d245cf4219e"
+    },
+    "doc:doc-615117b386391586b528e668a7667709": {
+      "entityType": "doc",
+      "entityId": "doc-615117b386391586b528e668a7667709",
+      "path": "docs/guides/smoothness/smooth-06-history-clear-brief.md",
+      "hash": "55c63f6c447410b3e43e6383bfe72ac2dad4e8dd1816a362e179c589fd0f0b40",
+      "revision": 2,
+      "headHash": "55c63f6c447410b3e43e6383bfe72ac2dad4e8dd1816a362e179c589fd0f0b40"
+    },
+    "doc:doc-63e806a1c72bab8271082253f3209635": {
+      "entityType": "doc",
+      "entityId": "doc-63e806a1c72bab8271082253f3209635",
+      "path": "docs/guides/smoothness/smooth-01-seam-aware-probe-brief.md",
+      "hash": "7fe3a259a34254169e16c12f347551ad60942e272c1e397776c725a78429ed39",
+      "revision": 2,
+      "headHash": "7fe3a259a34254169e16c12f347551ad60942e272c1e397776c725a78429ed39"
+    },
+    "doc:doc-775a1cdce2904f7126c2674a4f9fe84f": {
+      "entityType": "doc",
+      "entityId": "doc-775a1cdce2904f7126c2674a4f9fe84f",
+      "path": "docs/guides/smoothness/smooth-03-proximity-beacon-brief.md",
+      "hash": "a82e1cc3a4773c401396347a0f27bbe081262ed176c0945dd22bc78a66a8df2f",
+      "revision": 2,
+      "headHash": "a82e1cc3a4773c401396347a0f27bbe081262ed176c0945dd22bc78a66a8df2f"
+    },
+    "doc:doc-7fb372992cd3b9151331f41fd972db3c": {
+      "entityType": "doc",
+      "entityId": "doc-7fb372992cd3b9151331f41fd972db3c",
+      "path": "docs/guides/smoothness/smooth-10-quota-i18n-brief.md",
+      "hash": "70b255ca35e38e225891666c573d4e0f1dddbff5db74babc1b1808c87e811bee",
+      "revision": 2,
+      "headHash": "70b255ca35e38e225891666c573d4e0f1dddbff5db74babc1b1808c87e811bee"
+    },
+    "doc:doc-b6ae6d42ebe32b989e34550201ea4886": {
+      "entityType": "doc",
+      "entityId": "doc-b6ae6d42ebe32b989e34550201ea4886",
+      "path": "docs/specs/2026-08-31/edge-drop-smoothness-wave.md",
+      "hash": "6c8e174cc245cd605f5ff42d622b4725c9141c14d33bfa184870051073dec3f3",
+      "revision": 2,
+      "headHash": "6c8e174cc245cd605f5ff42d622b4725c9141c14d33bfa184870051073dec3f3"
+    },
+    "doc:doc-c9e8d68a50aac685f1f1d1ee0e02d308": {
+      "entityType": "doc",
+      "entityId": "doc-c9e8d68a50aac685f1f1d1ee0e02d308",
+      "path": "docs/guides/smoothness/smoothness-canonical-paths.md",
+      "hash": "900d3a36f67d81128ab421d4763926f3e1a59403d12fe71359e66203c8491bb4",
+      "revision": 2,
+      "headHash": "900d3a36f67d81128ab421d4763926f3e1a59403d12fe71359e66203c8491bb4"
+    },
+    "doc:doc-e5982d8bd5e12d6b1431fcbe9a7725d5": {
+      "entityType": "doc",
+      "entityId": "doc-e5982d8bd5e12d6b1431fcbe9a7725d5",
+      "path": "docs/guides/smoothness/smooth-09-settings-feel-brief.md",
+      "hash": "0cdac4c6724a4c783851cce6bddd97b34f4e9cf54b31433e0294a1ac83d0a650",
+      "revision": 2,
+      "headHash": "0cdac4c6724a4c783851cce6bddd97b34f4e9cf54b31433e0294a1ac83d0a650"
+    },
+    "doc:doc-f9a4263a9b88d758240474cf60b520e7": {
+      "entityType": "doc",
+      "entityId": "doc-f9a4263a9b88d758240474cf60b520e7",
+      "path": "docs/guides/smoothness/smooth-04-cheap-material-brief.md",
+      "hash": "f66fcd426077ee37c8c03adbff173428721a29fa0b88a76ebea0d101c411757f",
+      "revision": 2,
+      "headHash": "f66fcd426077ee37c8c03adbff173428721a29fa0b88a76ebea0d101c411757f"
+    },
+    "task:1jdmgn": {
+      "entityType": "task",
+      "entityId": "1jdmgn",
+      "path": "tasks/task-1jdmgn - smooth-07-Capture-preview-polish.md",
+      "hash": "a04f04f3e28d0755d682889e70d74ea2b77cbc13bf3d4ea199490cc3c5acb1fc",
+      "revision": 5,
+      "headHash": "a04f04f3e28d0755d682889e70d74ea2b77cbc13bf3d4ea199490cc3c5acb1fc"
+    },
+    "task:2r55hq": {
+      "entityType": "task",
+      "entityId": "2r55hq",
+      "path": "tasks/task-2r55hq - Antigravity-provider-doc-sai-cho-token-o-state-vsc.md",
+      "hash": "7a078f9e581e48cbd2f858f2058748d0423b67111b27ac26575a55f52780bc49",
+      "revision": 2,
+      "headHash": "7a078f9e581e48cbd2f858f2058748d0423b67111b27ac26575a55f52780bc49"
+    },
+    "task:370vlz": {
+      "entityType": "task",
+      "entityId": "370vlz",
+      "path": "tasks/task-370vlz - smooth-08-Silent-GitHub-auto-update.md",
+      "hash": "06f1cc131f769d15798f9ae9b78beb33a7a35de32278aa78b4ac7adff38eff27",
+      "revision": 5,
+      "headHash": "06f1cc131f769d15798f9ae9b78beb33a7a35de32278aa78b4ac7adff38eff27"
+    },
+    "task:378teh": {
+      "entityType": "task",
+      "entityId": "378teh",
+      "path": "tasks/task-378teh - Feature-parity-voi-Edge-Drop-13-tinh-nang-UX.md",
+      "hash": "eb052a48bf5a046ad899a06943b63e591b309e499b19c5b1cba851f6b36ae703",
+      "revision": 3,
+      "headHash": "eb052a48bf5a046ad899a06943b63e591b309e499b19c5b1cba851f6b36ae703"
+    },
+    "task:5vsd9y": {
+      "entityType": "task",
+      "entityId": "5vsd9y",
+      "path": "tasks/task-5vsd9y - smooth-04-Cheap-panel-material-clearer-opacity.md",
+      "hash": "cef606f8b1fcb585a0bd1ffb12109eeac71199ab5484afe20a7ee54c9a520bc5",
+      "revision": 5,
+      "headHash": "cef606f8b1fcb585a0bd1ffb12109eeac71199ab5484afe20a7ee54c9a520bc5"
+    },
+    "task:9q66ks": {
+      "entityType": "task",
+      "entityId": "9q66ks",
+      "path": "tasks/task-9q66ks - BACKLOG-Cost-Meter-tinh-tien-theo-token.md",
+      "hash": "26330df4b4803c58a2e5e9da30647b4d7d5f9521fb6114d892327f0f7f26d8b6",
+      "revision": 5,
+      "headHash": "26330df4b4803c58a2e5e9da30647b4d7d5f9521fb6114d892327f0f7f26d8b6"
+    },
+    "task:ayx44m": {
+      "entityType": "task",
+      "entityId": "ayx44m",
+      "path": "tasks/task-ayx44m - smooth-09-Settings-feel-magnetic-slider-1-75s-pre.md",
+      "hash": "e4b4ff62d3af169e7a9d32add3fa460099a87173f16001bedb667365dbc864b9",
+      "revision": 5,
+      "headHash": "e4b4ff62d3af169e7a9d32add3fa460099a87173f16001bedb667365dbc864b9"
+    },
+    "task:e6f62s": {
+      "entityType": "task",
+      "entityId": "e6f62s",
+      "path": "tasks/task-e6f62s - smooth-01-Port-seam-aware-edge-probe.md",
+      "hash": "b2a3c52eccafb9e5451db7436ae6ca04a7edaddcf3da36724f6307822a79af6d",
+      "revision": 5,
+      "headHash": "b2a3c52eccafb9e5451db7436ae6ca04a7edaddcf3da36724f6307822a79af6d"
+    },
+    "task:euv8k3": {
+      "entityType": "task",
+      "entityId": "euv8k3",
+      "path": "tasks/task-euv8k3 - smooth-05-Drag-integrity-5px-self-drop-z-band.md",
+      "hash": "a95ff4281afcf5577313d1d2de77df6e7dc947c386edace856a34810561dbf5c",
+      "revision": 5,
+      "headHash": "a95ff4281afcf5577313d1d2de77df6e7dc947c386edace856a34810561dbf5c"
+    },
+    "task:f4wasv": {
+      "entityType": "task",
+      "entityId": "f4wasv",
+      "path": "tasks/task-f4wasv - P4-Hop-nhat-giao-dien.md",
+      "hash": "38e72913b61cd38d6c6e86275ab8fb1832695354b0e11a459a93f5556f5e57ef",
+      "revision": 3,
+      "headHash": "38e72913b61cd38d6c6e86275ab8fb1832695354b0e11a459a93f5556f5e57ef"
+    },
+    "task:gf62ik": {
+      "entityType": "task",
+      "entityId": "gf62ik",
+      "path": "tasks/task-gf62ik - Design-pass-Obsidian-Blade-nen-den-tim-glow-spring.md",
+      "hash": "2b9964b65708291ef8963b858afd1b4100839a4627894d08c96a3d57fc18aace",
+      "revision": 4,
+      "headHash": "2b9964b65708291ef8963b858afd1b4100839a4627894d08c96a3d57fc18aace"
+    },
+    "task:gop97t": {
+      "entityType": "task",
+      "entityId": "gop97t",
+      "path": "tasks/task-gop97t - smooth-06-Filter-scoped-and-timed-history-clear.md",
+      "hash": "d62ad2000bf46cfdde9fddd67ffae18695953ca08165303876318545ec7c5434",
+      "revision": 5,
+      "headHash": "d62ad2000bf46cfdde9fddd67ffae18695953ca08165303876318545ec7c5434"
+    },
+    "task:khxq0g": {
+      "entityType": "task",
+      "entityId": "khxq0g",
+      "path": "tasks/task-khxq0g - P5-Dong-goi-va-phat-hanh.md",
+      "hash": "e3b4bba26a24f4fd93402d0a4d813f4841195474f525e7fbfb1a20a5a119761e",
+      "revision": 4,
+      "headHash": "e3b4bba26a24f4fd93402d0a4d813f4841195474f525e7fbfb1a20a5a119761e"
+    },
+    "task:lvq9pf": {
+      "entityType": "task",
+      "entityId": "lvq9pf",
+      "path": "tasks/task-lvq9pf - UI-polish-wave-Obsidian-Blade-glance-material-Arch.md",
+      "hash": "1e24d9e6787518daa0c36654a6fe30a386369294273b88a0f17d4782817b9a4c",
+      "revision": 4,
+      "headHash": "1e24d9e6787518daa0c36654a6fe30a386369294273b88a0f17d4782817b9a4c"
+    },
+    "task:ma5ui8": {
+      "entityType": "task",
+      "entityId": "ma5ui8",
+      "path": "tasks/task-ma5ui8 - smooth-03-Proximity-beacon-trigger-clipPath.md",
+      "hash": "736b1f84f010fef9d137a9569725d07f5fc8602da5d8d24b7573edf501b1fd57",
+      "revision": 5,
+      "headHash": "736b1f84f010fef9d137a9569725d07f5fc8602da5d8d24b7573edf501b1fd57"
+    },
+    "task:mlncst": {
+      "entityType": "task",
+      "entityId": "mlncst",
+      "path": "tasks/task-mlncst - smooth-00-Edge-Drop-smoothness-wave.md",
+      "hash": "f0837af6baa054e01d14b3882dd24c4fcac091d690a4747b8eb02ece0c4f279a",
+      "revision": 7,
+      "headHash": "f0837af6baa054e01d14b3882dd24c4fcac091d690a4747b8eb02ece0c4f279a"
+    },
+    "task:qsavo6": {
+      "entityType": "task",
+      "entityId": "qsavo6",
+      "path": "tasks/task-qsavo6 - smooth-02-Multi-monitor-stick-persist.md",
+      "hash": "dd636c08e0aec32c942f9ef5fc8bb98c690ab49b229009448ae8d01f71ea706c",
+      "revision": 5,
+      "headHash": "dd636c08e0aec32c942f9ef5fc8bb98c690ab49b229009448ae8d01f71ea706c"
+    },
+    "task:rmttou": {
+      "entityType": "task",
+      "entityId": "rmttou",
+      "path": "tasks/task-rmttou - i18n-audit-toan-bo-soat-chuoi-hardcode-chua-qua-t.md",
+      "hash": "b81eb2a0a16e707e45282f1b0110966693bfe15916876bc42acb8b61a7cc3cbc",
+      "revision": 3,
+      "headHash": "b81eb2a0a16e707e45282f1b0110966693bfe15916876bc42acb8b61a7cc3cbc"
+    },
+    "task:sxqzf8": {
+      "entityType": "task",
+      "entityId": "sxqzf8",
+      "path": "tasks/task-sxqzf8 - P3-Chuyen-Gauge-sang.md",
+      "hash": "b046087a49d77fcad901620645c0a0f67a828be3a70018ad5ff21cd4e15210d9",
+      "revision": 3,
+      "headHash": "b046087a49d77fcad901620645c0a0f67a828be3a70018ad5ff21cd4e15210d9"
+    },
+    "task:teejfm": {
+      "entityType": "task",
+      "entityId": "teejfm",
+      "path": "tasks/task-teejfm - P0-Bo-khung-chay-duoc.md",
+      "hash": "ba8f9b4a908590377e51edabcb050598efd3d579ce7b3771e3e319e91482d9f6",
+      "revision": 3,
+      "headHash": "ba8f9b4a908590377e51edabcb050598efd3d579ce7b3771e3e319e91482d9f6"
+    },
+    "task:unlbvv": {
+      "entityType": "task",
+      "entityId": "unlbvv",
+      "path": "tasks/task-unlbvv - smooth-10-Quota-glance-strip-vi-en-i18n.md",
+      "hash": "91c20e41583d3a44f72fb06514ae4beb842ca956e1921e735a96375a07c51881",
+      "revision": 5,
+      "headHash": "91c20e41583d3a44f72fb06514ae4beb842ca956e1921e735a96375a07c51881"
+    },
+    "task:w8q9t9": {
+      "entityType": "task",
+      "entityId": "w8q9t9",
+      "path": "tasks/task-w8q9t9 - P2-Chuyen-Shelf-sang.md",
+      "hash": "2a2715f19fc6d1a59b06fca0a5ad9d0e82c14e6ede1f97585877f1c90afb7652",
+      "revision": 4,
+      "headHash": "2a2715f19fc6d1a59b06fca0a5ad9d0e82c14e6ede1f97585877f1c90afb7652"
+    },
+    "task:yji970": {
+      "entityType": "task",
+      "entityId": "yji970",
+      "path": "tasks/task-yji970 - Fix-xoa-custom-provider-de-lai-rac-trong-enabledPr.md",
+      "hash": "c308b28baf40156362da0a1cec7216257ee04d7015977b488e704e4defcd23b2",
+      "revision": 2,
+      "headHash": "c308b28baf40156362da0a1cec7216257ee04d7015977b488e704e4defcd23b2"
+    },
+    "task:zgs3rs": {
+      "entityType": "task",
+      "entityId": "zgs3rs",
+      "path": "tasks/task-zgs3rs - P1-Lop-platform-adapter.md",
+      "hash": "1273d6ff809cdd741fe4251e4b168f3cc34192c5fba7d992cb630d4f9fd8a401",
+      "revision": 3,
+      "headHash": "1273d6ff809cdd741fe4251e4b168f3cc34192c5fba7d992cb630d4f9fd8a401"
+    },
+    "task:zu4x6f": {
+      "entityType": "task",
+      "entityId": "zu4x6f",
+      "path": "tasks/task-zu4x6f - Quota-usage-tracking-pace-burn-rate-sparkline-hist.md",
+      "hash": "8619d6533ec2e51cfaea671bbc0f8e697f75a0c7e02d4f67bef67435e2230aee",
+      "revision": 3,
+      "headHash": "8619d6533ec2e51cfaea671bbc0f8e697f75a0c7e02d4f67bef67435e2230aee"
+    }
+  }
+}

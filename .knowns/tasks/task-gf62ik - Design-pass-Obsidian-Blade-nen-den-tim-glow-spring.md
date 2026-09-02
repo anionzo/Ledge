@@ -7,7 +7,7 @@ labels:
   - design
   - ui
 createdAt: '2026-08-31T07:33:43.554Z'
-updatedAt: '2026-08-31T08:23:54.591Z'
+updatedAt: '2026-09-02T08:50:03.150Z'
 completedAt: '2026-08-31T08:23:36.630Z'
 timeSpent: 0
 ---
@@ -29,5 +29,6 @@ Nguoi dung muon lay design dep nhu Edge-Drop. Edge-Drop tokens: nen den nhieu lo
 
 <!-- SECTION:NOTES:BEGIN -->
 Obsidian Blade ap dung: nen den nhieu lop, accent tim #8b5cf6+glow, shadow sau, blade 22px, spring nay. Light theme giu dung duoc. Values-only, 0 rename token.
+[2026-09-02 Lead] Bug fix da ship: item-card.css hover lift dung box-shadow: 0 1px 3px var(--bz-shadow) — nhung --bz-shadow la shadow DA LOP bat dau bang inset, nen layer dau sai cu phap va bi browser bo (cu nhac hover mat bong, chi con hairline). Da them token --bz-lift (light + 2 scope dark) tai design/tokens.css va doi item-card.css:77 sang var(--bz-lift). Architect (Grok no-edits) da giao backlog 10 muc polish — xem task moi.
 <!-- SECTION:NOTES:END -->
 

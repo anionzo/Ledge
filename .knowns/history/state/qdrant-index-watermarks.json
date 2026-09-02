@@ -47,8 +47,8 @@
   "task:9q66ks": {
     "entityType": "task",
     "entityId": "9q66ks",
-    "canonicalHash": "10f54626d17a594a2872cd0f230ebd62eb776a02b8134afcb1ec5520dba15f2e",
-    "revision": 4,
+    "canonicalHash": "26330df4b4803c58a2e5e9da30647b4d7d5f9521fb6114d892327f0f7f26d8b6",
+    "revision": 5,
     "path": "tasks/9q66ks.md",
     "indexedAt": "0001-01-01T00:00:00Z",
     "stale": true
@@ -92,8 +92,8 @@
   "task:gf62ik": {
     "entityType": "task",
     "entityId": "gf62ik",
-    "canonicalHash": "a6e069e07a630a299c7935d2551b8ea1ab20c4160a88f6946bf8d70d22f06381",
-    "revision": 3,
+    "canonicalHash": "2b9964b65708291ef8963b858afd1b4100839a4627894d08c96a3d57fc18aace",
+    "revision": 4,
     "path": "tasks/gf62ik.md",
     "indexedAt": "0001-01-01T00:00:00Z",
     "stale": true
@@ -113,6 +113,15 @@
     "canonicalHash": "e3b4bba26a24f4fd93402d0a4d813f4841195474f525e7fbfb1a20a5a119761e",
     "revision": 4,
     "path": "tasks/khxq0g.md",
+    "indexedAt": "0001-01-01T00:00:00Z",
+    "stale": true
+  },
+  "task:lvq9pf": {
+    "entityType": "task",
+    "entityId": "lvq9pf",
+    "canonicalHash": "1e24d9e6787518daa0c36654a6fe30a386369294273b88a0f17d4782817b9a4c",
+    "revision": 4,
+    "path": "tasks/lvq9pf.md",
     "indexedAt": "0001-01-01T00:00:00Z",
     "stale": true
   },
