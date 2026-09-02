@@ -64,6 +64,13 @@ jobs:
       - name: Install
         run: npm ci
 
+      # `npm ci` does not always run electron's postinstall (a warm npm cache
+      # skips it), so `dist/` may not exist yet — the first run downloaded the
+      # binary itself, which is too late for the chmod below. Force it here so
+      # the next step has a file to change.
+      - name: Ensure the Electron binary is present
+        run: node node_modules/electron/install.js
+
       # Electron ships a SUID sandbox helper that the kernel will only honour
       # when it is owned by root with mode 4755, which npm cannot set on
       # extract. The alternative is `--no-sandbox`, which is worse than it
