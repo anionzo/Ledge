@@ -341,7 +341,13 @@ export function App() {
   // on close, so leaving this set would reopen into a blade-width window with
   // an image squeezed beside it.
   useEffect(() => {
-    if (!open) setSideImage(null)
+    if (open) return
+    // Both, not just the side preview. The lightbox is `position: fixed` over
+    // the whole window, so a hub that closed while it was up would leave it
+    // mounted and invisible above a click-through panel — and show it again,
+    // stale, on the next open.
+    setSideImage(null)
+    setLightboxSrc(null)
   }, [open])
 
   const onMergeSelection = useCallback(() => {

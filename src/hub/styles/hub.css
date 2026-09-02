@@ -99,10 +99,19 @@
 }
 
 /* The blade never gives up width to the preview — it keeps the size the panel
-   was configured with and the window grew to make room for the rest. */
+   was configured with and the window grew to make room for the rest.
+   
+   `order` rather than DOM order, because the two dock sides disagree about
+   what DOM order means: `row-reverse` puts the FIRST child at the screen edge
+   on the right, while plain `row` puts the LAST one there on the left. Writing
+   the rule as "the blade is first in the flex order" is true on both sides;
+   writing it as JSX ordering was true on neither — the preview took the edge
+   and pushed the shelf inboard, which is the opposite of the point. */
 .bz-hub-root > .bz-panel {
   flex: 0 0 var(--bz-blade-width, 360px);
+  order: 0;
 }
+
 
 /*
  * The side preview.
@@ -113,6 +122,8 @@
  * navigation when the user only wanted to look at something.
  */
 .bz-side-preview {
+  /* Always inboard of the blade, on either dock side — see the note above. */
+  order: 1;
   flex: 1 1 auto;
   min-width: 0;
   position: relative;

@@ -381,6 +381,27 @@ export class PanelHost {
       // of view, so a "closed" panel is a full-size transparent window that
       // clicks pass straight through.
       win.setIgnoreMouseEvents(!open, { forward: false })
+      // ...but the bounds are no longer state-independent: a side preview
+      // widens them, and only while open. This branch used to skip resizing
+      // entirely, which desynchronised the window from `#extraWidth` in both
+      // directions —
+      //
+      //   closing with a preview up left the window stuck at its widened size,
+      //   and since the field had just been zeroed, `setExtraWidth(0)`
+      //   early-returned and nothing ever resized it back. The hub kept an
+      //   invisible but still-interactive column inboard of the blade, the
+      //   pointer never left it, `mouseleave` never fired, and the hub could
+      //   not be closed at all;
+      //
+      //   opening with a width already requested (the renderer asking a beat
+      //   before main considered the panel open) left the window at its base
+      //   size with the preview squeezed into nothing, so clicking an image
+      //   looked like it did nothing.
+      //
+      // Re-applying unconditionally costs one `setBounds` per toggle and
+      // removes the whole class. `#boundsFor` already returns the base width
+      // for a closed click-through panel, so this is correct in both states.
+      this.applyGeometry()
     } else {
       // Linux path. There is no way to make a window ignore the mouse, so the
       // window has to physically stop covering the desktop.
@@ -408,6 +429,9 @@ export class PanelHost {
     const next = Math.max(0, Math.round(px))
     if (this.#extraWidth === next) return
     this.#extraWidth = next
+    // Only resize while open; a closed panel keeps the value and picks it up
+    // when `#setOpen` re-applies geometry, so a request that arrives just
+    // before the open is not lost.
     if (this.#open) this.applyGeometry()
   }
 
