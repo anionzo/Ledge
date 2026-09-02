@@ -80,6 +80,27 @@ body {
   transform: translateX(100%);
 }
 
+/* The docked edge is where the blade is moulded into the screen edge (see
+   hub.css's flare fillets); the opposite, inboard edge floats free over the
+   desktop. A faint inset rim along that free edge — hairline plus a soft
+   falloff, at or under the existing rim-hairline opacity — reads as the
+   blade catching light along its open side, without tinting the wallpaper
+   the glass sits on. Layered onto --bz-shadow rather than replacing it, since
+   --bz-shadow is itself a multi-layer value. */
+.bz-panel[data-side='right'] {
+  box-shadow:
+    var(--bz-shadow),
+    inset -1px 0 0 var(--bz-rim-hairline),
+    inset -8px 0 18px -12px var(--bz-rim-soft);
+}
+
+.bz-panel[data-side='left'] {
+  box-shadow:
+    var(--bz-shadow),
+    inset 1px 0 0 var(--bz-rim-hairline),
+    inset 8px 0 18px -12px var(--bz-rim-soft);
+}
+
 /* ── Header ──────────────────────────────────────────────────────────────── */
 
 .bz-panel-header-title {

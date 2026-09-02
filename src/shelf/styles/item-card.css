@@ -74,7 +74,7 @@
   background: var(--bz-panel-2);
   transform: translateY(-2px);
   box-shadow:
-    0 1px 3px var(--bz-shadow),
+    var(--bz-lift),
     inset 0 0 0 1px var(--bz-rule-soft);
   z-index: 1;
 }

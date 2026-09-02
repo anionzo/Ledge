@@ -185,7 +185,9 @@
   "gauge.balance.granted": "Được cấp",
   "gauge.balance.topup": "Nạp thêm",
   "gauge.balance.aria": "{name}: số dư {currency} {amount}, {status}",
-  "gauge.cost.metered": "Chi hôm nay: {currency} {today} · tháng này: {currency} {month}",
+  "gauge.cost.label": "Chi phí",
+  "gauge.cost.today": "{currency} {amount} hôm nay",
+  "gauge.cost.month": "{currency} {amount} tháng này",
   "gauge.cost.subscription": "Gói thuê bao — không tính phí theo lần dùng",
   "gauge.cost.price_ref": "{model}: {input}/{output} $ mỗi 1M vào/ra",
 

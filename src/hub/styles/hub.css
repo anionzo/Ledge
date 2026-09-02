@@ -59,6 +59,16 @@
   z-index: -1;
 }
 
+/* Only while the blade is open does the fillet carry its own rim light — a
+   closed blade has already zeroed these pseudo-elements' opacity below, so
+   scoping to `:has(.bz-hub[data-open])` keeps a stray hairline from surviving
+   the collapse animation's tail. No blur: an inset box-shadow is GPU-cheap
+   and reads as the same edge-light the blade's own rim already carries. */
+.bz-hub-root:has(.bz-hub[data-open])::before,
+.bz-hub-root:has(.bz-hub[data-open])::after {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--bz-rim) 22%, transparent);
+}
+
 /* The mask is the whole trick: remove a disc centred on the corner AWAY from
    the screen edge, and what is left is the concave sweep — full width where it
    meets the blade, tapering to nothing as it runs out toward the edge. */
@@ -227,6 +237,7 @@
 /* ── Quota strip ─────────────────────────────────────────────────────────── */
 
 .bz-quota {
+  background: color-mix(in srgb, var(--bz-panel-2) 55%, transparent);
   border-bottom: 1px solid var(--bz-rule-soft);
 }
 
@@ -246,7 +257,9 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--bz-space-1);
+  /* Tightened from --bz-space-1 so icon+% pairs read as units on the denser
+     rail, rather than as loose beads. */
+  gap: 5px;
   min-width: 0;
 }
 
@@ -262,7 +275,12 @@
   padding: 2px 6px;
   border-radius: var(--bz-radius-sm);
   cursor: pointer;
-  transition: background var(--bz-fast) var(--bz-spring);
+  transition:
+    background var(--bz-fast) var(--bz-spring),
+    box-shadow var(--bz-fast) var(--bz-spring);
+  /* Same severity variable the rings and dots resolve, so the chip's own
+     hairline always agrees with the number it is drawn around. */
+  --bz-sev: var(--bz-ink-3);
 }
 
 .bz-quota-chip:hover {
@@ -275,6 +293,23 @@
 
 .bz-quota-chip[data-pace='hot'] {
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--bz-warn) 45%, transparent);
+}
+
+/* A resting hairline keyed to severity, so "who's in trouble" reads at a
+   glance without expanding the strip. `none` (an unknown reading) and a muted
+   chip stay hollow — colour here would claim a severity the reader does not
+   have. */
+.bz-quota-chip[data-severity='ok'] {
+  --bz-sev: var(--bz-ok);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--bz-sev) 40%, transparent);
+}
+.bz-quota-chip[data-severity='warn'] {
+  --bz-sev: var(--bz-warn);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--bz-sev) 50%, transparent);
+}
+.bz-quota-chip[data-severity='critical'] {
+  --bz-sev: var(--bz-crit);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--bz-sev) 55%, transparent);
 }
 
 .bz-quota-chip-glyph {

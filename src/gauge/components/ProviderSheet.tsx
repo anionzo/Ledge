@@ -192,15 +192,16 @@ function CostLine({ reading }: { reading: QuotaReading }) {
   }
 
   return (
-    <p className="bz-detail-cost">
-      <span className="bz-num">
-        {t('gauge.cost.metered', {
-          currency: cost.currency,
-          today: formatAmount(cost.todayAmount),
-          month: formatAmount(cost.monthAmount)
-        })}
+    <div className="bz-detail-cost">
+      <span className="bz-detail-cost-label">{t('gauge.cost.label')}</span>
+      <span className="bz-detail-cost-figures bz-num">
+        {t('gauge.cost.today', { currency: cost.currency, amount: formatAmount(cost.todayAmount) })}
+        <span className="bz-detail-cost-sep" aria-hidden="true">
+          ·
+        </span>
+        {t('gauge.cost.month', { currency: cost.currency, amount: formatAmount(cost.monthAmount) })}
       </span>
-    </p>
+    </div>
   )
 }
 
