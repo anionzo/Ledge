@@ -249,7 +249,12 @@ export const en: Dictionary = {
 
   // Cost Meter. Real spend is a prepaid balance falling over time (Ledge is a
   // spectator and cannot count tokens); the price line is a reference only.
-  'gauge.cost.metered': 'Spent today: {currency} {today} · this month: {currency} {month}',
+  // The instrument row mirrors `.bz-trend`: a mono uppercase label plus two
+  // tabular figures, so today/month are separate keys rather than one packed
+  // sentence.
+  'gauge.cost.label': 'Cost',
+  'gauge.cost.today': '{currency} {amount} today',
+  'gauge.cost.month': '{currency} {amount} this month',
   'gauge.cost.subscription': 'Subscription — no per-use cost',
   'gauge.cost.price_ref': '{model}: {input}/{output} $ per 1M in/out',
 

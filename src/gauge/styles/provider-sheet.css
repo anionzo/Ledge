@@ -144,7 +144,10 @@
 }
 
 .bz-window-track {
-  height: 4px;
+  /* Bumped from the base 4px so the lit fill below has room to read as a lit
+     bar rather than a glow escaping a hairline. The unknown/dashed track
+     (below) stays at the thinner base height. */
+  height: 5px;
   border-radius: 2px;
   background: var(--bz-rule);
   overflow: hidden;
@@ -153,6 +156,7 @@
 /* An unknown window keeps its empty track. Drawing nothing at all would leave
    a gap that reads as a layout fault rather than as missing data. */
 .bz-window-track[data-unknown] {
+  height: 4px;
   background: repeating-linear-gradient(
     90deg,
     var(--bz-rule) 0 3px,
@@ -163,6 +167,10 @@
 .bz-window-fill {
   height: 100%;
   background: var(--bz-sev);
+  /* A faint lit edge, coloured by the same severity the fill already carries
+     — the bar reads as lit rather than merely filled, without adding a new
+     colour to the achromatic chrome. */
+  box-shadow: 0 0 6px color-mix(in srgb, var(--bz-sev) 35%, transparent);
   transition: width var(--bz-open-ms) var(--bz-spring);
 }
 
@@ -181,6 +189,11 @@
 /**
  * Cost Meter — secondary to the quota/balance above. Achromatic, tabular
  * figures, no colour: spend is information, not an alert.
+ *
+ * The metered row mirrors `.bz-trend`'s anatomy: a mono uppercase label
+ * followed by its figures, so the sheet's two "reading" rows share one
+ * grammar. The subscription line (no figures to show) keeps the plain
+ * paragraph shape instead.
  */
 .bz-detail-cost {
   margin: 0;
@@ -189,8 +202,36 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* The metered row (a <div>) adds the label/figures split; the subscription
+   fallback (a <p>) stays plain prose and only inherits the rule above. */
+div.bz-detail-cost {
+  display: flex;
+  align-items: baseline;
+  gap: var(--bz-space-2);
+}
+
+.bz-detail-cost-label {
+  flex: 0 0 auto;
+  font-family: var(--bz-font-mono);
+  letter-spacing: var(--bz-track-label);
+  text-transform: uppercase;
+  color: var(--bz-ink-3);
+}
+
+.bz-detail-cost-figures {
+  flex: 1 1 auto;
+  color: var(--bz-ink-2);
+}
+
+.bz-detail-cost-sep {
+  margin: 0 4px;
+  color: var(--bz-ink-3);
+}
+
+/* One step quieter than the spend row above it — a reference, not a reading. */
 .bz-detail-price {
   margin: 0;
+  padding-top: 2px;
   font-size: var(--bz-text-xs);
   color: var(--bz-ink-3);
   font-variant-numeric: tabular-nums;

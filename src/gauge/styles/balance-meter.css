@@ -82,9 +82,14 @@
 
 .bz-balance-seg[data-part='topup'] {
   background: var(--bz-rim);
+  box-shadow: 0 0 4px color-mix(in srgb, var(--bz-rim) 40%, transparent);
 }
 
 .bz-balance[data-critical] .bz-balance-seg {
   background: var(--bz-crit);
   opacity: 0.55;
+  /* The critical wash replaces both segments outright — the topup segment's
+     rim glow would otherwise survive underneath it, since the rule above
+     only overrides background. */
+  box-shadow: none;
 }
