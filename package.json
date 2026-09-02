@@ -21,6 +21,7 @@
   "scripts": {
     "dev": "electron-vite dev",
     "start": "npm run build && electron .",
+    "smoke": "npm run build && node scripts/smoke.mjs",
     "build": "electron-vite build",
     "preview": "electron-vite preview",
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json --composite false",
