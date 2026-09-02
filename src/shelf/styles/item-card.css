@@ -47,10 +47,23 @@
   contain-intrinsic-size: auto 76px;
 }
 
+/*
+ * The lift overshoots; the press does not.
+ *
+ * This is where bounce belongs — a 2px travel on a small opaque element, not
+ * on the blurred full-height panel where the same curve cost a re-raster per
+ * frame and read as a jolt. Coming up, the card passes its resting height and
+ * settles, which is what makes it feel like it has weight. Going back down
+ * under a click it lands flat and immediately, because a press should feel
+ * like something stopping, not like something wobbling.
+ *
+ * Reduced motion needs no separate rule: the tokens zero every duration, so
+ * the curve has nothing to travel over.
+ */
 .bz-item {
   transition:
     background var(--bz-fast) var(--bz-spring),
-    transform var(--bz-fast) var(--bz-spring),
+    transform var(--bz-base) var(--bz-spring-overshoot),
     box-shadow var(--bz-fast) var(--bz-spring);
 }
 
@@ -59,17 +72,19 @@
    here would wrongly read as a severity or selection cue. */
 .bz-item:hover {
   background: var(--bz-panel-2);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
   box-shadow:
     0 1px 3px var(--bz-shadow),
     inset 0 0 0 1px var(--bz-rule-soft);
   z-index: 1;
 }
 
-/* Press settles the lift back down immediately, on the same fast transition
-   — a quick tactile confirmation rather than a bounce. */
+/* Press settles the lift back down immediately and flat — a quick tactile
+   confirmation. Overriding the duration here is the point: the spring is for
+   arriving, not for leaving. */
 .bz-item:active {
   transform: translateY(0);
+  transition: transform var(--bz-fast) var(--bz-spring);
 }
 
 /* The mark no longer lifts on its own.

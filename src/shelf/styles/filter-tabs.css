@@ -53,7 +53,22 @@
   transition:
     color var(--bz-close-ms) var(--bz-spring),
     background var(--bz-close-ms) var(--bz-spring),
-    border-color var(--bz-close-ms) var(--bz-spring);
+    border-color var(--bz-close-ms) var(--bz-spring),
+    transform var(--bz-base) var(--bz-spring-overshoot);
+}
+
+/* A filter is pressed far more often than anything else on this strip, so it
+   is worth a gesture: it dips under the finger and springs past its resting
+   size on the way back. The scale is deliberately small — 0.9/1.06 on a 30px
+   target is felt more than seen, which is the right ratio for something the
+   user hits dozens of times an hour. */
+.bz-filter:active {
+  transform: scale(0.9);
+  transition: transform var(--bz-fast) var(--bz-spring);
+}
+
+.bz-filter[data-active] {
+  transform: scale(1.06);
 }
 
 .bz-filter:hover {

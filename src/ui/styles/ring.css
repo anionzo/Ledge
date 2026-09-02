@@ -43,19 +43,53 @@
   stroke: var(--bz-rule);
 }
 
+/*
+ * The arc blooms in its own severity colour.
+ *
+ * Two stacked drop-shadows — a tight one that thickens the stroke's own light
+ * and a wide, faint one that lets it sit off the ground — is the trick
+ * agent-notch's ring uses, and it is most of why that instrument reads as lit
+ * rather than drawn. Cheap: one filter on one SVG path, no extra element and
+ * nothing animating.
+ *
+ * The arc's own easing stays flat, deliberately. Every interaction below
+ * overshoots, but this one must not: an arc that springs past 95% and settles
+ * back is, for those few frames, displaying a number the provider never
+ * reported. Bounce belongs to feedback, not to data.
+ */
 .bz-ring-value {
   stroke: var(--bz-sev);
-  transition: stroke-dashoffset var(--bz-open-ms) var(--bz-spring);
+  transition:
+    stroke-dashoffset var(--bz-open-ms) var(--bz-spring),
+    filter var(--bz-base) var(--bz-spring);
+  filter:
+    drop-shadow(0 0 2px color-mix(in srgb, var(--bz-sev) 67%, transparent))
+    drop-shadow(0 0 6px color-mix(in srgb, var(--bz-sev) 25%, transparent));
+}
+
+/* No reading, no light. An unknown ring is chrome — glowing it would give a
+   dash the presence of a measurement. */
+.bz-ring[data-unknown] .bz-ring-value {
+  filter: none;
 }
 
 .bz-ring-endpoint {
   transition: transform var(--bz-open-ms) var(--bz-spring);
 }
 
+
 /* Halo is wider than the arc, so the terminus bulges very slightly — the
-   difference between a bar that stopped and a needle that is pointing. */
+   difference between a bar that stopped and a needle that is pointing. It
+   carries the same bloom as the arc, so the needle is the brightest point on
+   the instrument rather than a dark cap on a lit ring. */
 .bz-ring-endpoint-halo {
   fill: var(--bz-sev);
+  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--bz-sev) 55%, transparent));
+}
+
+.bz-ring[data-unknown] .bz-ring-endpoint-halo,
+.bz-ring[data-stale] .bz-ring-endpoint-halo {
+  filter: none;
 }
 
 /* A punched core turns the bulge into an index mark. It uses the opaque panel
@@ -107,6 +141,9 @@
    the needle goes hollow, which reads as "not live" even where a 45% opacity
    drop is easy to miss. The radius change is done in the component, where the
    stroke width is known. */
+   Stale also loses its bloom: the reading is true but no longer current, and a
+   lit ring is the one thing that says "this is live". */
 .bz-ring[data-stale] .bz-ring-value {
   transition: none;
+  filter: none;
 }
